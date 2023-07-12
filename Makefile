@@ -2,55 +2,65 @@
 # ---- Introduction ---- #
 ##########################
 
-# Welcome to the VeriSimpleV Makefile!
-# this file will allow you to build a fully synthesizable verilog processor
-# it should need no changes for use in project 3
-# but will be reused for project 4 and will need updates as you add new files and functionality
-# this will mostly be editing SIMFILES, SYNFILES, and TESTBENCH in the executable compilation section
-# but feel free to mess around! There are plenty of comments on different make features
-# and you should try things out. But make sure you commit changes to git before you break things!
+# Welcome to the Project 3 VeriSimpleV Processor makefile!
+# this file will build a fully synthesizable RISC-V verilog processor
+# and is an extended version of the EECS 470 standard makefile
 
-# here's a table of contents with reference make targets:
+# NOTE: this file should need no changes for project 3
+# but it will be reused for project 4, where you will likely add your own new files and functionality
+
+# reference table of all make targets:
+
+# make  <- runs the default target, set explicitly below as 'make rv32_fib_rec.out'
+.DEFAULT_GOAL = rv32_fib_rec.out
+# ^ this overrides using the first listed target as the default
 
 # ---- Program Execution ---- #
-# NOTE: these should be your main commands for running programs and generating output
-# make <my_program>.out     <- run a program on simv and generate .out, .wb, and .ppln output in output/
+# these are your main commands for running programs and generating output
+# make <my_program>.out     <- run a program on simv and generate .out, .wb, and .ppln files in 'output/'
 # make <my_program>.syn.out <- run a program on syn_simv and do the same
+# make simulate_all         <- run every program on simv at once (in parallel with -j)
+# make simulate_all_syn     <- run every program on syn_simv at once (in parallel with -j)
 
 # ---- Executable Compilation ---- #
-# make simv     <- compile the verilog executable simv from the testbench and SIMFILES
-# make syn_simv <- compile the synthesis executable syn_simv from the testbench and SYNFILES
+# make simv      <- compiles simv from the testbench and SOURCES
+# make syn_simv  <- compiles syn_simv from the testbench and *.vg SYNTH_FILES
+# make *.vg      <- synthesize the top level module in SOURCES for use in syn_simv
+# make slack     <- a phony command to print the slack of any synthesized modules
 
 # ---- Program Memory Compilation ---- #
 # NOTE: programs to run are in the test_progs/ directory
 # make <my_program>.mem <- creates the program memory file output/<my_program>.mem for running on simv etc
+# make compile_all      <- compile every program at once (in parallel with -j)
 
 # ---- Dump Files ---- #
 # make <my_program>.dump_numeric <- creates a numeric dump file for viewing the disassembled source code
 # make <my_program>.dump_abi     <- creates an abi dump file for viewing the disassembled source code
-# make <my_program>.dump         <- creates both of the above files  at once and is easier to type :)
+# make <my_program>.dump         <- creates both of the above files at once and is easier to type :)
 # make <my_program>.debug.dump_* <- creates dump files for C programs that intersperses the C source code
+# make dump_all                  <- create all dump files at once (in parallel with -j)
 
 # ---- Verdi ---- #
 # make <my_program>.verdi     <- run a program in the verdi debugger via simv
-# make <my_program>.syn.verdi <- the same but via syn_simv
+# make <my_program>.syn.verdi <- the same via syn_simv
 
 # ---- Visual Debugger ---- #
 # make <my_program>.vis <- run a program on the project 3 vtuber visual debugger!
-# make vis_simv         <- compile the vtuber executable from visual_testbench.sv and the SIMFILES
+# make vis_simv         <- compile the vtuber executable from visual_testbench.sv and the SOURCES
+
+# ---- Legacy Build System ---- #
+# the legacy system for compiling programs is included
+# I discourage using it, but it does exist if needed
+# make sim, syn, verdi, verdi_syn, vis <- run as expected, using the program in the SOURCE variable
 
 # ---- Cleanup ---- #
-# make clean <- remove most created files except specific synthesis files and .mem files
-# make nuke  <- remove all files created from make rules
-
-# each of these will compile/run any of their dependencies as needed, and needs no other
-# commands to be called first, this is one of the major improvements from the legacy system
-# which would require recompiling multiple files before each run of a different program on simv
-
-# I've also added the targets: compile_all dump_all simulate_all simulate_all_syn
-# that respectively compile, dump, and simulate EVERY program in test_progs/ at once
-# NOTE: you can use the -j flag with make to allow make to run multithreaded to finish these faster
-# although this will make color printing funky because of the interleaved output
+# make clean            <- remove per-run files and compiled executable files
+# make nuke             <- remove all files created from make rules
+# make clean_run_files  <- remove per-run output files
+# make clean_exe        <- remove compiled executable files
+# make clean_synth      <- remove generated synthesis files
+# make clean_output_dir <- remove the entire output/ directory)
+# make clean_programs   <- remove program memory and dump files (implicit in clean_output_dir)
 
 # credits:
 # VeriSimpleV was adapted by Jielun Tan for RISC-V from the original 470 VeriSimple Alpha language processor
@@ -64,44 +74,62 @@
 # ---- Directories ---- #
 #########################
 
-# this is a built-in Make variable that lets Make search folders to find dependencies and targets
-# it can greatly simplify make rules and increase readability
+# VPATH is a built-in Make variable that lets Make search folders to find dependencies and targets
+# setting it simplifies many of our make rules and increases readability with our new directory format
 VPATH = synth:testbench:test_progs:verilog:output
 
-################################################
-# ---- Compilation Commands and Variables ---- #
-################################################
+# some targets in this makefile are built in the 'output/' directory for organization
+# this rule creates it if it doesn't exist yet (since the entire directory might be deleted by 'make nuke')
+# NOTE: usually placed after the pipe "|" as a dependency to avoid matching the "$^" automatic variable
+output:
+	mkdir -p output
+
+######################################################
+# ---- Compilation Commands and Other Variables ---- #
+######################################################
 
 # these are various build flags for different parts of the makefile, VCS and LIB should be
 # familiar, but there are new variables for supporting the compilation of assembly and C
 # source programs into riscv machine code files to be loaded into the processor's memory
 
-# don't be afraid of changing these, but be diligent about testing changes (and make git commits often!)
-# should be no reason to change these for project 3
+# don't be afraid of changing these, but be diligent about testing changes and using git commits
+# there should be no need to change anything for project 3
 
-# stops the "Too Few Instance Port Connection" warnings that amount to ~2.4MiB of text when compiling simv
-VCS_NO_WARNINGS = +warn=noTFIPC +warn=noDEBUG_DEP +warn=noENUMASSIGN
-VCS = vcs -V -sverilog +vc -Mupdate -line -full64 +vcs+vcdpluson -kdb -lca -debug_access+all $(VCS_NO_WARNINGS)
-# also gets appended with a +define+CLOCK_PERIOD in the Common Variables section below
 
-# LIB is the reference file for the standard structural cells
-# this is what the synthesized code is linked against
+# this is a global clock period variable used in the tcl script and referenced in testbenches
+export CLOCK_PERIOD = 30.0
+
+# the Verilog Compiler command and arguments
+VCS = SW_VCS=2020.12-SP2-1 vcs -sverilog +vc -Mupdate -line -full64 -kdb -lca \
+      -debug_access+all+reverse $(VCS_BAD_WARNINGS) +define+CLOCK_PERIOD=$(CLOCK_PERIOD)
+# a SYNTH define is added when compiling for synthesis that can be used in testbenches
+
+# remove certain warnings that generate MB of text but can be safely ignored
+VCS_BAD_WARNINGS = +warn=noTFIPC +warn=noDEBUG_DEP +warn=noENUMASSIGN
+
+# a reference library of standard structural cells that we link against when synthesizing
 LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 
-CRT = crt.s
-LINKERS = linker.lds
-ASLINKERS = aslinker.lds
-DEBUG_FLAG = -g
+# the EECS 470 synthesis script
+TCL_SCRIPT = 470synth.tcl
 
-# you might want to update these build flags for the final project, but make sure you know what they do:
+# The following are new in project 3:
+
+# C and assembly compilation files. These link and setup the runtime for the programs
+CRT = test_progs/crt.s
+LINKERS = test_progs/linker.lds
+ASLINKERS = test_progs/aslinker.lds
+
+# you might need to update these build flags for project 4, but make sure you know what they do:
 # https://gcc.gnu.org/onlinedocs/gcc/RISC-V-Options.html
-CFLAGS = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align -mno-div
+CFLAGS     = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -std=gnu11 -mstrict-align -mno-div
 # adjust the optimization if you want programs to run faster; this may obfuscate/change their instructions
-OFLAGS = -O0
-ASFLAGS = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -Wno-main -mstrict-align
-OBJFLAGS = -SD -M no-aliases
-OBJCFLAGS = --set-section-flags .bss=contents,alloc,readonly
-OBJDFLAGS = -SD -M numeric,no-aliases
+OFLAGS     = -O0
+ASFLAGS    = -mno-relax -march=rv32im -mabi=ilp32 -nostartfiles -Wno-main -mstrict-align
+OBJFLAGS   = -SD -M no-aliases
+OBJCFLAGS  = --set-section-flags .bss=contents,alloc,readonly
+OBJDFLAGS  = -SD -M numeric,no-aliases
+DEBUG_FLAG = -g
 
 # NOTE: change this and update the below variables if you aren't using a caen machine
 CAEN = 1
@@ -119,74 +147,19 @@ else
 	ELF2HEX = elf2hex
 endif
 
-##############################
-# ---- Common Variables ---- #
-##############################
-
-# this is a global clock period variable used in sys_defs.svh and the .tcl scripts
-# don't change this for project 3
-CLOCK_PERIOD = 30.0
-
-# referenced in sys_defs.svh
-VCS += +define+CLOCK_PERIOD=$(CLOCK_PERIOD)+
-
-# nice to define the headers up here and export them statically
-HEADERS = sys_defs.svh \
-          ISA.svh
-# ^ note: could replace with $(wildcard *.svh)
-
-# these are read by the .tcl scripts
-# also the SOURCES and TOP_NAME variables, but those are set per-command using 'env'
-export CLOCK_PERIOD
-export HEADERS
-
-# dc_shell supports compiling with multiple cores to improve compile time
-# this variable is used by the .tcl script in 'set_host_options -max_cores' to change that
-export DC_SHELL_MULTICORE = 1
-
-######################
-# ---- Printing ---- #
-######################
-
-# this is a function with two arguments: PRINT_COLOR(color : int 0-7, msg : string)
-PRINT_COLOR = if [ -t 0 ]; then tput setaf $(1) ; fi; echo $(2); if [ -t 0 ]; then tput sgr0; fi
-# this decomposes to:
-# first, check if in a terminal and in a compliant shell
-# second, use tput setaf to set the ANSI Foreground color based on the number 0-7:
-#   0:black, 1:red, 2:green, 3:yellow, 4:blue, 5:magenta, 6:cyan, 7:white
-# third, echo the message
-# finally, reset the terminal color (but still only if a terminal)
-# make functions are called like this:
-# $(call PRINT_COLOR,5,msg)
-# add '@' at the start of the line so it doesn't print the command itself, only the output
-
-############################
-# ---- Default Target ---- #
-############################
-
-# The first make rule is the default target and is run when calling 'make' by itself
-# it is often called "all" by convention, but you can change it to anything
-# don't place any other make targets above this
-
-all: rv32_fib_rec.out
-# make won't check for the existence of .PHONY targets, and will run their commands every time
-# since this is generally what we want for all, we declare it as phony like so:
-.PHONY: all
-
 ####################################
 # ---- Executable Compilation ---- #
 ####################################
 
-# These are the files and recipes for compiling the verilog executables simv and syn_simv
-# Note that for projects 3/4, the executable is not the only thing you need to compile
-# you must also create a .mem file for the program you're running that will be loaded
-# into mem.sv's memory data by the testbench on startup.
+# NOTE: the executables are not the only things you need to compile
+# you must also create a .mem file for each program you run
+# which will be loaded into mem.sv by the testbench on startup
 
-# To actually run a program on simv or syn_simv, see the program compilation section later
+# To actually run a program on simv or syn_simv, see the program compilation section below
 # you can also use the legacy targets 'sim' and 'syn' that use the legacy program.mem file
 
-# NOTE: we're only able to write these filenames without directories due to the VPATH declaration above
-# Make will automatically expand these to their actual paths when used in recipes
+# NOTE: we're able to use these filenames without directories due to the VPATH declaration above
+# Make will automatically expand these to their actual paths when used as dependencies
 HEADERS = sys_defs.svh \
           ISA.svh
 
@@ -195,114 +168,90 @@ TESTBENCH = testbench.sv \
             mem.sv
 
 # you could simplify this line with $(wildcard verilog/*.sv) - but the manual way is more explicit
-SIMFILES = pipeline.sv \
-           regfile.sv \
-           if_stage.sv \
-           id_stage.sv \
-           ex_stage.sv \
-           mem_stage.sv \
-           wb_stage.sv
+SOURCES = pipeline.sv \
+          regfile.sv \
+          if_stage.sv \
+          id_stage.sv \
+          ex_stage.sv \
+          mem_stage.sv \
+          wb_stage.sv
 
-simv: $(HEADERS) $(TESTBENCH) $(SIMFILES)
-	@$(call PRINT_COLOR, 5, compiling $@)
+SYNTH_FILES = synth/pipeline.vg
+
+# the .vg rule is automatically generated below when the name of the file matches its top level module
+
+# the normal simulation executable will run your testbench on the original modules
+simv: $(TESTBENCH) $(SOURCES) | $(HEADERS)
+	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
 	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
-	$(VCS) $^ -o simv
+	$(VCS) $^ -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
+# NOTE: we reference variables with $(VARIABLE), and can make use of the automatic variables: ^, @, <, etc
+# see: https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html for explanations
 
-# NOTE: ^ is an automatic variable, and is replaced by the list of all of the prerequisites
-# ^, <, @, *, etc are also automatic variables that are used in this makefile
-# see: https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html
-
-# for synthesis, we first synthesize pipeline.vg by setting specific environment variables and call our .tcl script
-# then use the .vg file with our testbench and memory to compile the final syn_simv executable 
-SYNFILES = synth/pipeline.vg
-
-
-PIPELINE_TCL_SCRIPT = pipeline.tcl
-synth/pipeline.vg: $(SIMFILES) | $(PIPELINE_TCL_SCRIPT) $(HEADERS)
-	@$(call PRINT_COLOR, 5, synthesizing $@)
+synth/pipeline.vg: $(SOURCES) | $(TCL_SCRIPT) $(HEADERS)
+	@$(call PRINT_COLOR, 5, synthesizing the $* module)
 	@$(call PRINT_COLOR, 3, this might take a while...)
-	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load synopsys-synth"')
+	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
 	# pipefail causes the command to exit on failure even though it's piping to tee
-	set -o pipefail; cd synth && env TOP_NAME=pipeline SOURCES="$^" dc_shell-t -f $(PIPELINE_TCL_SCRIPT) | tee pipeline_synth.out
+	set -o pipefail; cd synth && MODULE=pipeline SOURCES="$^" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
+# this also generates many other files, see the tcl script's introduction for info on each of them
 
-syn_simv: $(HEADERS) $(TESTBENCH) $(SYNFILES)
-	@$(call PRINT_COLOR, 5, compiling $@)
-	$(VCS) $^ $(LIB) -o syn_simv
+# add all sources as extra dependencies for each SYNTH_FILES target
+# this is used when SOURCES="$^" uses the automatic variable $^ to reference all dependencies
+$(SYNTH_FILES): $(SOURCES)
+
+# the synthesis executable runs your testbench on the synthesized versions of your modules
+syn_simv: $(TESTBENCH) $(SYNTH_FILES) | $(HEADERS)
+	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
+	$(VCS) +define+SYNTH $^ $(LIB) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
+# we need to link the synthesized modules against LIB, so this differs slightly from simv above
+# but we still compile with the same non-synthesizable testbench
 # NOTE: LIB has to come after the other sources as it doesn't define a timescale, and must inherit it from a previous module
 
-###############################
-# ---- Build Directories ---- #
-###############################
-
-# some targets in this makefile are built in the output/ directory for organization
-# this rule creates the output directory if it doesn't exist yet
-# the entire directory is deleted by 'make nuke', so be careful with that
-# NOTE: add "| output" at the end of make rules that put things into output
-# the "|" creates 'ordered' dependencies that are built first, and in order
-# because you can't put files into output/ if it doesn't exist
-output:
-	mkdir -p output
+# a phony target to view the slack in the *.rep synthesis report file
+slack:
+	grep --color=auto "slack" synth/*.rep
+.PHONY: slack
 
 ########################################
 # ---- Program Memory Compilation ---- #
 ########################################
 
-# this section is where you compile programs into .mem files to be loaded into
-# memory by the testbench on startup
+# this section will compile programs into .mem files to be loaded into memory
 # you start with either an assembly or C program in the test_progs/ directory
-# you compile those into a link file by using the riscv assembler or compiler
-# then you convert that assembly to a .mem hex file
-# this section uses some more complicated make syntax you might not be familiar with
-# so I'll explain new stuff as it's introduced with the NOTE keyword below
+# those compile into a .elf link file via the riscv assembler or compiler
+# then that link file is converted to a .mem hex file
 
-# read all the test program files and separate them based on suffix of .s or .c
-ASSEMBLY = $(wildcard test_progs/*.s)
-C_CODE   = $(wildcard test_progs/*.c)
+# find the test program files and separate them based on suffix of .s or .c
+ASSEMBLY := $(wildcard test_progs/*.s)
+C_CODE   := $(filter-out $(CRT),$(wildcard test_progs/*.c))
 
-# concatenate ASSEMBLY and C_CODE to create a list of all the desired programs (in the output dir)
+# concatenate ASSEMBLY and C_CODE to list every program
+PROGRAMS := $(ASSEMBLY:test_progs/%.s=output/%) $(C_CODE:test_progs/%.c=output/%)
 # NOTE: this is Make's pattern substitution syntax
 # see: https://www.gnu.org/software/make/manual/html_node/Text-Functions.html#Text-Functions
-# it's technically equivalent to calling the function: $(patsubst pattern,replacement,$(var))
-# but the better syntax is: $(var:pattern=replacement)
-# the percent sign '%' acts as the wildcard, and can be reused in the replacement
+# this reads as: $(var:pattern=replacement)
+# a percent sign '%' in pattern is as a wildcard, and can be reused in the replacement
 # if you don't include the percent it automatically attempts to replace just the suffix of the input
-PROGRAMS = $(ASSEMBLY:test_progs/%.s=output/%) $(C_CODE:test_progs/%.c=output/%)
 
 # make link files from assembly code (matches the legacy 'assemble' target)
-# NOTE: this is complicated Make syntax, but is extremely powerful and concise
-# first, this creates a variable holding the desired target filenames (i.e. output/sampler.elf)
-# second, it creates a 'static pattern rule' that turns all the elements of the variable into targets
-# see: https://www.gnu.org/software/make/manual/html_node/Static-Usage.html
-# the pattern part allows me to extract the name of the program using the '%' wildcard
-# and I then reuse that as the $* automatic variable in the declaration
 ASSEMBLY_ELF = $(ASSEMBLY:test_progs/%.s=output/%.elf)
 $(ASSEMBLY_ELF): output/%.elf: test_progs/%.s | $(ASLINKERS) output
 	@$(call PRINT_COLOR, 5, compiling assembly file $*.s)
 	$(GCC) $(ASFLAGS) $^ -T $(ASLINKERS) $(CUSTOM_ASM_ARGS) -o $@
+# NOTE: this uses a 'static pattern rule' to match a list of known targets to a pattern
+# and then generates the correct rule based on the patter, where % and $* match
+# so for the target 'output/sampler.elf' the % matches 'sampler' and searches the source 'test_progs/sampler.s'
+# see: https://www.gnu.org/software/make/manual/html_node/Static-Usage.html
 
 # make link files from C source code (matches the legacy 'compile' target)
 C_CODE_ELF = $(C_CODE:test_progs/%.c=output/%.elf)
 $(C_CODE_ELF): output/%.elf: $(CRT) test_progs/%.c | $(LINKERS) output
 	@$(call PRINT_COLOR, 5, compiling C code file $*.c)
 	$(GCC) $(CFLAGS) $(OFLAGS) $^ -T $(LINKERS) $(CUSTOM_C_ARGS) -o $@
-
-# NOTE: the .elf commands only compile single file sources, however it's not difficult to add multi-source files
-# if you had a file 'test_progs/multi.c' that needed to compile with 'test_progs/helper1.c' and
-# 'test_progs/obj_helper2.o', you would uncomment the following line:
-# multi.elf: helper1.c obj_helper2.o
-# this adds the dependences to the $^ variable used in the command above (also why LINKERS is after the |)
-# NOTE: I've also included CUSTOM_ASM_ARGS and CUSTOM_C_ARGS variables that you can override at
-# the command line in case you need more complicated functionality:
-# make multi.elf CUSTOM_C_ARGS="test_progs/helper1.c test_progs/obj_helper2.o -v -pipe etc"
-
-# NOTE: I declare the .elf files as intermediate files here.
-# Make will automatically rm intermediate files after they're used in a recipe
-# and it won't remake targets depending on them if they don't exist
-# but if their sources (*.s *.c) are updated, then they'll be made and deleted again as needed
-.INTERMEDIATE: $(ASSEMBLY_ELF) $(C_CODE_ELF)
 
 # turn any link file into a hex memory file ready for the testbench (matches the legacy 'hex' target)
 %.mem: %.elf
@@ -311,6 +260,20 @@ $(C_CODE_ELF): output/%.elf: $(CRT) test_progs/%.c | $(LINKERS) output
 	@$(call PRINT_COLOR, 3, NOTE - to see the disassembled code)
 	@$(call PRINT_COLOR, 3, make $*.dump_numeric or $*.dump_abi)
 	@$(call PRINT_COLOR, 3, for .c sources - make .debug.dump_\*)
+
+# NOTE: the .elf commands only compile single file sources, however it's not difficult to add multi-source files
+# if you had a file 'test_progs/multi.c' that needed to compile with 'test_progs/helper1.c' and
+# 'test_progs/obj_helper2.o', you would uncomment the following line:
+#     multi.elf: helper1.c obj_helper2.o
+# this adds the dependences to the $^ variable used in the command above (also why LINKERS is after the |)
+# NOTE: I've also included CUSTOM_ASM_ARGS and CUSTOM_C_ARGS variables that you can override at
+# the command line in case you need more complicated functionality:
+# make multi.elf CUSTOM_C_ARGS="test_progs/helper1.c test_progs/obj_helper2.o -v -pipe etc"
+
+# NOTE: I declare the .elf files as intermediate files here.
+# Make will automatically rm intermediate files after they're used in a recipe
+# and it won't remake them until their sources are updated or they're needed again
+.INTERMEDIATE: $(ASSEMBLY_ELF) $(C_CODE_ELF)
 
 # this command compiles all the programs at once
 # NOTE: use 'make -j' to run multithreaded
@@ -321,8 +284,8 @@ compile_all: $(PROGRAMS:=.mem)
 # ---- Dump Files ---- #
 ########################
 
-# it can also be usefule to look at dump files that represent the compiled riscv assembly code
-# there are two types, which are useful for debugging different things:
+# it can also be useful to look at dump files that represent the compiled riscv assembly code
+# there are two types that are useful for debugging different things:
 #   1. dump_numeric gives dump files where the registers use their numeric values, better for debugging
 #      with verdi in the waveform view
 #   2. dump_abi gives dump files where the registers use their named values as written in the sources
@@ -369,7 +332,7 @@ dump_all: $(DUMP_PROGRAMS:=.dump_abi) $(DUMP_PROGRAMS:=.dump_numeric)
 # run one of the executables (simv/syn_simv) using the chosen program
 # e.g. 'make sampler.out' does the following from a clean directory:
 #   1. compiles simv
-#   2. compiles test_progs/sampler.s into its .elf and then .mem file (in output/)
+#   2. compiles test_progs/sampler.s into its .elf and then .mem files (in output/)
 #   3. runs ./simv +MEMORY=output/sampler.mem +WRITEBACK=output/sampler.wb +PIPELINE=output/sampler.ppln
 #   4. which creates the sampler.out, sampler.wb, and sampler.ppln files in output/
 # the same can be done for synthesis by doing 'make sampler.syn.out'
@@ -393,12 +356,13 @@ $(PROGRAMS:=.syn.out): %.syn.out: syn_simv %.mem
 
 # these commands run all the programs on simv or syn_simv in one command
 # NOTE: use 'make -j' to run multithreaded
-# NOTE: I'm using ordered prerequisites here (via the | character) so that make first compiles
-# everything before it runs anything, otherwise the output will be much messier
-# see: https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html
 simulate_all: $(PROGRAMS:=.out) | compile_all simv
 simulate_all_syn: $(PROGRAMS:=.syn.out) | compile_all syn_simv
 .PHONY: simulate_all simulate_all_syn
+
+# NOTE: I'm using ordered prerequisites here (via the | character) so that make first compiles
+# everything before it runs anything, otherwise the output is much messier
+# see: https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html
 
 ###################
 # ---- Verdi ---- #
@@ -406,7 +370,7 @@ simulate_all_syn: $(PROGRAMS:=.syn.out) | compile_all syn_simv
 
 # run verdi on a program with: 'make <my_program>.verdi' or 'make <my_program>.syn.verdi'
 
-# this creates a directory that verdi will use if it doesn't exist yet
+# this creates a directory verdi will use if it doesn't exist yet
 verdi_dir:
 	mkdir -p /tmp/$${USER}470
 .PHONY: verdi_dir
@@ -443,7 +407,7 @@ verdi_syn: syn_simv novas.rc verdi_dir program.mem $(SOURCE)
 VTUBER = visual_testbench.v visual_c_hooks.cpp mem.sv
 VISFLAGS = -lncurses
 
-vis_simv: $(HEADERS) $(VTUBER) $(SIMFILES)
+vis_simv: $(HEADERS) $(VTUBER) $(SOURCES)
 	@$(call PRINT_COLOR, 5, compiling visual debugger testbench)
 	$(VCS) $(VISFLAGS) $^ -o vis_simv
 	@$(call PRINT_COLOR, 6, finished compiling visual debugger testbench)
@@ -476,7 +440,7 @@ vis: vis_simv program.mem $(SOURCE)
 
 # the source program for the legacy system
 # NOTE: you can override this at the command line like: 'make SOURCE=test_progs/<my_program.s/.c>'
-# this however always recompiles program.mem and is inefficient vs the new system
+# however this always recompiles program.mem which is cumbersome
 SOURCE = test_progs/sampler.s
 
 assemble: $(ASLINKERS)
@@ -554,18 +518,23 @@ syn: syn_simv program.mem
 # ---- Cleanup ---- #
 #####################
 
-# cleans most build files, but notably does not remove .mem or synthesis files (does remove syn_simv)
-# clean does most common cleanup, nuke cleans everything
-# other clean_* commands clean only certain files
+# You should only clean your directory if you think something has built incorrectly
+# or you want to prepare a clean directory for e.g. git (first check your .gitignore).
+# Please avoid cleaning before every build. The point of a makefile is to
+# automatically determine which targets have dependencies that are modified,
+# and to re-build only those as needed; avoiding re-building everything everytime.
 
-# removes executables and per-run output files
+# 'make clean' removes build/output files, 'make nuke' removes all generated files
+# 'make clean' does not remove .mem or .dump files
+# clean_* commands clean certain groups of files
+
 clean: clean_exe clean_run_files
-	@$(call PRINT_COLOR, 6, NOTE: clean is split into multiple commands that you can call separately: clean_exe and clean_run_files)
+	@$(call PRINT_COLOR, 6, note: clean is split into multiple commands you can call separately: $^)
 
 # removes all extra synthesis files and the entire output directory
-# use cautiously, this can cause hours of recompiling
+# use cautiously, this can cause hours of recompiling in project 4
 nuke: clean clean_output_dir clean_synth
-	@$(call PRINT_COLOR, 6, NOTE: nuke is split into multiple commands that you can call separately: clean_output_dir and clean_synth)
+	@$(call PRINT_COLOR, 6, note: nuke is split into multiple commands you can call separately: $^)
 	@$(call PRINT_COLOR, 6, you can also call clean_programs to just delete the .mem and .dump files)
 
 clean_exe:
@@ -598,4 +567,16 @@ clean_programs:
 
 .PHONY: clean nuke clean_%
 
-# :)
+######################
+# ---- Printing ---- #
+######################
+
+# this is a GNU Make function with two arguments: PRINT_COLOR(color: number, msg: string)
+# it does all the color printing throughout the makefile
+PRINT_COLOR = if [ -t 0 ]; then tput setaf $(1) ; fi; echo $(2); if [ -t 0 ]; then tput sgr0; fi
+# colors: 0:black, 1:red, 2:green, 3:yellow, 4:blue, 5:magenta, 6:cyan, 7:white
+# other numbers are valid, but aren't specified in the tput man page
+
+# Make functions are called like this:
+# $(call PRINT_COLOR,3,Hello World!)
+# NOTE: adding '@' to the start of a line avoids printing the command itself, only the output
