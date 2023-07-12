@@ -44,7 +44,7 @@ struct node* createNode(int v) {
 }
 
 struct Graph* createGraph(int vertices) {
-	int i;
+    int i;
     struct Graph* graph = (struct Graph*)tj_malloc(sizeof(struct Graph));
     graph->numVertices = vertices;
 
@@ -225,9 +225,7 @@ void link_list() {
         insertAtTheBegin(&start, arr[i]);
 
     bubbleSort(start);
-
 }
-
 
 
 struct Vertex {
@@ -341,23 +339,22 @@ int towers(int num, char frompeg, char topeg, char auxpeg){
     }
     towers(num - 1, frompeg, auxpeg, topeg);
     towers(num - 1, auxpeg, topeg, frompeg);
-	return 0;
+    return 0;
 }
 
 void towers_test(){
-	towers(5, 'A', 'C', 'B');
+    towers(5, 'A', 'C', 'B');
 }
 
 int main(){
 
-	bfs_test();
+    bfs_test();
 
-	link_list();
+    link_list();
 
-	DFS_test();
+    DFS_test();
 
-	towers_test();
+    towers_test();
 
-	return 0;
-
+    return 0;
 }
