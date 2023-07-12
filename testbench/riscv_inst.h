@@ -134,7 +134,7 @@ struct inst_t {
     funct3 = (inst >> 12) & 0x7;
     funct7 = inst >> 25;
     funct12 = inst >> 20;
-    str = "invalid";
+    str = "unknown";
     op = INVALID;
 
     switch (opcode) {
@@ -201,7 +201,7 @@ struct inst_t {
             break;
           }
           default: {
-            str = "invalid";
+            str = "unknown";
             op = INVALID;
             break;
           }
@@ -238,7 +238,7 @@ struct inst_t {
             break;
           }
           default: {
-            str = "invalid";
+            str = "unknown";
             op = INVALID;
             break;
           }
@@ -265,7 +265,7 @@ struct inst_t {
             break;
           }
           default: {
-            str = "invalid";
+            str = "unknown";
             op = INVALID;
             break;
           }
@@ -312,7 +312,7 @@ struct inst_t {
               op = SLLI;
             }
             else {
-              str = "invalid";
+              str = "unknown";
               op = INVALID;
             }
             break;
@@ -327,7 +327,7 @@ struct inst_t {
               op = SRAI;
             }
             else {
-              str = "invalid";
+              str = "unknown";
               op = INVALID;
             }
             break;
@@ -431,7 +431,7 @@ struct inst_t {
             break;
           }
           default: {
-            str = "invalid";
+            str = "unknown";
             op = INVALID;
             break;
           }
@@ -503,7 +503,7 @@ struct inst_t {
             break;
           }
           default: {
-            str = "invalid";
+            str = "unknown";
             op = INVALID;
             break;
           }
@@ -511,7 +511,7 @@ struct inst_t {
         break;
       }
       default: {
-        str = "invalid";
+        str = "unknown";
         op = INVALID;
         break;
       }

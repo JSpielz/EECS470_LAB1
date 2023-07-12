@@ -64,7 +64,7 @@ void print_stage(char* div, int inst, int npc, int valid_inst)
       case 0b101: str = "bge"; break;
       case 0b110: str = "bltu"; break;
       case 0b111: str = "bgeu"; break;
-      default: str = "invalid"; break;
+      default: str = "unknown"; break;
       }
       break;
     case 0x03: // load
@@ -74,7 +74,7 @@ void print_stage(char* div, int inst, int npc, int valid_inst)
       case 0b010: str = "lw"; break;
       case 0b100: str = "lbu"; break;
       case 0b101: str = "lhu"; break;
-      default: str = "invalid"; break;
+      default: str = "unknown"; break;
       }
       break;
     case 0x23: // store
@@ -82,7 +82,7 @@ void print_stage(char* div, int inst, int npc, int valid_inst)
       case 0b000: str = "sb"; break;
       case 0b001: str = "sh"; break;
       case 0b010: str = "sw"; break;
-      default: str = "invalid"; break;
+      default: str = "unknown"; break;
       }
       break;
     case 0x13: // immediate
@@ -95,12 +95,12 @@ void print_stage(char* div, int inst, int npc, int valid_inst)
       case 0b111: str = "andi"; break;
       case 0b001:
         if (funct7 == 0x00) str = "slli";
-        else str = "invalid";
+        else str = "unknown";
         break;
       case 0b101:
         if (funct7 == 0x00) str = "srli";
         else if (funct7 == 0x20) str = "srai";
-        else str = "invalid";
+        else str = "unknown";
         break;
       }
       break;
@@ -125,7 +125,7 @@ void print_stage(char* div, int inst, int npc, int valid_inst)
       case 0x015: str = "divu"; break; // unimplemented
       case 0x016: str = "rem"; break;  // unimplemented
       case 0x017: str = "remu"; break; // unimplemented
-      default: str = "invalid"; break;
+      default: str = "unknown"; break;
       }
       break;
     case 0x0f: str = "fence"; break; // unimplemented, imprecise 
@@ -146,10 +146,10 @@ void print_stage(char* div, int inst, int npc, int valid_inst)
       case 0b101: str = "csrrwi"; break;
       case 0b110: str = "csrrsi"; break;
       case 0b111: str = "csrrci"; break;
-      default: str = "invalid"; break;
+      default: str = "unknown"; break;
       }
       break;
-    default: str = "invalid"; break;
+    default: str = "unknown"; break;
     }
   }
 
