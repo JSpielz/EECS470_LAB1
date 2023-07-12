@@ -29,7 +29,7 @@
 # make slack     <- a phony command to print the slack of any synthesized modules
 
 # ---- Program Memory Compilation ---- #
-# NOTE: programs to run are in the test_progs/ directory
+# NOTE: programs to run are in the programs/ directory
 # make <my_program>.mem <- creates the program memory file output/<my_program>.mem for running on simv etc
 # make compile_all      <- compile every program at once (in parallel with -j)
 
@@ -76,7 +76,7 @@
 
 # VPATH is a built-in Make variable that lets Make search folders to find dependencies and targets
 # setting it simplifies many of our make rules and increases readability with our new directory format
-VPATH = synth:testbench:test_progs:verilog:output
+VPATH = synth:testbench:programs:verilog:output
 
 # some targets in this makefile are built in the 'output/' directory for organization
 # this rule creates it if it doesn't exist yet (since the entire directory might be deleted by 'make nuke')
@@ -116,9 +116,9 @@ TCL_SCRIPT = 470synth.tcl
 # The following are new in project 3:
 
 # C and assembly compilation files. These link and setup the runtime for the programs
-CRT = test_progs/crt.s
-LINKERS = test_progs/linker.lds
-ASLINKERS = test_progs/aslinker.lds
+CRT = programs/crt.s
+LINKERS = programs/linker.lds
+ASLINKERS = programs/aslinker.lds
 
 # you might need to update these build flags for project 4, but make sure you know what they do:
 # https://gcc.gnu.org/onlinedocs/gcc/RISC-V-Options.html
@@ -221,16 +221,19 @@ slack:
 ########################################
 
 # this section will compile programs into .mem files to be loaded into memory
-# you start with either an assembly or C program in the test_progs/ directory
+# you start with either an assembly or C program in the programs/ directory
 # those compile into a .elf link file via the riscv assembler or compiler
 # then that link file is converted to a .mem hex file
 
 # find the test program files and separate them based on suffix of .s or .c
-ASSEMBLY := $(wildcard test_progs/*.s)
-C_CODE   := $(filter-out $(CRT),$(wildcard test_progs/*.c))
+ASSEMBLY := $(wildcard programs/*.s)
+C_CODE   := $(wildcard programs/*.c)
+
+# remove crt.s from ASSEMBLY as it is not actually a program
+ASSEMBLY := $(filter-out $(CRT),$(ASSEMBY))
 
 # concatenate ASSEMBLY and C_CODE to list every program
-PROGRAMS := $(ASSEMBLY:test_progs/%.s=output/%) $(C_CODE:test_progs/%.c=output/%)
+PROGRAMS := $(ASSEMBLY:programs/%.s=output/%) $(C_CODE:programs/%.c=output/%)
 # NOTE: this is Make's pattern substitution syntax
 # see: https://www.gnu.org/software/make/manual/html_node/Text-Functions.html#Text-Functions
 # this reads as: $(var:pattern=replacement)
@@ -238,18 +241,18 @@ PROGRAMS := $(ASSEMBLY:test_progs/%.s=output/%) $(C_CODE:test_progs/%.c=output/%
 # if you don't include the percent it automatically attempts to replace just the suffix of the input
 
 # make link files from assembly code (matches the legacy 'assemble' target)
-ASSEMBLY_ELF = $(ASSEMBLY:test_progs/%.s=output/%.elf)
-$(ASSEMBLY_ELF): output/%.elf: test_progs/%.s | $(ASLINKERS) output
+ASSEMBLY_ELF = $(ASSEMBLY:programs/%.s=output/%.elf)
+$(ASSEMBLY_ELF): output/%.elf: programs/%.s | $(ASLINKERS) output
 	@$(call PRINT_COLOR, 5, compiling assembly file $*.s)
 	$(GCC) $(ASFLAGS) $^ -T $(ASLINKERS) $(CUSTOM_ASM_ARGS) -o $@
 # NOTE: this uses a 'static pattern rule' to match a list of known targets to a pattern
 # and then generates the correct rule based on the patter, where % and $* match
-# so for the target 'output/sampler.elf' the % matches 'sampler' and searches the source 'test_progs/sampler.s'
+# so for the target 'output/sampler.elf' the % matches 'sampler' and searches the source 'programs/sampler.s'
 # see: https://www.gnu.org/software/make/manual/html_node/Static-Usage.html
 
 # make link files from C source code (matches the legacy 'compile' target)
-C_CODE_ELF = $(C_CODE:test_progs/%.c=output/%.elf)
-$(C_CODE_ELF): output/%.elf: $(CRT) test_progs/%.c | $(LINKERS) output
+C_CODE_ELF = $(C_CODE:programs/%.c=output/%.elf)
+$(C_CODE_ELF): output/%.elf: $(CRT) programs/%.c | $(LINKERS) output
 	@$(call PRINT_COLOR, 5, compiling C code file $*.c)
 	$(GCC) $(CFLAGS) $(OFLAGS) $^ -T $(LINKERS) $(CUSTOM_C_ARGS) -o $@
 
@@ -262,13 +265,13 @@ $(C_CODE_ELF): output/%.elf: $(CRT) test_progs/%.c | $(LINKERS) output
 	@$(call PRINT_COLOR, 3, for .c sources - make .debug.dump_\*)
 
 # NOTE: the .elf commands only compile single file sources, however it's not difficult to add multi-source files
-# if you had a file 'test_progs/multi.c' that needed to compile with 'test_progs/helper1.c' and
-# 'test_progs/obj_helper2.o', you would uncomment the following line:
+# if you had a file 'programs/multi.c' that needed to compile with 'programs/helper1.c' and
+# 'programs/obj_helper2.o', you would uncomment the following line:
 #     multi.elf: helper1.c obj_helper2.o
 # this adds the dependences to the $^ variable used in the command above (also why LINKERS is after the |)
 # NOTE: I've also included CUSTOM_ASM_ARGS and CUSTOM_C_ARGS variables that you can override at
 # the command line in case you need more complicated functionality:
-# make multi.elf CUSTOM_C_ARGS="test_progs/helper1.c test_progs/obj_helper2.o -v -pipe etc"
+# make multi.elf CUSTOM_C_ARGS="programs/helper1.c programs/obj_helper2.o -v -pipe etc"
 
 # NOTE: I declare the .elf files as intermediate files here.
 # Make will automatically rm intermediate files after they're used in a recipe
@@ -297,8 +300,8 @@ compile_all: $(PROGRAMS:=.mem)
 # because it includes some of the original C operations and function/variable names
 # NOTE: static pattern make rules generally need their dependencies to be above them in the makefile
 # otherwise you can get the 'No rule to make target' error, due to being unable to find a dependency
-DEBUG_C_PROGRAMS = $(C_CODE:test_progs/%.c=output/%.debug)
-$(DEBUG_C_PROGRAMS:=.elf): output/%.debug.elf: test_progs/%.c $(CRT) | $(LINKERS) output
+DEBUG_C_PROGRAMS = $(C_CODE:programs/%.c=output/%.debug)
+$(DEBUG_C_PROGRAMS:=.elf): output/%.debug.elf: programs/%.c $(CRT) | $(LINKERS) output
 	@$(call PRINT_COLOR, 5, making debug C code link file $*.c)
 	$(GCC) $(DEBUG_FLAG) $(CFLAGS) $(OFLAGS) $^ -T $(LINKERS) $(CUSTOM_C_ARGS) -o $@
 
@@ -332,7 +335,7 @@ dump_all: $(DUMP_PROGRAMS:=.dump_abi) $(DUMP_PROGRAMS:=.dump_numeric)
 # run one of the executables (simv/syn_simv) using the chosen program
 # e.g. 'make sampler.out' does the following from a clean directory:
 #   1. compiles simv
-#   2. compiles test_progs/sampler.s into its .elf and then .mem files (in output/)
+#   2. compiles programs/sampler.s into its .elf and then .mem files (in output/)
 #   3. runs ./simv +MEMORY=output/sampler.mem +WRITEBACK=output/sampler.wb +PIPELINE=output/sampler.ppln
 #   4. which creates the sampler.out, sampler.wb, and sampler.ppln files in output/
 # the same can be done for synthesis by doing 'make sampler.syn.out'
@@ -439,9 +442,9 @@ vis: vis_simv program.mem $(SOURCE)
 # running simv or syn_simv with no arguments will still load "program.mem" into memory
 
 # the source program for the legacy system
-# NOTE: you can override this at the command line like: 'make SOURCE=test_progs/<my_program.s/.c>'
+# NOTE: you can override this at the command line like: 'make SOURCE=programs/<my_program.s/.c>'
 # however this always recompiles program.mem which is cumbersome
-SOURCE = test_progs/sampler.s
+SOURCE = programs/sampler.s
 
 assemble: $(ASLINKERS)
 	@$(call PRINT_COLOR, 5, compiling assembly file $(SOURCE))
