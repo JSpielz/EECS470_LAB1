@@ -206,7 +206,7 @@ module testbench;
         // Dump register file contents
         $write("a");
         for(int i = 0; i < 32; i=i+1) begin
-            $write("%h", pipeline_0.id_stage_0.regf_0.registers[i]);
+            $write("%h", pipeline_0.stage_id_0.regf_0.registers[i]);
         end
         $display("");
 
@@ -230,9 +230,9 @@ module testbench;
         // IF signals (6) - prefix 'f'
         $display("fNPC 8:%h",         pipeline_0.if_packet.NPC);
         $display("fIR 8:%h",          pipeline_0.if_packet.inst);
-        $display("fImem_addr 8:%h",   pipeline_0.if_stage_0.proc2Imem_addr);
-        $display("fPC_en 1:%h",       pipeline_0.if_stage_0.PC_enable);
-        $display("fPC_reg 8:%h",      pipeline_0.if_stage_0.PC_reg);
+        $display("fImem_addr 8:%h",   pipeline_0.stage_if_0.proc2Imem_addr);
+        $display("fPC_en 1:%h",       pipeline_0.stage_if_0.PC_enable);
+        $display("fPC_reg 8:%h",      pipeline_0.stage_if_0.PC_reg);
         $display("fif_valid 1:%h",    pipeline_0.if_packet.valid);
 
         // IF/ID signals (4) - prefix 'g'
@@ -276,8 +276,8 @@ module testbench;
         $display("hcsr_op 1:%h",      pipeline_0.id_ex_packet.csr_op);
 
         // EX signals (4) - prefix 'e'
-        $display("eopa_mux 8:%h",     pipeline_0.ex_stage_0.opa_mux_out);
-        $display("eopb_mux 8:%h",     pipeline_0.ex_stage_0.opb_mux_out);
+        $display("eopa_mux 8:%h",     pipeline_0.stage_ex_0.opa_mux_out);
+        $display("eopb_mux 8:%h",     pipeline_0.stage_ex_0.opb_mux_out);
         $display("ealu_result 8:%h",  pipeline_0.ex_packet.alu_result);
         $display("etake_branch 1:%h", pipeline_0.ex_packet.take_branch);
 

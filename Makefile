@@ -169,11 +169,11 @@ TESTBENCH = testbench.sv \
 # you could simplify this line with $(wildcard verilog/*.sv) - but the manual way is more explicit
 SOURCES = pipeline.sv \
           regfile.sv \
-          if_stage.sv \
-          id_stage.sv \
-          ex_stage.sv \
-          mem_stage.sv \
-          wb_stage.sv
+          stage_if.sv \
+          stage_id.sv \
+          stage_ex.sv \
+          stage_mem.sv \
+          stage_wb.sv
 
 SYNTH_FILES = synth/pipeline.vg
 
