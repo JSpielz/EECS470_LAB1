@@ -133,17 +133,17 @@ DEBUG_FLAG = -g
 # NOTE: change this and update the below variables if you aren't using a caen machine
 CAEN = 1
 ifeq (1, $(CAEN))
-	GCC     = riscv gcc
-	OBJCOPY = riscv objcopy
-	OBJDUMP = riscv objdump
-	AS      = riscv as
-	ELF2HEX = riscv elf2hex
+    GCC     = riscv gcc
+    OBJCOPY = riscv objcopy
+    OBJDUMP = riscv objdump
+    AS      = riscv as
+    ELF2HEX = riscv elf2hex
 else
-	GCC     = riscv64-unknown-elf-gcc
-	OBJCOPY = riscv64-unknown-elf-objcopy
-	OBJDUMP = riscv64-unknown-elf-objdump
-	AS      = riscv64-unknown-elf-as
-	ELF2HEX = elf2hex
+    GCC     = riscv64-unknown-elf-gcc
+    OBJCOPY = riscv64-unknown-elf-objcopy
+    OBJDUMP = riscv64-unknown-elf-objdump
+    AS      = riscv64-unknown-elf-as
+    ELF2HEX = elf2hex
 endif
 
 ####################################
