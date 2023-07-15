@@ -95,9 +95,9 @@ module pipeline (
     logic             mem_wb_take_branch;
 
     // Outputs from WB-Stage (These loop back to the register file in ID)
-    logic [`XLEN-1:0] wb_reg_wr_data_out;
-    logic [4:0]       wb_reg_wr_idx_out;
-    logic             wb_reg_wr_en_out;
+    logic [`XLEN-1:0] reg_write_data;
+    logic [4:0]       reg_write_idx;
+    logic             reg_write_en;
 
 //////////////////////////////////////////////////
 //                                              //
@@ -192,17 +192,17 @@ module pipeline (
 //                                              //
 //////////////////////////////////////////////////
 
-    id_stage id_stage_0 (
+    stage_id stage_id_0 (
         // Inputs
-        .clock(clock),
-        .reset(reset),
-        .if_id_packet_in(if_id_packet),
-        .wb_reg_wr_en_out   (wb_reg_wr_en_out),
-        .wb_reg_wr_idx_out  (wb_reg_wr_idx_out),
-        .wb_reg_wr_data_out (wb_reg_wr_data_out),
+        .clock (clock),
+        .reset (reset),
+        .if_id_packet_in   (if_id_packet),
+        .reg_write_en   (reg_write_en),
+        .reg_write_idx  (reg_write_idx),
+        .reg_write_data (reg_write_data),
 
         // Outputs
-        .id_packet_out(id_packet)
+        .id_packet_out (id_packet)
     );
 
 //////////////////////////////////////////////////
@@ -346,20 +346,20 @@ module pipeline (
 //                                              //
 //////////////////////////////////////////////////
 
-    wb_stage wb_stage_0 (
+    stage_wb stage_wb_0 (
         // Inputs
-        .clock(clock),
-        .reset(reset),
-        .mem_wb_NPC(mem_wb_NPC),
-        .mem_wb_result(mem_wb_result),
-        .mem_wb_dest_reg_idx(mem_wb_dest_reg_idx),
-        .mem_wb_take_branch(mem_wb_take_branch),
-        .mem_wb_valid_inst(mem_wb_valid_inst),
+        .clock (clock),
+        .reset (reset),
+        .mem_wb_NPC          (mem_wb_NPC),
+        .mem_wb_result       (mem_wb_result),
+        .mem_wb_dest_reg_idx (mem_wb_dest_reg_idx),
+        .mem_wb_take_branch  (mem_wb_take_branch),
+        .mem_wb_valid_inst   (mem_wb_valid_inst),
 
         // Outputs
-        .reg_wr_data_out(wb_reg_wr_data_out),
-        .reg_wr_idx_out(wb_reg_wr_idx_out),
-        .reg_wr_en_out(wb_reg_wr_en_out)
+        .reg_wr_en_out   (reg_write_en)
+        .reg_wr_idx_out  (reg_write_idx),
+        .reg_wr_data_out (reg_write_data),
     );
 
 endmodule // module pipeline

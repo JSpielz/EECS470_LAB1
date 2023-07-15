@@ -316,9 +316,9 @@ module testbench;
         $display("jvalid 1:%h",       pipeline_0.mem_wb_valid_inst);
 
         // WB signals (3) - prefix 'w'
-        $display("wwr_data 8:%h",     pipeline_0.wb_reg_wr_data_out);
-        $display("wwr_idx 2:%h",      pipeline_0.wb_reg_wr_idx_out);
-        $display("wwr_en 1:%h",       pipeline_0.wb_reg_wr_en_out);
+        $display("wwr_data 8:%h",     pipeline_0.reg_write_data);
+        $display("wwr_idx 2:%h",      pipeline_0.reg_write_idx);
+        $display("wwr_en 1:%h",       pipeline_0.reg_write_en);
 
         // Misc signals(2) - prefix 'v'
         $display("vcompleted 1:%h",   pipeline_0.pipeline_completed_insts);

@@ -217,13 +217,13 @@ module decoder (
 endmodule // module decoder
 
 
-module id_stage (
-    input              clock,              // system clock
-    input              reset,              // system reset
-    input              wb_reg_wr_en_out,   // Reg write enable from WB Stage
-    input [4:0]        wb_reg_wr_idx_out,  // Reg write index from WB Stage
-    input [`XLEN-1:0]  wb_reg_wr_data_out, // Reg write data from WB Stage
-    input IF_ID_PACKET if_id_packet_in,
+module stage_id (
+    input              clock,          // system clock
+    input              reset,          // system reset
+    input IF_ID_PACKET if_id_reg_in,
+    input              reg_write_en,   // Reg write enable from WB Stage
+    input [4:0]        reg_write_idx,  // Reg write index from WB Stage
+    input [`XLEN-1:0]  reg_write_data, // Reg write data from WB Stage
 
     output ID_EX_PACKET id_packet_out
 );
@@ -235,16 +235,16 @@ module id_stage (
 
     // Instantiate the register file used by this pipeline
     regfile regf_0 (
-        .rda_idx(if_id_packet_in.inst.r.rs1),
-        .rda_out(id_packet_out.rs1_value),
+        .clock  (clock),
+        .read_idx_1 (if_id_reg_in.inst.r.rs1),
+        .read_idx_2 (if_id_reg_in.inst.r.rs2),
+        .write_en   (reg_write_en),
+        .write_idx  (reg_write_idx),
+        .write_data (reg_write_data)
 
-        .rdb_idx(if_id_packet_in.inst.r.rs2),
-        .rdb_out(id_packet_out.rs2_value),
+        .read_out_1 (id_packet_out.rs1_value),
+        .read_out_2 (id_packet_out.rs2_value),
 
-        .wr_clk(clock),
-        .wr_en(wb_reg_wr_en_out),
-        .wr_idx(wb_reg_wr_idx_out),
-        .wr_data(wb_reg_wr_data_out)
     );
 
     // instantiate the instruction decoder
