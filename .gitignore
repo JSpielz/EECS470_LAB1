@@ -1,37 +1,45 @@
 
+# misc
+*.pdf
+
+# zip files
+*.zip
+*.gz
+*.tgz
+
+# verilog compilation
 *simv
 *.daidir
-csrc
 *.key
 *.vdb
 vc_hdrs.h
 debug_bin
+csrc/
+urgReport/
 
-output/
-output/*
-*.out
-*.wb
-*.ppln
-*.elf
-*.dump
-*.dump_*
-*.mem
+# synthesis files
+*.vg
+*.rep
+*.ddc
+*.chk
 *.log
+*.syn
+*.db
+*.svf
+*.mr
+*.pvl
 
+# verdi
 verdi*
 novas*
 *fsdb*
 
-synth/*.vg
-synth/*.rep
-synth/*.ddc
-synth/*.chk
-synth/*.log
-synth/*.syn
-synth/*.out
-synth/*.db
-synth/*.svf
-synth/*.mr
-synth/*.pvl
-
-urgReport/
+# per-run output files
+*.out
+*.wb
+*.ppln
+*.elf
+*.mem
+*.dump
+*.dump_*
+output/
