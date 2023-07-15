@@ -7,9 +7,6 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`ifndef __REGFILE_SV__
-`define __REGFILE_SV__
-
 `include "sys_defs.svh"
 
 module regfile (
@@ -53,5 +50,3 @@ module regfile (
     end
 
 endmodule // regfile
-
-`endif //__REGFILE_SV__

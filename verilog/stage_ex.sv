@@ -1,17 +1,14 @@
-///////////////////////////////////////////////////////////////////////////
-//                                                                       //
-//   Modulename :  ex_stage.sv                                           //
-//                                                                       //
-//  Description :  instruction execute (EX) stage of the pipeline;       //
-//                 given the instruction command code CMD, select the    //
-//                 proper input A and B for the ALU, compute the result, //
-//                 and compute the condition for branches, and pass all  //
-//                 the results down the pipeline. MWB                    //
-//                                                                       //
-///////////////////////////////////////////////////////////////////////////
-
-`ifndef __EX_STAGE_SV__
-`define __EX_STAGE_SV__
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//   Modulename :  stage_ex.sv                                         //
+//                                                                     //
+//  Description :  instruction execute (EX) stage of the pipeline;     //
+//                 given the instruction command code CMD, select the  //
+//                 proper input A and B for the ALU, compute the       //
+//                 result, and compute the condition for branches, and //
+//                 pass all the results down the pipeline.             //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 
 `include "sys_defs.svh"
 
@@ -169,5 +166,3 @@ module ex_stage (
                                        | (id_ex_packet_in.cond_branch & brcond_result);
 
 endmodule // module ex_stage
-
-`endif // __EX_STAGE_SV__

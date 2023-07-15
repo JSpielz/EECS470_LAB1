@@ -1,15 +1,12 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  id_stage.sv                                         //
+//   Modulename :  stage_id.sv                                         //
 //                                                                     //
 //  Description :  instruction decode (ID) stage of the pipeline;      //
 //                 decode the instruction fetch register operands, and //
 //                 compute immediate operand (if applicable)           //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
-
-`ifndef __ID_STAGE_SV__
-`define __ID_STAGE_SV__
 
 `include "sys_defs.svh"
 `include "ISA.svh"
@@ -281,5 +278,3 @@ module id_stage (
     end
 
 endmodule // module id_stage
-
-`endif // __ID_STAGE_SV__

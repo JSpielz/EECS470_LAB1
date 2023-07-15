@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  testbench.v                                         //
+//   Modulename :  testbench.sv                                        //
 //                                                                     //
 //  Description :  Testbench module for the verisimple pipeline;       //
 //                                                                     //

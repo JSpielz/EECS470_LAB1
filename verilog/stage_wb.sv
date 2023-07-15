@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  wb_stage.sv                                         //
+//   Modulename :  stage_wb.sv                                         //
 //                                                                     //
 //  Description :   writeback (WB) stage of the pipeline;              //
 //                  determine the destination register of the          //
@@ -49,5 +49,3 @@ module wb_stage (
     assign reg_wr_data_out = result_mux;
 
 endmodule // module wb_stage
-
-`endif // __WB_STAGE_SV__

@@ -1,16 +1,13 @@
-///////////////////////////////////////////////////////////////////////////////
-//                                                                           //
-//  Modulename : mem.v                                                       //
-//                                                                           //
-// Description : This is a clock-based latency, pipelined memory with        //
-//               3 buses (address in, data in, data out) and a limit         //
-//               on the number of outstanding memory operations allowed      //
-//               at any time.                                                //
-//                                                                           //
-///////////////////////////////////////////////////////////////////////////////
-
-`ifndef __MEM_SV__
-`define __MEM_SV__
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename : mem.sv                                                //
+//                                                                     //
+// Description : This is a clock-based latency, pipelined memory with  //
+//               3 buses (address in, data in, data out) and a limit   //
+//               on the number of outstanding memory operations        //
+//               allowed at any time.                                  //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 
 `include "sys_defs.svh"
 
@@ -185,5 +182,3 @@ module mem (
     end
 
 endmodule // module mem
-
-`endif //__MEM_SV__

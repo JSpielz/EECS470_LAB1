@@ -1,15 +1,12 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  if_stage.sv                                         //
+//   Modulename :  stage_if.sv                                         //
 //                                                                     //
 //  Description :  instruction fetch (IF) stage of the pipeline;       //
 //                 fetch instruction, compute next PC location, and    //
 //                 send them down the pipeline.                        //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
-
-`ifndef __IF_STAGE_SV__
-`define __IF_STAGE_SV__
 
 `include "sys_defs.svh"
 
@@ -66,5 +63,3 @@ module if_stage (
     end
 
 endmodule // module if_stage
-
-`endif // __IF_STAGE_SV__

@@ -8,9 +8,6 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`ifndef __PIPELINE_SV__
-`define __PIPELINE_SV__
-
 `include "sys_defs.svh"
 
 module pipeline (
@@ -366,5 +363,3 @@ module pipeline (
     );
 
 endmodule // module pipeline
-
-`endif // __PIPELINE_SV__

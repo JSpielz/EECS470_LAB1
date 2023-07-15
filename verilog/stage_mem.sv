@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  mem_stage.sv                                        //
+//   Modulename :  stage_mem.sv                                        //
 //                                                                     //
 //  Description :  memory access (MEM) stage of the pipeline;          //
 //                 this stage accesses memory for stores and loads,    //
@@ -65,5 +65,3 @@ module mem_stage (
     assert property (@(negedge clock) (`XLEN == 32) && ex_mem_packet_in.rd_mem |-> proc2Dmem_size != DOUBLE);
 
 endmodule // module mem_stage
-
-`endif // __MEM_STAGE_SV__
