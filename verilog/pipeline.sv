@@ -22,6 +22,7 @@ module pipeline (
     output logic [63:0]      proc2mem_data,    // Data sent to memory
     output MEM_SIZE          proc2mem_size,    // data size sent to memory
 
+    // Note: these are assigned at the very bottom of the module
     output logic [3:0]       pipeline_completed_insts,
     output EXCEPTION_CODE    pipeline_error_status,
     output logic [4:0]       pipeline_commit_wr_idx,
@@ -99,23 +100,6 @@ module pipeline (
     logic [`XLEN-1:0] reg_write_data;
     logic [4:0]       reg_write_idx;
     logic             reg_write_en;
-
-    //////////////////////////////////////////////////
-    //                                              //
-    //               Testbench Outputs              //
-    //                                              //
-    //////////////////////////////////////////////////
-
-    assign pipeline_completed_insts = {3'b0, mem_wb_valid_inst};
-    assign pipeline_error_status = mem_wb_illegal            ? ILLEGAL_INST :
-                                   mem_wb_halt               ? HALTED_ON_WFI :
-                                   (mem2proc_response==4'h0) ? LOAD_ACCESS_FAULT :
-                                   NO_ERROR;
-
-    assign pipeline_commit_wr_idx  = wb_reg_wr_idx_out;
-    assign pipeline_commit_wr_data = wb_reg_wr_data_out;
-    assign pipeline_commit_wr_en   = wb_reg_wr_en_out;
-    assign pipeline_commit_NPC     = mem_wb_NPC;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -384,5 +368,21 @@ module pipeline (
         .reg_wr_idx_out  (reg_write_idx),
         .reg_wr_data_out (reg_write_data),
     );
+
+    //////////////////////////////////////////////////
+    //                                              //
+    //               Pipeline Outputs               //
+    //                                              //
+    //////////////////////////////////////////////////
+
+    assign pipeline_completed_insts = {3'b0, mem_wb_valid_inst}; // commit one valid instruction
+    assign pipeline_error_status = mem_wb_illegal            ? ILLEGAL_INST :
+                                   mem_wb_halt               ? HALTED_ON_WFI :
+                                   (mem2proc_response==4'h0) ? LOAD_ACCESS_FAULT : NO_ERROR;
+
+    assign pipeline_commit_wr_en   = wb_reg_wr_en_out;
+    assign pipeline_commit_wr_idx  = wb_reg_wr_idx_out;
+    assign pipeline_commit_wr_data = wb_reg_wr_data_out;
+    assign pipeline_commit_NPC     = mem_wb_NPC;
 
 endmodule // module pipeline
