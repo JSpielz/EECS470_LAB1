@@ -10,7 +10,8 @@
 `include "sys_defs.svh"
 
 module regfile (
-    input             clock,
+    input             clock, // system clock
+    // note: no system reset, register values must be written before they can be read
     input [4:0]       read_idx_1, read_idx_2, write_idx,
     input             write_en,
     input [`XLEN-1:0] write_data,
