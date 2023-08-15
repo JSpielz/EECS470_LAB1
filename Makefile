@@ -3,7 +3,7 @@
 ##########################
 
 # Welcome to the Project 3 VeriSimpleV Processor makefile!
-# this file will build a fully synthesizable RISC-V verilog processor
+# this file will build and run a fully synthesizable RISC-V verilog processor
 # and is an extended version of the EECS 470 standard makefile
 
 # NOTE: this file should need no changes for project 3
@@ -115,9 +115,9 @@ TCL_SCRIPT = 470synth.tcl
 # The following are new in project 3:
 
 # C and assembly compilation files. These link and setup the runtime for the programs
-CRT = programs/crt.s
-LINKERS = programs/linker.lds
-ASLINKERS = programs/aslinker.lds
+CRT        = programs/crt.s
+LINKERS    = programs/linker.lds
+ASLINKERS  = programs/aslinker.lds
 
 # you might need to update these build flags for project 4, but make sure you know what they do:
 # https://gcc.gnu.org/onlinedocs/gcc/RISC-V-Options.html
@@ -219,12 +219,19 @@ slack:
 # then that link file is converted to a .mem hex file
 
 # find the test program files and separate them based on suffix of .s or .c
+<<<<<<< HEAD
 # remove crt.s from ASSEMBLY as it is not actually a program
 ASSEMBLY := $(filter-out $(CRT),$(wildcard programs/*.s))
 C_CODE   := $(wildcard programs/*.c)
+=======
+# filter out files that aren't themselves programs
+NON_PROGRAMS = $(CRT)
+ASSEMBLY = $(filter-out $(NON_PROGRAMS),$(wildcard programs/*.s))
+C_CODE   = $(filter-out $(NON_PROGRAMS),$(wildcard programs/*.c))
+>>>>>>> eb15716 (Makfile: filter-out CRT from programs)
 
 # concatenate ASSEMBLY and C_CODE to list every program
-PROGRAMS := $(ASSEMBLY:programs/%.s=output/%) $(C_CODE:programs/%.c=output/%)
+PROGRAMS = $(ASSEMBLY:programs/%.s=output/%) $(C_CODE:programs/%.c=output/%)
 # NOTE: this is Make's pattern substitution syntax
 # see: https://www.gnu.org/software/make/manual/html_node/Text-Functions.html#Text-Functions
 # this reads as: $(var:pattern=replacement)
@@ -251,9 +258,9 @@ $(C_CODE_ELF): output/%.elf: $(CRT) programs/%.c | $(LINKERS) output
 %.mem: %.elf
 	$(ELF2HEX) 8 8192 $< > $@
 	@$(call PRINT_COLOR, 6, created memory file $@)
-	@$(call PRINT_COLOR, 3, NOTE - to see the disassembled code)
+	@$(call PRINT_COLOR, 3, NOTE: to see the disassembled code)
 	@$(call PRINT_COLOR, 3, make $*.dump_numeric or $*.dump_abi)
-	@$(call PRINT_COLOR, 3, for .c sources - make .debug.dump_\*)
+	@$(call PRINT_COLOR, 3, for .c sources: make .debug.dump_\*)
 
 # NOTE: the .elf commands only compile single file sources, however it's not difficult to add multi-source files
 # if you had a file 'programs/multi.c' that needed to compile with 'programs/helper1.c' and
