@@ -10,9 +10,6 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`ifndef __MEM_STAGE_SV__
-`define __MEM_STAGE_SV__
-
 `include "sys_defs.svh"
 
 module mem_stage (
