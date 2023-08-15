@@ -12,9 +12,7 @@
 
 `include "sys_defs.svh"
 
-// The ALU
-// given the command code CMD and proper operands A and B, compute the
-// result of the instruction
+// ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
 module alu (
     input [`XLEN-1:0] opa,
@@ -24,12 +22,16 @@ module alu (
     output logic [`XLEN-1:0] result
 );
 
-    wire signed [`XLEN-1:0]   signed_opa, signed_opb;
-    wire signed [2*`XLEN-1:0] signed_mul, mixed_mul;
-    wire        [2*`XLEN-1:0] unsigned_mul;
+    logic signed [`XLEN-1:0]   signed_opa, signed_opb;
+    logic signed [2*`XLEN-1:0] signed_mul, mixed_mul;
+    logic        [2*`XLEN-1:0] unsigned_mul;
 
     assign signed_opa   = opa;
     assign signed_opb   = opb;
+
+    // We let verilog do the full 32-bit multiplication for us.
+    // This gives a large clock period.
+    // You will replace this with your pipelined multiplier in project 4.
     assign signed_mul   = signed_opa * signed_opb;
     assign unsigned_mul = opa * opb;
     assign mixed_mul    = signed_opa * opb;
@@ -75,14 +77,14 @@ module brcond (
     assign signed_rs1 = rs1;
     assign signed_rs2 = rs2;
     always_comb begin
-        cond = 0;
         case (func)
-            3'b000: cond = signed_rs1 == signed_rs2; // BEQ
-            3'b001: cond = signed_rs1 != signed_rs2; // BNE
-            3'b100: cond = signed_rs1 < signed_rs2;  // BLT
-            3'b101: cond = signed_rs1 >= signed_rs2; // BGE
-            3'b110: cond = rs1 < rs2;                // BLTU
-            3'b111: cond = rs1 >= rs2;               // BGEU
+            3'b000:  cond = signed_rs1 == signed_rs2; // BEQ
+            3'b001:  cond = signed_rs1 != signed_rs2; // BNE
+            3'b100:  cond = signed_rs1 < signed_rs2;  // BLT
+            3'b101:  cond = signed_rs1 >= signed_rs2; // BGE
+            3'b110:  cond = rs1 < rs2;                // BLTU
+            3'b111:  cond = rs1 >= rs2;               // BGEU
+            default: cond = 0;
         endcase
     end
 
