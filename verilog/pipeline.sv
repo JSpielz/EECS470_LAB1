@@ -29,35 +29,36 @@ module pipeline (
     output logic             pipeline_commit_wr_en,
     output logic [`XLEN-1:0] pipeline_commit_NPC,
 
-    // testing hooks (these must be exported so we can test
-    // the synthesized version) data is tested by looking at
-    // the final values in memory
+    // testbench outputs: these signals are solely used by testbenches in synthesis
+    // do not change for project 3
+    // you will definitely want to change these for project 4
 
-    // Outputs from IF-Stage
     output logic [`XLEN-1:0] if_NPC_out,
     output logic [31:0]      if_IR_out,
     output logic             if_valid_inst_out,
 
-    // Outputs from IF/ID Pipeline Register
     output logic [`XLEN-1:0] if_id_NPC,
     output logic [31:0]      if_id_IR,
     output logic             if_id_valid_inst,
 
-    // Outputs from ID/EX Pipeline Register
     output logic [`XLEN-1:0] id_ex_NPC,
     output logic [31:0]      id_ex_IR,
     output logic             id_ex_valid_inst,
 
-    // Outputs from EX/MEM Pipeline Register
     output logic [`XLEN-1:0] ex_mem_NPC,
     output logic [31:0]      ex_mem_IR,
     output logic             ex_mem_valid_inst,
 
-    // Outputs from MEM/WB Pipeline Register
     output logic [`XLEN-1:0] mem_wb_NPC,
     output logic [31:0]      mem_wb_IR,
     output logic             mem_wb_valid_inst
 );
+
+    //////////////////////////////////////////////////
+    //                                              //
+    //                Pipeline Wires                //
+    //                                              //
+    //////////////////////////////////////////////////
 
     // Pipeline register enables
     logic if_id_enable, id_ex_enable, ex_mem_enable, mem_wb_enable;
@@ -99,11 +100,11 @@ module pipeline (
     logic [4:0]       reg_write_idx;
     logic             reg_write_en;
 
-//////////////////////////////////////////////////
-//                                              //
-//               Testbench Outputs              //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //               Testbench Outputs              //
+    //                                              //
+    //////////////////////////////////////////////////
 
     assign pipeline_completed_insts = {3'b0, mem_wb_valid_inst};
     assign pipeline_error_status = mem_wb_illegal            ? ILLEGAL_INST :
@@ -116,30 +117,35 @@ module pipeline (
     assign pipeline_commit_wr_en   = wb_reg_wr_en_out;
     assign pipeline_commit_NPC     = mem_wb_NPC;
 
-//////////////////////////////////////////////////
-//                                              //
-//                Memory Outputs                //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                Memory Outputs                //
+    //                                              //
+    //////////////////////////////////////////////////
+
+    // these signals go to and from the processor and memory
+    // we give precedence to the mem stage over instruction fetch
+    // note that there is no latency in project 3
+    // but there will be a 100ns latency in project 4
 
     always_comb begin
-        if (proc2Dmem_command == BUS_NONE) begin // load an instruction from memory
-            proc2mem_command = BUS_LOAD;
-            proc2mem_addr    = proc2Imem_addr;
-            proc2mem_size    = DOUBLE; // if it's an instruction, then load a double word (64 bits)
-        end else begin // do a data operation with memory
+        if (proc2Dmem_command != BUS_NONE) begin // read or write DATA from memory
             proc2mem_command = proc2Dmem_command;
             proc2mem_addr    = proc2Dmem_addr;
-            proc2mem_size    = proc2Dmem_size;
+            proc2mem_size    = proc2Dmem_size;  // size is never DOUBLE in project 3
+        end else begin                          // read an INSTRUCTION from memory
+            proc2mem_command = BUS_LOAD;
+            proc2mem_addr    = proc2Imem_addr;
+            proc2mem_size    = DOUBLE;          // instructions load a full memory line (64 bits)
         end
         proc2mem_data = {32'b0, proc2Dmem_data};
     end
 
-//////////////////////////////////////////////////
-//                                              //
-//                  Valid Bit                   //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                  Valid Bit                   //
+    //                                              //
+    //////////////////////////////////////////////////
 
     // This state controls the stall signal that artificially forces fetch to
     // stall until the previous instruction has completed.
@@ -158,11 +164,11 @@ module pipeline (
         end
     end
 
-//////////////////////////////////////////////////
-//                                              //
-//                  IF-Stage                    //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                  IF-Stage                    //
+    //                                              //
+    //////////////////////////////////////////////////
 
     stage_if stage_if_0 (
         // Inputs
@@ -178,11 +184,11 @@ module pipeline (
         .proc2Imem_addr (proc2Imem_addr)
     );
 
-//////////////////////////////////////////////////
-//                                              //
-//            IF/ID Pipeline Register           //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //            IF/ID Pipeline Register           //
+    //                                              //
+    //////////////////////////////////////////////////
 
     assign if_id_NPC        = if_id_packet.NPC;
     assign if_id_IR         = if_id_packet.inst;
@@ -203,11 +209,11 @@ module pipeline (
         end
     end // always
 
-//////////////////////////////////////////////////
-//                                              //
-//                  ID-Stage                    //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                  ID-Stage                    //
+    //                                              //
+    //////////////////////////////////////////////////
 
     stage_id stage_id_0 (
         // Inputs
@@ -222,11 +228,11 @@ module pipeline (
         .id_packet_out (id_packet)
     );
 
-//////////////////////////////////////////////////
-//                                              //
-//            ID/EX Pipeline Register           //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //            ID/EX Pipeline Register           //
+    //                                              //
+    //////////////////////////////////////////////////
 
     assign id_ex_NPC        = id_ex_packet.NPC;
     assign id_ex_IR         = id_ex_packet.inst;
@@ -261,11 +267,11 @@ module pipeline (
         end // else: !if(reset)
     end // always
 
-//////////////////////////////////////////////////
-//                                              //
-//                  EX-Stage                    //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                  EX-Stage                    //
+    //                                              //
+    //////////////////////////////////////////////////
 
     stage_ex stage_ex_0 (
         // Inputs
@@ -277,11 +283,11 @@ module pipeline (
         .ex_packet_out(ex_packet)
     );
 
-//////////////////////////////////////////////////
-//                                              //
-//           EX/MEM Pipeline Register           //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //           EX/MEM Pipeline Register           //
+    //                                              //
+    //////////////////////////////////////////////////
 
     assign ex_mem_NPC        = ex_mem_packet.NPC;
     assign ex_mem_valid_inst = ex_mem_packet.valid;
@@ -302,11 +308,11 @@ module pipeline (
         end // else: !if(reset)
     end // always
 
-//////////////////////////////////////////////////
-//                                              //
-//                 MEM-Stage                    //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                 MEM-Stage                    //
+    //                                              //
+    //////////////////////////////////////////////////
 
     stage_mem stage_mem_0 (
         // Inputs
@@ -323,11 +329,11 @@ module pipeline (
         .proc2Dmem_data(proc2Dmem_data)
     );
 
-//////////////////////////////////////////////////
-//                                              //
-//           MEM/WB Pipeline Register           //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //           MEM/WB Pipeline Register           //
+    //                                              //
+    //////////////////////////////////////////////////
 
     assign mem_wb_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
@@ -357,11 +363,11 @@ module pipeline (
         end // else: !if(reset)
     end // always
 
-//////////////////////////////////////////////////
-//                                              //
-//                  WB-Stage                    //
-//                                              //
-//////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //                                              //
+    //                  WB-Stage                    //
+    //                                              //
+    //////////////////////////////////////////////////
 
     stage_wb stage_wb_0 (
         // Inputs
