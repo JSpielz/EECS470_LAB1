@@ -201,7 +201,7 @@ module decoder (
 endmodule // module decoder
 
 
-module id_stage (
+module stage_id (
     input              clock,          // system clock
     input              reset,          // system reset
     input IF_ID_PACKET if_id_reg_in,
@@ -260,4 +260,4 @@ module id_stage (
         .illegal       (id_packet_out.illegal)
     );
 
-endmodule // module id_stage
+endmodule // module stage_id

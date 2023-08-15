@@ -147,7 +147,7 @@ module pipeline (
     assign if_IR_out         = if_packet.inst;
     assign if_valid_inst_out = if_packet.valid;
 
-    if_stage if_stage_0 (
+    stage_if stage_if_0 (
         // Inputs
         .clock (clock),
         .reset (reset),
@@ -250,7 +250,7 @@ module pipeline (
 //                                              //
 //////////////////////////////////////////////////
 
-    ex_stage ex_stage_0 (
+    stage_ex stage_ex_0 (
         // Inputs
         .clock(clock),
         .reset(reset),
@@ -291,7 +291,7 @@ module pipeline (
 //                                              //
 //////////////////////////////////////////////////
 
-    mem_stage mem_stage_0 (
+    stage_mem stage_mem_0 (
         // Inputs
         .clock(clock),
         .reset(reset),

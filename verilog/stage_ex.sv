@@ -89,7 +89,7 @@ module brcond (
 endmodule // module brcond
 
 
-module ex_stage (
+module stage_ex (
     input clock, // system clock
     input reset, // system reset
     input ID_EX_PACKET id_ex_packet_in,
@@ -165,4 +165,4 @@ module ex_stage (
     assign ex_packet_out.take_branch = id_ex_packet_in.uncond_branch
                                        | (id_ex_packet_in.cond_branch & brcond_result);
 
-endmodule // module ex_stage
+endmodule // module stage_ex

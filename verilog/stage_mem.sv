@@ -12,7 +12,7 @@
 
 `include "sys_defs.svh"
 
-module mem_stage (
+module stage_mem (
     input               clock,            // system clock
     input               reset,            // system reset
     input EX_MEM_PACKET ex_mem_packet_in, // write memory? (from decoder)
@@ -61,4 +61,4 @@ module mem_stage (
     //if we are in 32 bit mode, then we should never load a double word sized data
     assert property (@(negedge clock) (`XLEN == 32) && ex_mem_packet_in.rd_mem |-> proc2Dmem_size != DOUBLE);
 
-endmodule // module mem_stage
+endmodule // module stage_mem

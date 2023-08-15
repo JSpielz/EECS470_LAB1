@@ -10,7 +10,7 @@
 
 `include "sys_defs.svh"
 
-module if_stage (
+module stage_if (
     input             clock,              // system clock
     input             reset,              // system reset
     input             mem_wb_valid_inst,  // only go to next instruction when true
@@ -62,4 +62,4 @@ module if_stage (
         end
     end
 
-endmodule // module if_stage
+endmodule // module stage_if
