@@ -137,28 +137,45 @@ module pipeline (
 
 //////////////////////////////////////////////////
 //                                              //
-//                  IF-Stage                    //
+//                  Valid Bit                   //
 //                                              //
 //////////////////////////////////////////////////
 
-    // these are debug signals that are now included in the packet,
-    // breaking them out to support the legacy debug modes
-    assign if_NPC_out        = if_packet.NPC;
-    assign if_IR_out         = if_packet.inst;
-    assign if_valid_inst_out = if_packet.valid;
+    // This state controls the stall signal that artificially forces fetch to
+    // stall until the previous instruction has completed.
+    // For project 3, start by setting this to always be 1
+
+    logic next_if_valid;
+
+    // synopsys sync_set_reset "reset"
+    always_ff @(posedge clock) begin
+        if (reset) begin
+            // start valid, other stages (ID,EX,MEM,WB) start as invalid
+            next_if_valid <= `SD 1;
+        end else begin
+            // valid bit will cycle through the pipeline and come back from the wb stage
+            next_if_valid <= `SD mem_wb_valid_inst;
+        end
+    end
+
+//////////////////////////////////////////////////
+//                                              //
+//                  IF-Stage                    //
+//                                              //
+//////////////////////////////////////////////////
 
     stage_if stage_if_0 (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .mem_wb_valid_inst(mem_wb_valid_inst),
-        .ex_mem_take_branch(ex_mem_packet.take_branch),
-        .ex_mem_target_pc(ex_mem_packet.alu_result),
-        .Imem2proc_data(mem2proc_data),
+        .if_valid           (next_if_valid),
+        .ex_mem_take_branch (ex_mem_packet.take_branch),
+        .ex_mem_target_pc   (ex_mem_packet.alu_result),
+        .Imem2proc_data     (mem2proc_data),
 
         // Outputs
-        .proc2Imem_addr(proc2Imem_addr),
-        .if_packet_out(if_packet)
+        .if_packet_out  (if_packet_out),
+        .proc2Imem_addr (proc2Imem_addr)
     );
 
 //////////////////////////////////////////////////
