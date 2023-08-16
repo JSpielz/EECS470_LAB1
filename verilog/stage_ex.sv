@@ -61,17 +61,14 @@ module alu (
 endmodule // module alu
 
 
-// Branch condition module
-// Given the instruction code, compute the proper condition for the
-// instruction; for branches this condition will indicate whether the
-// target is taken.
+// Conditional branch module: compute whether to take conditional branches
 // This module is purely combinational
-module brcond (
+module conditional_branch (
+    input [2:0]       func, // Specifies which condition to check
     input [`XLEN-1:0] rs1,  // Value to check against condition
     input [`XLEN-1:0] rs2,
-    input [2:0]       func, // Specifies which condition to check
 
-    output logic cond // 0/1 condition result (False/True)
+    output logic take // True/False condition result
 );
 
     logic signed [`XLEN-1:0] signed_rs1, signed_rs2;
@@ -79,17 +76,17 @@ module brcond (
     assign signed_rs2 = rs2;
     always_comb begin
         case (func)
-            3'b000:  cond = signed_rs1 == signed_rs2; // BEQ
-            3'b001:  cond = signed_rs1 != signed_rs2; // BNE
-            3'b100:  cond = signed_rs1 < signed_rs2;  // BLT
-            3'b101:  cond = signed_rs1 >= signed_rs2; // BGE
-            3'b110:  cond = rs1 < rs2;                // BLTU
-            3'b111:  cond = rs1 >= rs2;               // BGEU
-            default: cond = 0;
+            3'b000:  take = signed_rs1 == signed_rs2; // BEQ
+            3'b001:  take = signed_rs1 != signed_rs2; // BNE
+            3'b100:  take = signed_rs1 < signed_rs2;  // BLT
+            3'b101:  take = signed_rs1 >= signed_rs2; // BGE
+            3'b110:  take = rs1 < rs2;                // BLTU
+            3'b111:  take = rs1 >= rs2;               // BGEU
+            default: take = `FALSE;
         endcase
     end
 
-endmodule // module brcond
+endmodule // module conditional_branch
 
 
 module stage_ex (
@@ -97,6 +94,9 @@ module stage_ex (
 
     output EX_MEM_PACKET ex_packet
 );
+
+    logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+    logic take_conditional;
 
     // Pass-throughs
     assign ex_packet.NPC          = id_ex_reg.NPC;
@@ -108,28 +108,28 @@ module stage_ex (
     assign ex_packet.illegal      = id_ex_reg.illegal;
     assign ex_packet.csr_op       = id_ex_reg.csr_op;
     assign ex_packet.valid        = id_ex_reg.valid;
+
+    // Break out the signed/unsigned bit and memory read/write size
     assign ex_packet.rd_unsigned  = id_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
     assign ex_packet.mem_size     = MEM_SIZE'(id_ex_reg.inst.r.funct3[1:0]);
 
-    logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
-    logic brcond_result;
+    // ultimate "take branch" signal:
+    // unconditional, or conditional and the condition is true
+    assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
 
     // ALU opA mux
     always_comb begin
-        opa_mux_out = `XLEN'hdeadfbac; // dead facebook
         case (id_ex_reg.opa_select)
             OPA_IS_RS1:  opa_mux_out = id_ex_reg.rs1_value;
             OPA_IS_NPC:  opa_mux_out = id_ex_reg.NPC;
             OPA_IS_PC:   opa_mux_out = id_ex_reg.PC;
             OPA_IS_ZERO: opa_mux_out = 0;
+            default:     opa_mux_out = `XLEN'hdeadface; // dead face
         endcase
     end
 
     // ALU opB mux
     always_comb begin
-        // Default value, Set only because the case isnt full. If you see this
-        // value on the output of the mux you have an invalid opb_select
-        opb_mux_out = `XLEN'hfacefeed;
         case (id_ex_reg.opb_select)
             OPB_IS_RS2:   opb_mux_out = id_ex_reg.rs2_value;
             OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(id_ex_reg.inst);
@@ -137,10 +137,11 @@ module stage_ex (
             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_reg.inst);
             OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(id_ex_reg.inst);
             OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(id_ex_reg.inst);
+            default:     opa_mux_out = `XLEN'hfacefeed; // face feed
         endcase
     end
 
-    // instantiate the ALU
+    // Instantiate the ALU
     alu alu_0 (
         // Inputs
         .opa(opa_mux_out),
@@ -151,20 +152,15 @@ module stage_ex (
         .result(ex_packet.alu_result)
     );
 
-    // instantiate the branch condition tester
-    brcond brcond (
+    // Instantiate the conditional branch module
+    conditional_branch conditional_branch_0 (
         // Inputs
+        .func(id_ex_reg.inst.b.funct3), // instruction bits for which condition to check
         .rs1(id_ex_reg.rs1_value),
         .rs2(id_ex_reg.rs2_value),
-        .func(id_ex_reg.inst.b.funct3), // inst bits to determine check
 
         // Output
-        .cond(brcond_result)
+        .take(take_conditional)
     );
-
-    // ultimate "take branch" signal:
-    // unconditional, or conditional and the condition is true
-    assign ex_packet.take_branch =
-        id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && brcond_result);
 
 endmodule // module stage_ex
