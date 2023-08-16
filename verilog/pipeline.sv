@@ -34,9 +34,9 @@ module pipeline (
     // do not change for project 3
     // you will definitely want to change these for project 4
 
-    output logic [`XLEN-1:0] if_NPC_out,
-    output logic [31:0]      if_IR_out,
-    output logic             if_valid_inst_out,
+    output logic [`XLEN-1:0] if_NPC,
+    output logic [31:0]      if_IR,
+    output logic             if_valid_inst,
 
     output logic [`XLEN-1:0] if_id_NPC,
     output logic [31:0]      if_id_IR,
@@ -155,15 +155,16 @@ module pipeline (
         .proc2Imem_addr (proc2Imem_addr)
     );
 
+    // testbench outputs
+    assign if_NPC        = if_packet.NPC;
+    assign if_IR         = if_packet.inst;
+    assign if_valid_inst = if_packet.valid;
+
     //////////////////////////////////////////////////
     //                                              //
     //            IF/ID Pipeline Register           //
     //                                              //
     //////////////////////////////////////////////////
-
-    assign if_id_NPC        = if_id_packet.NPC;
-    assign if_id_IR         = if_id_packet.inst;
-    assign if_id_valid_inst = if_id_packet.valid;
 
     assign if_id_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
@@ -179,6 +180,11 @@ module pipeline (
             end
         end
     end
+
+    // testbench outputs
+    assign if_id_NPC        = if_id_reg.NPC;
+    assign if_id_IR         = if_id_reg.inst;
+    assign if_id_valid_inst = if_id_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -204,10 +210,6 @@ module pipeline (
     //            ID/EX Pipeline Register           //
     //                                              //
     //////////////////////////////////////////////////
-
-    assign id_ex_NPC        = id_ex_packet.NPC;
-    assign id_ex_IR         = id_ex_packet.inst;
-    assign id_ex_valid_inst = id_ex_packet.valid;
 
     assign id_ex_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
@@ -238,6 +240,11 @@ module pipeline (
         end
     end
 
+    // testbench outputs
+    assign id_ex_NPC        = id_ex_reg.NPC;
+    assign id_ex_IR         = id_ex_reg.inst;
+    assign id_ex_valid_inst = id_ex_reg.valid;
+
     //////////////////////////////////////////////////
     //                                              //
     //                  EX-Stage                    //
@@ -258,9 +265,6 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign ex_mem_NPC        = ex_mem_packet.NPC;
-    assign ex_mem_valid_inst = ex_mem_packet.valid;
-
     assign ex_mem_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -274,6 +278,10 @@ module pipeline (
             end
         end
     end
+
+    // testbench outputs
+    assign ex_mem_NPC        = ex_mem_reg.NPC;
+    assign ex_mem_valid_inst = ex_mem_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -300,9 +308,6 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign mem_wb_NPC        = mem_wb_reg.NPC;
-    assign mem_wb_valid_inst = mem_wb_reg.valid;
-
     assign mem_wb_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -318,6 +323,10 @@ module pipeline (
             end
         end
     end
+
+    // testbench outputs
+    assign mem_wb_NPC        = mem_wb_reg.NPC;
+    assign mem_wb_valid_inst = mem_wb_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //

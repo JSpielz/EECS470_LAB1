@@ -56,9 +56,9 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
-    logic [`XLEN-1:0] if_NPC_out;
-    logic [31:0]      if_IR_out;
-    logic             if_valid_inst_out;
+    logic [`XLEN-1:0] if_NPC;
+    logic [31:0]      if_IR;
+    logic             if_valid_inst;
     logic [`XLEN-1:0] if_id_NPC;
     logic [31:0]      if_id_IR;
     logic             if_id_valid_inst;
@@ -95,9 +95,9 @@ module testbench;
         .pipeline_commit_wr_en    (pipeline_commit_wr_en),
         .pipeline_commit_NPC      (pipeline_commit_NPC),
 
-        .if_NPC_out        (if_NPC_out),
-        .if_IR_out         (if_IR_out),
-        .if_valid_inst_out (if_valid_inst_out),
+        .if_NPC            (if_NPC),
+        .if_IR             (if_IR),
+        .if_valid_inst     (if_valid_inst),
         .if_id_NPC         (if_id_NPC),
         .if_id_IR          (if_id_IR),
         .if_id_valid_inst  (if_id_valid_inst),
@@ -249,7 +249,7 @@ module testbench;
 
             // print the piepline stuff via c code to the pipeline output file
             print_cycles();
-            print_stage(" ", if_IR_out, if_NPC_out[31:0], {31'b0,if_valid_inst_out});
+            print_stage(" ", if_IR,     if_NPC    [31:0], {31'b0,if_valid_inst});
             print_stage("|", if_id_IR,  if_id_NPC [31:0], {31'b0,if_id_valid_inst});
             print_stage("|", id_ex_IR,  id_ex_NPC [31:0], {31'b0,id_ex_valid_inst});
             print_stage("|", ex_mem_IR, ex_mem_NPC[31:0], {31'b0,ex_mem_valid_inst});

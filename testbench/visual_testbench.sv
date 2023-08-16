@@ -47,9 +47,9 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
-    logic [`XLEN-1:0] if_NPC_out;
-    logic [31:0]      if_IR_out;
-    logic             if_valid_inst_out;
+    logic [`XLEN-1:0] if_NPC;
+    logic [31:0]      if_IR;
+    logic             if_valid_inst;
     logic [`XLEN-1:0] if_id_NPC;
     logic [31:0]      if_id_IR;
     logic             if_id_valid_inst;
@@ -86,9 +86,9 @@ module testbench;
         .pipeline_commit_wr_en    (pipeline_commit_wr_en),
         .pipeline_commit_NPC      (pipeline_commit_NPC),
 
-        .if_NPC_out        (if_NPC_out),
-        .if_IR_out         (if_IR_out),
-        .if_valid_inst_out (if_valid_inst_out),
+        .if_NPC            (if_NPC),
+        .if_IR             (if_IR),
+        .if_valid_inst     (if_valid_inst),
         .if_id_NPC         (if_id_NPC),
         .if_id_IR          (if_id_IR),
         .if_id_valid_inst  (if_id_valid_inst),
@@ -214,7 +214,7 @@ module testbench;
         // is in each stage
         $write("p");
         $write("%h%h%h%h%h%h%h%h%h%h ",
-               pipeline_0.if_IR_out,  pipeline_0.if_valid_inst_out,
+               pipeline_0.if_IR,      pipeline_0.if_valid_inst,
                pipeline_0.if_id_IR,   pipeline_0.if_id_valid_inst,
                pipeline_0.id_ex_IR,   pipeline_0.id_ex_valid_inst,
                pipeline_0.ex_mem_IR,  pipeline_0.ex_mem_valid_inst,
