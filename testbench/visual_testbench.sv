@@ -231,7 +231,6 @@ module testbench;
         $display("fNPC 8:%h",         pipeline_0.if_packet.NPC);
         $display("fIR 8:%h",          pipeline_0.if_packet.inst);
         $display("fImem_addr 8:%h",   pipeline_0.stage_if_0.proc2Imem_addr);
-        $display("fPC_en 1:%h",       pipeline_0.stage_if_0.PC_enable);
         $display("fPC_reg 8:%h",      pipeline_0.stage_if_0.PC_reg);
         $display("fif_valid 1:%h",    pipeline_0.if_packet.valid);
 
