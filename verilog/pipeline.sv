@@ -174,10 +174,8 @@ module pipeline (
             if_id_reg.valid <= `SD `FALSE;
             if_id_reg.NPC   <= `SD 0;
             if_id_reg.PC    <= `SD 0;
-        end else begin
-            if (if_id_enable) begin
-                if_id_reg <= `SD if_packet;
-            end
+        end else if (if_id_enable) begin
+            if_id_reg <= `SD if_packet;
         end
     end
 
@@ -233,10 +231,8 @@ module pipeline (
                 1'b0, // csr_op
                 1'b0  // valid
             };
-        end else begin
-            if (id_ex_enable) begin
-                id_ex_reg <= `SD id_packet;
-            end
+        end else if (id_ex_enable) begin
+            id_ex_reg <= `SD id_packet;
         end
     end
 
@@ -271,11 +267,9 @@ module pipeline (
         if (reset) begin
             ex_mem_IR  <= `SD `NOP;
             ex_mem_reg <= `SD 0; // the defaults can all be zero!
-        end else begin
-            if (ex_mem_enable) begin
-                ex_mem_IR  <= `SD id_ex_IR; // testbench output, just forwarded from ID
-                ex_mem_reg <= `SD ex_packet;
-            end
+        end else if (ex_mem_enable) begin
+            ex_mem_IR  <= `SD id_ex_IR; // testbench output, just forwarded from ID
+            ex_mem_reg <= `SD ex_packet;
         end
     end
 
@@ -314,13 +308,9 @@ module pipeline (
         if (reset) begin
             mem_wb_IR  <= `SD `NOP; // testbench output
             mem_wb_reg <= `SD 0; // the defaults can all be zero!
-        end else begin
-            if (mem_wb_enable) begin
-                mem_wb_IR               <= `SD ex_mem_IR; // testbench output, just forwarded from EX
-                // these are forwarded directly from EX/MEM latches
-                // these are results of MEM stage
-                mem_wb_reg       <= `SD mem_packet;
-            end
+        end else if (mem_wb_enable) begin
+            mem_wb_IR  <= `SD ex_mem_IR; // testbench output, just forwarded from EX
+            mem_wb_reg <= `SD mem_packet;
         end
     end
 
