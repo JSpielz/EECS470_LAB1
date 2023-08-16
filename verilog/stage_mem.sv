@@ -45,19 +45,19 @@ module stage_mem (
     // Read data from memory and sign extend the proper bits
     always_comb begin
         read_data = Dmem2proc_data;
-        if (~ex_mem_reg.rd_unsigned) begin
-            // signed: sign-extend the data
-            if (ex_mem_reg.mem_size[1:0] == BYTE) begin
-                read_data[`XLEN-1:8] = {(`XLEN-8){Dmem2proc_data[7]}};
-            end else if (ex_mem_reg.mem_size == HALF) begin
-                read_data[`XLEN-1:16] = {(`XLEN-16){Dmem2proc_data[15]}};
-            end
-        end else begin
+        if (ex_mem_reg.rd_unsigned) begin
             // unsigned: zero-extend the data
             if (ex_mem_reg.mem_size == BYTE) begin
                 read_data[`XLEN-1:8] = 0;
             end else if (ex_mem_reg.mem_size == HALF) begin
                 read_data[`XLEN-1:16] = 0;
+            end
+        end else begin
+            // signed: sign-extend the data
+            if (ex_mem_reg.mem_size[1:0] == BYTE) begin
+                read_data[`XLEN-1:8] = {(`XLEN-8){Dmem2proc_data[7]}};
+            end else if (ex_mem_reg.mem_size == HALF) begin
+                read_data[`XLEN-1:16] = {(`XLEN-16){Dmem2proc_data[15]}};
             end
         end
     end
