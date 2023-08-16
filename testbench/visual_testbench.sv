@@ -47,21 +47,21 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
-    logic [`XLEN-1:0] if_NPC;
-    logic [31:0]      if_IR;
-    logic             if_valid_inst;
-    logic [`XLEN-1:0] if_id_NPC;
-    logic [31:0]      if_id_IR;
-    logic             if_id_valid_inst;
-    logic [`XLEN-1:0] id_ex_NPC;
-    logic [31:0]      id_ex_IR;
-    logic             id_ex_valid_inst;
-    logic [`XLEN-1:0] ex_mem_NPC;
-    logic [31:0]      ex_mem_IR;
-    logic             ex_mem_valid_inst;
-    logic [`XLEN-1:0] mem_wb_NPC;
-    logic [31:0]      mem_wb_IR;
-    logic             mem_wb_valid_inst;
+    logic [`XLEN-1:0] if_NPC_dbg;
+    logic [31:0]      if_inst_dbg;
+    logic             if_valid_dbg;
+    logic [`XLEN-1:0] if_id_NPC_dbg;
+    logic [31:0]      if_id_inst_dbg;
+    logic             if_id_valid_dbg;
+    logic [`XLEN-1:0] id_ex_NPC_dbg;
+    logic [31:0]      id_ex_inst_dbg;
+    logic             id_ex_valid_dbg;
+    logic [`XLEN-1:0] ex_mem_NPC_dbg;
+    logic [31:0]      ex_mem_inst_dbg;
+    logic             ex_mem_valid_dbg;
+    logic [`XLEN-1:0] mem_wb_NPC_dbg;
+    logic [31:0]      mem_wb_inst_dbg;
+    logic             mem_wb_valid_dbg;
 
 
     // Instantiate the Pipeline
@@ -86,21 +86,21 @@ module testbench;
         .pipeline_commit_wr_en    (pipeline_commit_wr_en),
         .pipeline_commit_NPC      (pipeline_commit_NPC),
 
-        .if_NPC            (if_NPC),
-        .if_IR             (if_IR),
-        .if_valid_inst     (if_valid_inst),
-        .if_id_NPC         (if_id_NPC),
-        .if_id_IR          (if_id_IR),
-        .if_id_valid_inst  (if_id_valid_inst),
-        .id_ex_NPC         (id_ex_NPC),
-        .id_ex_IR          (id_ex_IR),
-        .id_ex_valid_inst  (id_ex_valid_inst),
-        .ex_mem_NPC        (ex_mem_NPC),
-        .ex_mem_IR         (ex_mem_IR),
-        .ex_mem_valid_inst (ex_mem_valid_inst),
-        .mem_wb_NPC        (mem_wb_NPC),
-        .mem_wb_IR         (mem_wb_IR),
-        .mem_wb_valid_inst (mem_wb_valid_inst)
+        .if_NPC_dbg       (if_NPC_dbg),
+        .if_inst_dbg      (if_inst_dbg),
+        .if_valid_dbg     (if_valid_dbg),
+        .if_id_NPC_dbg    (if_id_NPC_dbg),
+        .if_id_inst_dbg   (if_id_inst_dbg),
+        .if_id_valid_dbg  (if_id_valid_dbg),
+        .id_ex_NPC_dbg    (id_ex_NPC_dbg),
+        .id_ex_inst_dbg   (id_ex_inst_dbg),
+        .id_ex_valid_dbg  (id_ex_valid_dbg),
+        .ex_mem_NPC_dbg   (ex_mem_NPC_dbg),
+        .ex_mem_inst_dbg  (ex_mem_inst_dbg),
+        .ex_mem_valid_dbg (ex_mem_valid_dbg),
+        .mem_wb_NPC_dbg   (mem_wb_NPC_dbg),
+        .mem_wb_inst_dbg  (mem_wb_inst_dbg),
+        .mem_wb_valid_dbg (mem_wb_valid_dbg)
     );
 
 
@@ -210,15 +210,14 @@ module testbench;
         end
         $display("");
 
-        // Dump IR information so we can see which instruction
-        // is in each stage
+        // Dump instructions and their validity for each stage
         $write("p");
         $write("%h%h%h%h%h%h%h%h%h%h ",
-               pipeline_0.if_IR,      pipeline_0.if_valid_inst,
-               pipeline_0.if_id_IR,   pipeline_0.if_id_valid_inst,
-               pipeline_0.id_ex_IR,   pipeline_0.id_ex_valid_inst,
-               pipeline_0.ex_mem_IR,  pipeline_0.ex_mem_valid_inst,
-               pipeline_0.mem_wb_IR,  pipeline_0.mem_wb_valid_inst);
+               if_inst_dbg,      if_valid_dbg,
+               if_id_inst_dbg,   if_id_valid_dbg,
+               id_ex_inst_dbg,   id_ex_valid_dbg,
+               ex_mem_inst_dbg,  ex_mem_valid_dbg,
+               mem_wb_inst_dbg,  mem_wb_valid_dbg);
         $display("");
 
         // Dump interesting register/signal contents onto stdout

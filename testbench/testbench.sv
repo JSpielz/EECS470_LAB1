@@ -56,21 +56,21 @@ module testbench;
     logic             pipeline_commit_wr_en;
     logic [`XLEN-1:0] pipeline_commit_NPC;
 
-    logic [`XLEN-1:0] if_NPC;
-    logic [31:0]      if_IR;
-    logic             if_valid_inst;
-    logic [`XLEN-1:0] if_id_NPC;
-    logic [31:0]      if_id_IR;
-    logic             if_id_valid_inst;
-    logic [`XLEN-1:0] id_ex_NPC;
-    logic [31:0]      id_ex_IR;
-    logic             id_ex_valid_inst;
-    logic [`XLEN-1:0] ex_mem_NPC;
-    logic [31:0]      ex_mem_IR;
-    logic             ex_mem_valid_inst;
-    logic [`XLEN-1:0] mem_wb_NPC;
-    logic [31:0]      mem_wb_IR;
-    logic             mem_wb_valid_inst;
+    logic [`XLEN-1:0] if_NPC_dbg;
+    logic [31:0]      if_inst_dbg;
+    logic             if_valid_dbg;
+    logic [`XLEN-1:0] if_id_NPC_dbg;
+    logic [31:0]      if_id_inst_dbg;
+    logic             if_id_valid_dbg;
+    logic [`XLEN-1:0] id_ex_NPC_dbg;
+    logic [31:0]      id_ex_inst_dbg;
+    logic             id_ex_valid_dbg;
+    logic [`XLEN-1:0] ex_mem_NPC_dbg;
+    logic [31:0]      ex_mem_inst_dbg;
+    logic             ex_mem_valid_dbg;
+    logic [`XLEN-1:0] mem_wb_NPC_dbg;
+    logic [31:0]      mem_wb_inst_dbg;
+    logic             mem_wb_valid_dbg;
 
 
     // Instantiate the Pipeline
@@ -95,21 +95,21 @@ module testbench;
         .pipeline_commit_wr_en    (pipeline_commit_wr_en),
         .pipeline_commit_NPC      (pipeline_commit_NPC),
 
-        .if_NPC            (if_NPC),
-        .if_IR             (if_IR),
-        .if_valid_inst     (if_valid_inst),
-        .if_id_NPC         (if_id_NPC),
-        .if_id_IR          (if_id_IR),
-        .if_id_valid_inst  (if_id_valid_inst),
-        .id_ex_NPC         (id_ex_NPC),
-        .id_ex_IR          (id_ex_IR),
-        .id_ex_valid_inst  (id_ex_valid_inst),
-        .ex_mem_NPC        (ex_mem_NPC),
-        .ex_mem_IR         (ex_mem_IR),
-        .ex_mem_valid_inst (ex_mem_valid_inst),
-        .mem_wb_NPC        (mem_wb_NPC),
-        .mem_wb_IR         (mem_wb_IR),
-        .mem_wb_valid_inst (mem_wb_valid_inst)
+        .if_NPC_dbg       (if_NPC_dbg),
+        .if_inst_dbg      (if_inst_dbg),
+        .if_valid_dbg     (if_valid_dbg),
+        .if_id_NPC_dbg    (if_id_NPC_dbg),
+        .if_id_inst_dbg   (if_id_inst_dbg),
+        .if_id_valid_dbg  (if_id_valid_dbg),
+        .id_ex_NPC_dbg    (id_ex_NPC_dbg),
+        .id_ex_inst_dbg   (id_ex_inst_dbg),
+        .id_ex_valid_dbg  (id_ex_valid_dbg),
+        .ex_mem_NPC_dbg   (ex_mem_NPC_dbg),
+        .ex_mem_inst_dbg  (ex_mem_inst_dbg),
+        .ex_mem_valid_dbg (ex_mem_valid_dbg),
+        .mem_wb_NPC_dbg   (mem_wb_NPC_dbg),
+        .mem_wb_inst_dbg  (mem_wb_inst_dbg),
+        .mem_wb_valid_dbg (mem_wb_valid_dbg)
     );
 
 
@@ -247,13 +247,13 @@ module testbench;
             `SD;
             `SD;
 
-            // print the piepline stuff via c code to the pipeline output file
+            // print the pipeline debug outputs via c code to the pipeline output file
             print_cycles();
-            print_stage(" ", if_IR,     if_NPC    [31:0], {31'b0,if_valid_inst});
-            print_stage("|", if_id_IR,  if_id_NPC [31:0], {31'b0,if_id_valid_inst});
-            print_stage("|", id_ex_IR,  id_ex_NPC [31:0], {31'b0,id_ex_valid_inst});
-            print_stage("|", ex_mem_IR, ex_mem_NPC[31:0], {31'b0,ex_mem_valid_inst});
-            print_stage("|", mem_wb_IR, mem_wb_NPC[31:0], {31'b0,mem_wb_valid_inst});
+            print_stage(" ", if_inst_dbg,     if_NPC_dbg    [31:0], {31'b0,if_valid_dbg});
+            print_stage("|", if_id_inst_dbg,  if_id_NPC_dbg [31:0], {31'b0,if_id_valid_dbg});
+            print_stage("|", id_ex_inst_dbg,  id_ex_NPC_dbg [31:0], {31'b0,id_ex_valid_dbg});
+            print_stage("|", ex_mem_inst_dbg, ex_mem_NPC_dbg[31:0], {31'b0,ex_mem_valid_dbg});
+            print_stage("|", mem_wb_inst_dbg, mem_wb_NPC_dbg[31:0], {31'b0,mem_wb_valid_dbg});
             print_reg(32'b0, pipeline_commit_wr_data[31:0],
                 {27'b0,pipeline_commit_wr_idx}, {31'b0,pipeline_commit_wr_en});
             print_membus({30'b0,proc2mem_command}, {28'b0,mem2proc_response},

@@ -30,29 +30,24 @@ module pipeline (
     output logic             pipeline_commit_wr_en,
     output logic [`XLEN-1:0] pipeline_commit_NPC,
 
-    // testbench outputs: these signals are solely used by testbenches in synthesis
-    // do not change for project 3
-    // you will definitely want to change these for project 4
-
-    output logic [`XLEN-1:0] if_NPC,
-    output logic [31:0]      if_IR,
-    output logic             if_valid_inst,
-
-    output logic [`XLEN-1:0] if_id_NPC,
-    output logic [31:0]      if_id_IR,
-    output logic             if_id_valid_inst,
-
-    output logic [`XLEN-1:0] id_ex_NPC,
-    output logic [31:0]      id_ex_IR,
-    output logic             id_ex_valid_inst,
-
-    output logic [`XLEN-1:0] ex_mem_NPC,
-    output logic [31:0]      ex_mem_IR,
-    output logic             ex_mem_valid_inst,
-
-    output logic [`XLEN-1:0] mem_wb_NPC,
-    output logic [31:0]      mem_wb_IR,
-    output logic             mem_wb_valid_inst
+    // Debug outputs: these signals are solely used for debugging in testbenches
+    // Do not change for project 3
+    // You should definitely change these for project 4
+    output logic [`XLEN-1:0] if_NPC_dbg,
+    output logic [31:0]      if_inst_dbg,
+    output logic             if_valid_dbg,
+    output logic [`XLEN-1:0] if_id_NPC_dbg,
+    output logic [31:0]      if_id_inst_dbg,
+    output logic             if_id_valid_dbg,
+    output logic [`XLEN-1:0] id_ex_NPC_dbg,
+    output logic [31:0]      id_ex_inst_dbg,
+    output logic             id_ex_valid_dbg,
+    output logic [`XLEN-1:0] ex_mem_NPC_dbg,
+    output logic [31:0]      ex_mem_inst_dbg,
+    output logic             ex_mem_valid_dbg,
+    output logic [`XLEN-1:0] mem_wb_NPC_dbg,
+    output logic [31:0]      mem_wb_inst_dbg,
+    output logic             mem_wb_valid_dbg
 );
 
     //////////////////////////////////////////////////
@@ -155,10 +150,10 @@ module pipeline (
         .proc2Imem_addr (proc2Imem_addr)
     );
 
-    // testbench outputs
-    assign if_NPC        = if_packet.NPC;
-    assign if_IR         = if_packet.inst;
-    assign if_valid_inst = if_packet.valid;
+    // debug outputs
+    assign if_NPC_dbg   = if_packet.NPC;
+    assign if_inst_dbg  = if_packet.inst;
+    assign if_valid_dbg = if_packet.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -179,10 +174,10 @@ module pipeline (
         end
     end
 
-    // testbench outputs
-    assign if_id_NPC        = if_id_reg.NPC;
-    assign if_id_IR         = if_id_reg.inst;
-    assign if_id_valid_inst = if_id_reg.valid;
+    // debug outputs
+    assign if_id_NPC_dbg   = if_id_reg.NPC;
+    assign if_id_inst_dbg  = if_id_reg.inst;
+    assign if_id_valid_dbg = if_id_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -236,10 +231,10 @@ module pipeline (
         end
     end
 
-    // testbench outputs
-    assign id_ex_NPC        = id_ex_reg.NPC;
-    assign id_ex_IR         = id_ex_reg.inst;
-    assign id_ex_valid_inst = id_ex_reg.valid;
+    // debug outputs
+    assign id_ex_NPC_dbg   = id_ex_reg.NPC;
+    assign id_ex_inst_dbg  = id_ex_reg.inst;
+    assign id_ex_valid_dbg = id_ex_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -265,17 +260,17 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            ex_mem_IR  <= `SD `NOP;
-            ex_mem_reg <= `SD 0; // the defaults can all be zero!
+            ex_mem_inst_dbg <= `SD `NOP; // debug output
+            ex_mem_reg      <= `SD 0;    // the defaults can all be zero!
         end else if (ex_mem_enable) begin
-            ex_mem_IR  <= `SD id_ex_IR; // testbench output, just forwarded from ID
-            ex_mem_reg <= `SD ex_packet;
+            ex_mem_inst_dbg <= `SD id_ex_inst_dbg; // debug output, just forwarded from ID
+            ex_mem_reg      <= `SD ex_packet;
         end
     end
 
-    // testbench outputs
-    assign ex_mem_NPC        = ex_mem_reg.NPC;
-    assign ex_mem_valid_inst = ex_mem_reg.valid;
+    // debug outputs
+    assign ex_mem_NPC_dbg   = ex_mem_reg.NPC;
+    assign ex_mem_valid_dbg = ex_mem_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -306,17 +301,17 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            mem_wb_IR  <= `SD `NOP; // testbench output
-            mem_wb_reg <= `SD 0; // the defaults can all be zero!
+            mem_wb_inst_dbg <= `SD `NOP; // debug output
+            mem_wb_reg      <= `SD 0;    // the defaults can all be zero!
         end else if (mem_wb_enable) begin
-            mem_wb_IR  <= `SD ex_mem_IR; // testbench output, just forwarded from EX
-            mem_wb_reg <= `SD mem_packet;
+            mem_wb_inst_dbg <= `SD ex_mem_inst_dbg; // debug output, just forwarded from EX
+            mem_wb_reg      <= `SD mem_packet;
         end
     end
 
-    // testbench outputs
-    assign mem_wb_NPC        = mem_wb_reg.NPC;
-    assign mem_wb_valid_inst = mem_wb_reg.valid;
+    // debug outputs
+    assign mem_wb_NPC_dbg   = mem_wb_reg.NPC;
+    assign mem_wb_valid_dbg = mem_wb_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
