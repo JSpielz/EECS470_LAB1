@@ -92,24 +92,22 @@ endmodule // module brcond
 
 
 module stage_ex (
-    input clock, // system clock
-    input reset, // system reset
-    input ID_EX_PACKET id_ex_packet_in,
+    input ID_EX_PACKET id_ex_reg,
 
-    output EX_MEM_PACKET ex_packet_out
+    output EX_MEM_PACKET ex_packet
 );
 
     // Pass-throughs
-    assign ex_packet_out.NPC          = id_ex_packet_in.NPC;
-    assign ex_packet_out.rs2_value    = id_ex_packet_in.rs2_value;
-    assign ex_packet_out.rd_mem       = id_ex_packet_in.rd_mem;
-    assign ex_packet_out.wr_mem       = id_ex_packet_in.wr_mem;
-    assign ex_packet_out.dest_reg_idx = id_ex_packet_in.dest_reg_idx;
-    assign ex_packet_out.halt         = id_ex_packet_in.halt;
-    assign ex_packet_out.illegal      = id_ex_packet_in.illegal;
-    assign ex_packet_out.csr_op       = id_ex_packet_in.csr_op;
-    assign ex_packet_out.valid        = id_ex_packet_in.valid;
-    assign ex_packet_out.mem_size     = id_ex_packet_in.inst.r.funct3;
+    assign ex_packet.NPC          = id_ex_reg.NPC;
+    assign ex_packet.rs2_value    = id_ex_reg.rs2_value;
+    assign ex_packet.rd_mem       = id_ex_reg.rd_mem;
+    assign ex_packet.wr_mem       = id_ex_reg.wr_mem;
+    assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
+    assign ex_packet.halt         = id_ex_reg.halt;
+    assign ex_packet.illegal      = id_ex_reg.illegal;
+    assign ex_packet.csr_op       = id_ex_reg.csr_op;
+    assign ex_packet.valid        = id_ex_reg.valid;
+    assign ex_packet.mem_size     = id_ex_reg.inst.r.funct3
 
     logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic brcond_result;
@@ -117,10 +115,10 @@ module stage_ex (
     // ALU opA mux
     always_comb begin
         opa_mux_out = `XLEN'hdeadfbac; // dead facebook
-        case (id_ex_packet_in.opa_select)
-            OPA_IS_RS1:  opa_mux_out = id_ex_packet_in.rs1_value;
-            OPA_IS_NPC:  opa_mux_out = id_ex_packet_in.NPC;
-            OPA_IS_PC:   opa_mux_out = id_ex_packet_in.PC;
+        case (id_ex_reg.opa_select)
+            OPA_IS_RS1:  opa_mux_out = id_ex_reg.rs1_value;
+            OPA_IS_NPC:  opa_mux_out = id_ex_reg.NPC;
+            OPA_IS_PC:   opa_mux_out = id_ex_reg.PC;
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
@@ -130,13 +128,13 @@ module stage_ex (
         // Default value, Set only because the case isnt full. If you see this
         // value on the output of the mux you have an invalid opb_select
         opb_mux_out = `XLEN'hfacefeed;
-        case (id_ex_packet_in.opb_select)
-            OPB_IS_RS2:   opb_mux_out = id_ex_packet_in.rs2_value;
-            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(id_ex_packet_in.inst);
-            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(id_ex_packet_in.inst);
-            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_packet_in.inst);
-            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(id_ex_packet_in.inst);
-            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(id_ex_packet_in.inst);
+        case (id_ex_reg.opb_select)
+            OPB_IS_RS2:   opb_mux_out = id_ex_reg.rs2_value;
+            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(id_ex_reg.inst);
+            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(id_ex_reg.inst);
+            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_reg.inst);
+            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(id_ex_reg.inst);
+            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(id_ex_reg.inst);
         endcase
     end
 
@@ -145,18 +143,18 @@ module stage_ex (
         // Inputs
         .opa(opa_mux_out),
         .opb(opb_mux_out),
-        .func(id_ex_packet_in.alu_func),
+        .func(id_ex_reg.alu_func),
 
         // Output
-        .result(ex_packet_out.alu_result)
+        .result(ex_packet.alu_result)
     );
 
     // instantiate the branch condition tester
     brcond brcond (
         // Inputs
-        .rs1(id_ex_packet_in.rs1_value),
-        .rs2(id_ex_packet_in.rs2_value),
-        .func(id_ex_packet_in.inst.b.funct3), // inst bits to determine check
+        .rs1(id_ex_reg.rs1_value),
+        .rs2(id_ex_reg.rs2_value),
+        .func(id_ex_reg.inst.b.funct3), // inst bits to determine check
 
         // Output
         .cond(brcond_result)
@@ -164,7 +162,7 @@ module stage_ex (
 
     // ultimate "take branch" signal:
     // unconditional, or conditional and the condition is true
-    assign ex_packet_out.take_branch = id_ex_packet_in.uncond_branch
-                                       | (id_ex_packet_in.cond_branch & brcond_result);
+    assign ex_packet.take_branch =
+        id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && brcond_result);
 
 endmodule // module stage_ex

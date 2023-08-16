@@ -237,9 +237,9 @@ module testbench;
 
         // IF/ID signals (4) - prefix 'g'
         $display("genable 1:%h",      pipeline_0.if_id_enable);
-        $display("gNPC 16:%h",        pipeline_0.if_id_packet.NPC);
-        $display("gIR 8:%h",          pipeline_0.if_id_packet.inst);
-        $display("gvalid 1:%h",       pipeline_0.if_id_packet.valid);
+        $display("gNPC 16:%h",        pipeline_0.if_id_reg.NPC);
+        $display("gIR 8:%h",          pipeline_0.if_id_reg.inst);
+        $display("gvalid 1:%h",       pipeline_0.if_id_reg.valid);
 
         // ID signals (13) - prefix 'd'
         $display("drs1 8:%h",         pipeline_0.id_packet.rs1_value);
@@ -258,22 +258,22 @@ module testbench;
 
         // ID/EX signals (17) - prefix 'h'
         $display("henable 1:%h",      pipeline_0.id_ex_enable);
-        $display("hNPC 16:%h",        pipeline_0.id_ex_packet.NPC);
-        $display("hIR 8:%h",          pipeline_0.id_ex_packet.inst);
-        $display("hrs1 8:%h",         pipeline_0.id_ex_packet.rs1_value);
-        $display("hrs2 8:%h",         pipeline_0.id_ex_packet.rs2_value);
-        $display("hdest_reg 2:%h",    pipeline_0.id_ex_packet.dest_reg_idx);
-        $display("hrd_mem 1:%h",      pipeline_0.id_ex_packet.rd_mem);
-        $display("hwr_mem 1:%h",      pipeline_0.id_ex_packet.wr_mem);
-        $display("hopa_sel 1:%h",     pipeline_0.id_ex_packet.opa_select);
-        $display("hopb_sel 1:%h",     pipeline_0.id_ex_packet.opb_select);
-        $display("halu_func 2:%h",    pipeline_0.id_ex_packet.alu_func);
-        $display("hcond_br 1:%h",     pipeline_0.id_ex_packet.cond_branch);
-        $display("huncond_br 1:%h",   pipeline_0.id_ex_packet.uncond_branch);
-        $display("hhalt 1:%h",        pipeline_0.id_ex_packet.halt);
-        $display("hillegal 1:%h",     pipeline_0.id_ex_packet.illegal);
-        $display("hvalid 1:%h",       pipeline_0.id_ex_packet.valid);
-        $display("hcsr_op 1:%h",      pipeline_0.id_ex_packet.csr_op);
+        $display("hNPC 16:%h",        pipeline_0.id_ex_reg.NPC);
+        $display("hIR 8:%h",          pipeline_0.id_ex_reg.inst);
+        $display("hrs1 8:%h",         pipeline_0.id_ex_reg.rs1_value);
+        $display("hrs2 8:%h",         pipeline_0.id_ex_reg.rs2_value);
+        $display("hdest_reg 2:%h",    pipeline_0.id_ex_reg.dest_reg_idx);
+        $display("hrd_mem 1:%h",      pipeline_0.id_ex_reg.rd_mem);
+        $display("hwr_mem 1:%h",      pipeline_0.id_ex_reg.wr_mem);
+        $display("hopa_sel 1:%h",     pipeline_0.id_ex_reg.opa_select);
+        $display("hopb_sel 1:%h",     pipeline_0.id_ex_reg.opb_select);
+        $display("halu_func 2:%h",    pipeline_0.id_ex_reg.alu_func);
+        $display("hcond_br 1:%h",     pipeline_0.id_ex_reg.cond_branch);
+        $display("huncond_br 1:%h",   pipeline_0.id_ex_reg.uncond_branch);
+        $display("hhalt 1:%h",        pipeline_0.id_ex_reg.halt);
+        $display("hillegal 1:%h",     pipeline_0.id_ex_reg.illegal);
+        $display("hvalid 1:%h",       pipeline_0.id_ex_reg.valid);
+        $display("hcsr_op 1:%h",      pipeline_0.id_ex_reg.csr_op);
 
         // EX signals (4) - prefix 'e'
         $display("eopa_mux 8:%h",     pipeline_0.stage_ex_0.opa_mux_out);
@@ -283,19 +283,19 @@ module testbench;
 
         // EX/MEM signals (14) - prefix 'i'
         $display("ienable 1:%h",      pipeline_0.ex_mem_enable);
-        $display("iNPC 8:%h",         pipeline_0.ex_mem_packet.NPC);
+        $display("iNPC 8:%h",         pipeline_0.ex_mem_reg.NPC);
         $display("iIR 8:%h",          pipeline_0.ex_mem_IR);
-        $display("irs2 8:%h",         pipeline_0.ex_mem_packet.rs2_value);
-        $display("ialu_result 8:%h",  pipeline_0.ex_mem_packet.alu_result);
-        $display("idest_reg 2:%h",    pipeline_0.ex_mem_packet.dest_reg_idx);
-        $display("ird_mem 1:%h",      pipeline_0.ex_mem_packet.rd_mem);
-        $display("iwr_mem 1:%h",      pipeline_0.ex_mem_packet.wr_mem);
-        $display("itake_branch 1:%h", pipeline_0.ex_mem_packet.take_branch);
-        $display("ihalt 1:%h",        pipeline_0.ex_mem_packet.halt);
-        $display("iillegal 1:%h",     pipeline_0.ex_mem_packet.illegal);
-        $display("ivalid 1:%h",       pipeline_0.ex_mem_packet.valid);
-        $display("icsr_op 1:%h",      pipeline_0.ex_mem_packet.csr_op);
-        $display("imem_size 1:%h",    pipeline_0.ex_mem_packet.mem_size);
+        $display("irs2 8:%h",         pipeline_0.ex_mem_reg.rs2_value);
+        $display("ialu_result 8:%h",  pipeline_0.ex_mem_reg.alu_result);
+        $display("idest_reg 2:%h",    pipeline_0.ex_mem_reg.dest_reg_idx);
+        $display("ird_mem 1:%h",      pipeline_0.ex_mem_reg.rd_mem);
+        $display("iwr_mem 1:%h",      pipeline_0.ex_mem_reg.wr_mem);
+        $display("itake_branch 1:%h", pipeline_0.ex_mem_reg.take_branch);
+        $display("ihalt 1:%h",        pipeline_0.ex_mem_reg.halt);
+        $display("iillegal 1:%h",     pipeline_0.ex_mem_reg.illegal);
+        $display("ivalid 1:%h",       pipeline_0.ex_mem_reg.valid);
+        $display("icsr_op 1:%h",      pipeline_0.ex_mem_reg.csr_op);
+        $display("imem_size 1:%h",    pipeline_0.ex_mem_reg.mem_size);
 
         // MEM signals (5) - prefix 'm'
         $display("mmem_data 16:%h",   pipeline_0.mem2proc_data);
@@ -316,12 +316,12 @@ module testbench;
         $display("jvalid 1:%h",       pipeline_0.mem_wb_valid_inst);
 
         // WB signals (3) - prefix 'w'
-        $display("wwr_data 8:%h",     pipeline_0.reg_write_data);
-        $display("wwr_idx 2:%h",      pipeline_0.reg_write_idx);
-        $display("wwr_en 1:%h",       pipeline_0.reg_write_en);
+        $display("wwr_data 8:%h",     pipeline_0.wb_regfile_data);
+        $display("wwr_idx 2:%h",      pipeline_0.wb_regfile_idx);
+        $display("wwr_en 1:%h",       pipeline_0.wb_regfile_en);
 
         // Misc signals(2) - prefix 'v'
-        $display("vcompleted 1:%h",   pipeline_0.pipeline_completed_insts);
+        $display("vcompleted 1:%h",   pipeline_completed_insts);
         $display("vpipe_err 1:%h",    pipeline_error_status);
 
         // must come last
