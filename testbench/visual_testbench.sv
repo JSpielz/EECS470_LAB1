@@ -308,12 +308,12 @@ module testbench;
         $display("jenable 1:%h",      pipeline_0.mem_wb_enable);
         $display("jNPC 8:%h",         pipeline_0.mem_wb_NPC);
         $display("jIR 8:%h",          pipeline_0.mem_wb_IR);
-        $display("jresult 8:%h",      pipeline_0.mem_wb_result);
-        $display("jdest_reg 2:%h",    pipeline_0.mem_wb_dest_reg_idx);
-        $display("jtake_branch 1:%h", pipeline_0.mem_wb_take_branch);
-        $display("jhalt 1:%h",        pipeline_0.mem_wb_halt);
-        $display("jillegal 1:%h",     pipeline_0.mem_wb_illegal);
-        $display("jvalid 1:%h",       pipeline_0.mem_wb_valid_inst);
+        $display("jresult 8:%h",      pipeline_0.mem_wb_reg.result);
+        $display("jdest_reg 2:%h",    pipeline_0.mem_wb_reg.dest_reg_idx);
+        $display("jtake_branch 1:%h", pipeline_0.mem_wb_reg.take_branch);
+        $display("jhalt 1:%h",        pipeline_0.mem_wb_reg.halt);
+        $display("jillegal 1:%h",     pipeline_0.mem_wb_reg.illegal);
+        $display("jvalid 1:%h",       pipeline_0.mem_wb_reg.valid);
 
         // WB signals (3) - prefix 'w'
         $display("wwr_data 8:%h",     pipeline_0.wb_regfile_data);

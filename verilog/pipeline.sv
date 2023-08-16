@@ -74,19 +74,14 @@ module pipeline (
     // Outputs from EX-Stage and EX/MEM Pipeline Register
     EX_MEM_PACKET ex_packet, ex_mem_reg;
 
-    // Outputs from MEM-Stage
-    logic [`XLEN-1:0] mem_result_out;
+    // Outputs from MEM-Stage and MEM/WB Pipeline Register
+    MEM_WB_PACKET mem_packet, mem_wb_reg;
+
+    // Outputs from MEM-Stage to memory
     logic [`XLEN-1:0] proc2Dmem_addr;
     logic [`XLEN-1:0] proc2Dmem_data;
     logic [1:0]       proc2Dmem_command;
     MEM_SIZE          proc2Dmem_size;
-
-    // Outputs from MEM/WB Pipeline Register
-    logic             mem_wb_halt;
-    logic             mem_wb_illegal;
-    logic [4:0]       mem_wb_dest_reg_idx;
-    logic [`XLEN-1:0] mem_wb_result;
-    logic             mem_wb_take_branch;
 
     // Outputs from WB-Stage (These loop back to the register file in ID)
     logic             wb_regfile_en;
@@ -136,7 +131,7 @@ module pipeline (
             next_if_valid <= `SD 1;
         end else begin
             // valid bit will cycle through the pipeline and come back from the wb stage
-            next_if_valid <= `SD mem_wb_valid_inst;
+            next_if_valid <= `SD mem_wb_reg.valid;
         end
     end
 
@@ -292,7 +287,7 @@ module pipeline (
         .Dmem2proc_data (mem2proc_data[`XLEN-1:0]), // for p3, we throw away the top 32 bits
 
         // Outputs
-        .mem_result_out    (mem_result_out),
+        .mem_packet        (mem_packet),
         .proc2Dmem_command (proc2Dmem_command),
         .proc2Dmem_size    (proc2Dmem_size),
         .proc2Dmem_addr    (proc2Dmem_addr),
@@ -305,29 +300,21 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
+    assign mem_wb_NPC        = mem_wb_reg.NPC;
+    assign mem_wb_valid_inst = mem_wb_reg.valid;
+
     assign mem_wb_enable = 1'b1; // always enabled
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            mem_wb_NPC          <= `SD 0;
-            mem_wb_IR           <= `SD `NOP;
-            mem_wb_halt         <= `SD 0;
-            mem_wb_illegal      <= `SD 0;
-            mem_wb_valid_inst   <= `SD 0;
-            mem_wb_dest_reg_idx <= `SD `ZERO_REG;
-            mem_wb_take_branch  <= `SD 0;
-            mem_wb_result       <= `SD 0;
+            mem_wb_IR  <= `SD `NOP; // testbench output
+            mem_wb_reg <= `SD 0; // the defaults can all be zero!
         end else begin
             if (mem_wb_enable) begin
+                mem_wb_IR               <= `SD ex_mem_IR; // testbench output, just forwarded from EX
                 // these are forwarded directly from EX/MEM latches
-                mem_wb_NPC          <= `SD ex_mem_packet.NPC;
-                mem_wb_IR           <= `SD ex_mem_IR;
-                mem_wb_halt         <= `SD ex_mem_packet.halt;
-                mem_wb_illegal      <= `SD ex_mem_packet.illegal;
-                mem_wb_valid_inst   <= `SD ex_mem_packet.valid;
-                mem_wb_dest_reg_idx <= `SD ex_mem_packet.dest_reg_idx;
-                mem_wb_take_branch  <= `SD ex_mem_packet.take_branch;
                 // these are results of MEM stage
+                mem_wb_reg       <= `SD mem_packet;
             end
         end
     end
@@ -339,12 +326,8 @@ module pipeline (
     //////////////////////////////////////////////////
 
     stage_wb stage_wb_0 (
-        // Inputs
-        .mem_wb_NPC          (mem_wb_NPC),
-        .mem_wb_result       (mem_wb_result),
-        .mem_wb_dest_reg_idx (mem_wb_dest_reg_idx),
-        .mem_wb_take_branch  (mem_wb_take_branch),
-        .mem_wb_valid_inst   (mem_wb_valid_inst),
+        // Input
+        .mem_wb_reg (mem_wb_reg), // doesn't use all of these
 
         // Outputs
         .wb_regfile_en   (wb_regfile_en),
@@ -358,14 +341,14 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign pipeline_completed_insts = {3'b0, mem_wb_valid_inst}; // commit one valid instruction
-    assign pipeline_error_status = mem_wb_illegal            ? ILLEGAL_INST :
-                                   mem_wb_halt               ? HALTED_ON_WFI :
+    assign pipeline_completed_insts = {3'b0, mem_wb_reg.valid}; // commit one valid instruction
+    assign pipeline_error_status = mem_wb_reg.illegal        ? ILLEGAL_INST :
+                                   mem_wb_reg.halt           ? HALTED_ON_WFI :
                                    (mem2proc_response==4'h0) ? LOAD_ACCESS_FAULT : NO_ERROR;
 
     assign pipeline_commit_wr_en   = wb_regfile_en;
     assign pipeline_commit_wr_idx  = wb_regfile_idx;
     assign pipeline_commit_wr_data = wb_regfile_data;
-    assign pipeline_commit_NPC     = mem_wb_NPC;
+    assign pipeline_commit_NPC     = mem_wb_reg.NPC;
 
 endmodule // module pipeline

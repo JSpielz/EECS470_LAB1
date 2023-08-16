@@ -231,13 +231,21 @@ typedef union packed {
 //
 `define NOP 32'h00000013
 
-//////////////////////////////////////////////
-//
-// IF Packets:
-// Data that is exchanged between the IF and the ID stages
-//
-//////////////////////////////////////////////
+////////////////////////////////
+// ---- Datapath Packets ---- //
+////////////////////////////////
 
+/**
+ * Packets are used to move many variables between modules with
+ * just one datatype, but can be cumbersome in some circumstances.
+ *
+ * Define new ones in project 4 at your own discretion
+ */
+
+/**
+ * IF_ID Packet:
+ * Data exchanged from the IF to the ID stage
+ */
 typedef struct packed {
     logic valid; // If low, the data in this struct is garbage
     INST  inst;  // fetched instruction out
@@ -245,13 +253,10 @@ typedef struct packed {
     logic [`XLEN-1:0] PC;  // PC
 } IF_ID_PACKET;
 
-//////////////////////////////////////////////
-//
-// ID Packets:
-// Data that is exchanged from ID to EX stage
-//
-//////////////////////////////////////////////
-
+/**
+ * ID_EX Packet:
+ * Data exchanged from the ID to the EX stage
+ */
 typedef struct packed {
     logic [`XLEN-1:0] NPC; // PC + 4
     logic [`XLEN-1:0] PC;  // PC
@@ -275,6 +280,10 @@ typedef struct packed {
     logic       valid;         // is inst a valid instruction to be counted for CPI calculations?
 } ID_EX_PACKET;
 
+/**
+ * EX_MEM Packet:
+ * Data exchanged from the EX to the MEM stage
+ */
 typedef struct packed {
     logic [`XLEN-1:0] alu_result;  // alu_result
     logic [`XLEN-1:0] NPC;         // pc + 4
@@ -286,5 +295,25 @@ typedef struct packed {
     logic             halt, illegal, csr_op, valid;
     logic [2:0]       mem_size; // byte, half-word or word
 } EX_MEM_PACKET;
+
+/**
+ * MEM_WB Packet:
+ * Data exchanged from the MEM to the WB stage
+ *
+ * does not include data sent from the MEM stage to memory
+ */
+typedef struct packed {
+    logic [`XLEN-1:0] result;
+    logic [`XLEN-1:0] NPC;
+    logic             valid;
+    logic             halt;    // not used by wb stage
+    logic             illegal; // not used by wb stage
+    logic             take_branch;
+    logic [4:0]       dest_reg_idx; // dest register (ZERO_REG if no writeback)
+} MEM_WB_PACKET;
+
+/**
+ * No WB output packet as it would be more cumbersome than useful
+ */
 
 `endif // __SYS_DEFS_SVH__
