@@ -213,8 +213,8 @@ module stage_id (
 );
 
     assign id_packet.inst = if_id_reg.inst;
-    assign id_packet.NPC  = if_id_reg.NPC;
     assign id_packet.PC   = if_id_reg.PC;
+    assign id_packet.NPC  = if_id_reg.NPC;
 
     // for counting valid instructions executed
     // and for making the fetch stage die on halts/keeping track of when

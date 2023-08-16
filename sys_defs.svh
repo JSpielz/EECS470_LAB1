@@ -246,10 +246,10 @@ typedef union packed {
  * Data exchanged from the IF to the ID stage
  */
 typedef struct packed {
-    logic valid; // If low, the data in this struct is garbage
-    INST  inst;  // fetched instruction out
+    INST              inst;
+    logic [`XLEN-1:0] PC;
     logic [`XLEN-1:0] NPC; // PC + 4
-    logic [`XLEN-1:0] PC;  // PC
+    logic             valid;
 } IF_ID_PACKET;
 
 /**
@@ -257,26 +257,27 @@ typedef struct packed {
  * Data exchanged from the ID to the EX stage
  */
 typedef struct packed {
+    INST              inst;
+    logic [`XLEN-1:0] PC;
     logic [`XLEN-1:0] NPC; // PC + 4
-    logic [`XLEN-1:0] PC;  // PC
 
     logic [`XLEN-1:0] rs1_value; // reg A value
     logic [`XLEN-1:0] rs2_value; // reg B value
 
     ALU_OPA_SELECT opa_select; // ALU opa mux select (ALU_OPA_xxx *)
     ALU_OPB_SELECT opb_select; // ALU opb mux select (ALU_OPB_xxx *)
-    INST inst;                 // instruction
 
     logic [4:0] dest_reg_idx;  // destination (writeback) register index
     ALU_FUNC    alu_func;      // ALU function select (ALU_xxx *)
-    logic       rd_mem;        // does inst read memory?
-    logic       wr_mem;        // does inst write memory?
-    logic       cond_branch;   // is inst a conditional branch?
-    logic       uncond_branch; // is inst an unconditional branch?
-    logic       halt;          // is this a halt?
-    logic       illegal;       // is this instruction illegal?
-    logic       csr_op;        // is this a CSR operation? (we only used this as a cheap way to get return code)
-    logic       valid;         // is inst a valid instruction to be counted for CPI calculations?
+    logic       rd_mem;        // Does inst read memory?
+    logic       wr_mem;        // Does inst write memory?
+    logic       cond_branch;   // Is inst a conditional branch?
+    logic       uncond_branch; // Is inst an unconditional branch?
+    logic       halt;          // Is this a halt?
+    logic       illegal;       // Is this instruction illegal?
+    logic       csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
+
+    logic       valid;
 } ID_EX_PACKET;
 
 /**
@@ -284,32 +285,37 @@ typedef struct packed {
  * Data exchanged from the EX to the MEM stage
  */
 typedef struct packed {
-    logic [`XLEN-1:0] alu_result;  // alu_result
-    logic [`XLEN-1:0] NPC;         // pc + 4
-    logic             take_branch; // is this a taken branch?
-    // pass-through from decode stage
+    logic [`XLEN-1:0] alu_result;
+    logic [`XLEN-1:0] NPC;
+
+    logic             take_branch; // Is this a taken branch?
+    // Pass-through from decode stage
     logic [`XLEN-1:0] rs2_value;
-    logic             rd_mem, wr_mem;
+    logic             rd_mem;
+    logic             wr_mem;
     logic [4:0]       dest_reg_idx;
-    logic             halt, illegal, csr_op, valid;
-    logic             rd_unsigned; // whether this data is read signed or unsigned
+    logic             halt;
+    logic             illegal;
+    logic             csr_op;
+    logic             rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
     MEM_SIZE          mem_size;
+    logic             valid;
 } EX_MEM_PACKET;
 
 /**
  * MEM_WB Packet:
  * Data exchanged from the MEM to the WB stage
  *
- * does not include data sent from the MEM stage to memory
+ * Does not include data sent from the MEM stage to memory
  */
 typedef struct packed {
     logic [`XLEN-1:0] result;
     logic [`XLEN-1:0] NPC;
-    logic             valid;
+    logic [4:0]       dest_reg_idx; // writeback destination (ZERO_REG if no writeback)
+    logic             take_branch;
     logic             halt;    // not used by wb stage
     logic             illegal; // not used by wb stage
-    logic             take_branch;
-    logic [4:0]       dest_reg_idx; // dest register (ZERO_REG if no writeback)
+    logic             valid;
 } MEM_WB_PACKET;
 
 /**
