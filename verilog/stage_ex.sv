@@ -11,6 +11,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 `include "sys_defs.svh"
+`include "ISA.svh"
 
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
