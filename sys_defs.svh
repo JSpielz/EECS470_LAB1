@@ -13,18 +13,37 @@
 // all files should `include "sys_defs.svh" to at least define the timescale
 `timescale 1ns/100ps
 
-//////////////////////////////////////////////
-//
-// Memory/testbench attribute definitions
-//
-//////////////////////////////////////////////
+///////////////////////////////
+// ---- Basic Constants ---- //
+///////////////////////////////
 
 // NOTE: the global CLOCK_PERIOD is defined in the Makefile
-// no need to change for project 3
 
-// this will change for the final project
-// the p3 processor has a massive boost in performance just from having no mem latency
-// see if you can beat it's CPI in p4 even with a 100ns latency!
+// standard delay - use after all non-blocking assignments
+`define SD #1
+
+// useful boolean single-bit definitions
+`define FALSE 1'h0
+`define TRUE  1'h1
+
+// data length
+`define XLEN 32
+
+// the zero register
+// In RISC-V, any read of this register returns zero and any writes are thrown away
+`define ZERO_REG 5'd0
+
+// Basic NOP instruction. Allows pipline registers to clearly be reset with
+// an instruction that does nothing instead of Zero which is really an ADDI x0, x0, 0
+`define NOP 32'h00000013
+
+//////////////////////////////////
+// ---- Memory Definitions ---- //
+//////////////////////////////////
+
+// this will change for project 4
+// the project 3 processor has a massive boost in performance just from having no mem latency
+// see if you can beat it's CPI in project 4 even with a 100ns latency!
 `define MEM_LATENCY_IN_CYCLES  0
 
 `define NUM_MEM_TAGS 15
@@ -38,22 +57,34 @@ typedef union packed {
     logic [1:0][31:0] word_level;
 } EXAMPLE_CACHE_BLOCK;
 
-`ifndef CACHE_MODE
 typedef enum logic [1:0] {
-    BYTE = 2'h0,
-    HALF = 2'h1,
-    WORD = 2'h2,
+    BYTE   = 2'h0,
+    HALF   = 2'h1,
+    WORD   = 2'h2,
     DOUBLE = 2'h3
 } MEM_SIZE;
-`endif
 
-//////////////////////////////////////////////
-// Exception codes
-// This mostly follows the RISC-V Privileged spec
-// except a few add-ons for our infrastructure
-// The majority of them won't be used, but it's
-// good to know what they are
-//////////////////////////////////////////////
+// Memory bus commands
+typedef enum logic [1:0] {
+    BUS_NONE   = 2'h0,
+    BUS_LOAD   = 2'h1,
+    BUS_STORE  = 2'h2
+} BUS_COMMAND;
+
+///////////////////////////////
+// ---- Exception Codes ---- //
+///////////////////////////////
+
+/**
+ * Exception codes for when something goes wrong in the processor.
+ * Note that we use HALTED_ON_WFI to signify the end of computation.
+ * It's original meaning is to 'Wait For an Interrupt', but we generally
+ * ignore interrupts in 470
+ *
+ * This mostly follows the RISC-V Privileged spec
+ * except a few add-ons for our infrastructure
+ * The majority of them won't be used, but it's good to know what they are
+ */
 
 typedef enum logic [3:0] {
     INST_ADDR_MISALIGN  = 4'h0,
@@ -66,19 +97,17 @@ typedef enum logic [3:0] {
     STORE_ACCESS_FAULT  = 4'h7,
     ECALL_U_MODE        = 4'h8,
     ECALL_S_MODE        = 4'h9,
-    NO_ERROR            = 4'ha, //a reserved code that we modified for our purpose
+    NO_ERROR            = 4'ha, // a reserved code that we use to signal no errors
     ECALL_M_MODE        = 4'hb,
     INST_PAGE_FAULT     = 4'hc,
     LOAD_PAGE_FAULT     = 4'hd,
-    HALTED_ON_WFI       = 4'he, //another reserved code that we used
+    HALTED_ON_WFI       = 4'he, // 'Wait For Interrupt'. In 470, signifies the end of computation
     STORE_PAGE_FAULT    = 4'hf
 } EXCEPTION_CODE;
 
-//////////////////////////////////////////////
-//
-// Datapath control signals
-//
-//////////////////////////////////////////////
+////////////////////////////////////////
+// ---- Datapath Control Signals ---- //
+////////////////////////////////////////
 
 // ALU opA input mux selects
 typedef enum logic [1:0] {
@@ -97,12 +126,6 @@ typedef enum logic [3:0] {
     OPB_IS_U_IMM  = 4'h4,
     OPB_IS_J_IMM  = 4'h5
 } ALU_OPB_SELECT;
-
-// Destination register select
-typedef enum logic [1:0] {
-    DEST_RD = 2'h0,
-    DEST_NONE  = 2'h1
-} DEST_REG_SEL;
 
 // ALU function code input
 // probably want to leave these alone
@@ -127,80 +150,61 @@ typedef enum logic [4:0] {
     ALU_REMU    = 5'h11
 } ALU_FUNC;
 
-//////////////////////////////////////////////
-//
-// Assorted things it is not wise to change
-//
-//////////////////////////////////////////////
+///////////////////////////////////
+// ---- Instruction Typedef ---- //
+///////////////////////////////////
 
-// standard delay - use after all non-blocking assignments
-`define SD #1
-
-// the RISCV register file zero register, any read of this register always
-// returns a zero value, and any write to this register is thrown away
-`define ZERO_REG 5'd0
-
-// Memory bus commands control signals
-typedef enum logic [1:0] {
-    BUS_NONE     = 2'h0,
-    BUS_LOAD     = 2'h1,
-    BUS_STORE    = 2'h2
-} BUS_COMMAND;
-
-// useful boolean single-bit definitions
-`define FALSE  1'h0
-`define TRUE  1'h1
-
-// RISCV ISA SPEC
-`define XLEN 32
+// from the RISC-V ISA spec
 typedef union packed {
     logic [31:0] inst;
     struct packed {
         logic [6:0] funct7;
-        logic [4:0] rs2;
-        logic [4:0] rs1;
+        logic [4:0] rs2; // source register 2
+        logic [4:0] rs1; // source register 1
         logic [2:0] funct3;
-        logic [4:0] rd;
+        logic [4:0] rd; // destination register
         logic [6:0] opcode;
-    } r; //register to register instructions
+    } r; // register-to-register instructions
     struct packed {
-        logic [11:0] imm;
-        logic [4:0]  rs1; //base
+        logic [11:0] imm; // immediate value for calculating address
+        logic [4:0]  rs1; // source register 1 (used as address base)
         logic [2:0]  funct3;
-        logic [4:0]  rd;  //dest
+        logic [4:0]  rd;  // destination register
         logic [6:0]  opcode;
-    } i; //immediate or load instructions
+    } i; // immediate or load instructions
     struct packed {
-        logic [6:0] off; //offset[11:5] for calculating address
-        logic [4:0] rs2; //source
-        logic [4:0] rs1; //base
+        logic [6:0] off; // offset[11:5] for calculating address
+        logic [4:0] rs2; // source register 2
+        logic [4:0] rs1; // source register 1 (used as address base)
         logic [2:0] funct3;
-        logic [4:0] set; //offset[4:0] for calculating address
+        logic [4:0] set; // offset[4:0] for calculating address
         logic [6:0] opcode;
-    } s; //store instructions
+    } s; // store instructions
     struct packed {
-        logic       of;  //offset[12]
-        logic [5:0] s;   //offset[10:5]
-        logic [4:0] rs2; //source 2
-        logic [4:0] rs1; //source 1
+        logic       of;  // offset[12]
+        logic [5:0] s;   // offset[10:5]
+        logic [4:0] rs2; // source register 2
+        logic [4:0] rs1; // source register 1
         logic [2:0] funct3;
-        logic [3:0] et;  //offset[4:1]
-        logic       f;   //offset[11]
+        logic [3:0] et;  // offset[4:1]
+        logic       f;   // offset[11]
         logic [6:0] opcode;
-    } b; //branch instructions
+    } b; // branch instructions
     struct packed {
-        logic [19:0] imm;
-        logic [4:0]  rd;
+        logic [19:0] imm; // immediate value
+        logic [4:0]  rd; // destination register
         logic [6:0]  opcode;
-    } u; //upper immediate instructions
+    } u; // upper-immediate instructions
     struct packed {
-        logic       of; //offset[20]
-        logic [9:0] et; //offset[10:1]
-        logic       s;  //offset[11]
-        logic [7:0] f;  //offset[19:12]
-        logic [4:0] rd; //dest
+        logic       of; // offset[20]
+        logic [9:0] et; // offset[10:1]
+        logic       s;  // offset[11]
+        logic [7:0] f;  // offset[19:12]
+        logic [4:0] rd; // destination register
         logic [6:0] opcode;
-    } j;  //jump instructions
+    } j;  // jump instructions
+
+// extensions for other instruction types
 `ifdef ATOMIC_EXT
     struct packed {
         logic [4:0] funct5;
@@ -211,7 +215,7 @@ typedef union packed {
         logic [2:0] funct3;
         logic [4:0] rd;
         logic [6:0] opcode;
-    } a; //atomic instructions
+    } a; // atomic instructions
 `endif
 `ifdef SYSTEM_EXT
     struct packed {
@@ -220,16 +224,11 @@ typedef union packed {
         logic [2:0]  funct3;
         logic [4:0]  rd;
         logic [6:0]  opcode;
-    } sys; //system call instructions
+    } sys; // system call instructions
 `endif
 
-} INST; //instruction typedef, this should cover all types of instructions
+} INST; // instruction typedef, this should cover all types of instructions
 
-//
-// Basic NOP instruction.  Allows pipline registers to clearly be reset with
-// an instruction that does nothing instead of Zero which is really an ADDI x0, x0, 0
-//
-`define NOP 32'h00000013
 
 ////////////////////////////////
 // ---- Datapath Packets ---- //
@@ -263,11 +262,11 @@ typedef struct packed {
 
     logic [`XLEN-1:0] rs1_value; // reg A value
     logic [`XLEN-1:0] rs2_value; // reg B value
-    
+
     ALU_OPA_SELECT opa_select; // ALU opa mux select (ALU_OPA_xxx *)
     ALU_OPB_SELECT opb_select; // ALU opb mux select (ALU_OPB_xxx *)
     INST inst;                 // instruction
-    
+
     logic [4:0] dest_reg_idx;  // destination (writeback) register index
     ALU_FUNC    alu_func;      // ALU function select (ALU_xxx *)
     logic       rd_mem;        // does inst read memory?
