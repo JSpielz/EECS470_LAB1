@@ -260,15 +260,15 @@ module testbench;
                 32'b0, proc2mem_addr[31:0],
                 proc2mem_data[63:32], proc2mem_data[31:0]);
 
-            // print the writeback information to writeback output file
-            if(pipeline_completed_insts>0) begin
+            // print register write information to the writeback output file
+            if (pipeline_completed_insts > 0) begin
                 if(pipeline_commit_wr_en)
                     $fdisplay(wb_fileno, "PC=%x, REG[%d]=%x",
-                        pipeline_commit_NPC-4,
-                        pipeline_commit_wr_idx,
-                        pipeline_commit_wr_data);
+                              pipeline_commit_NPC - 4,
+                              pipeline_commit_wr_idx,
+                              pipeline_commit_wr_data);
                 else
-                    $fdisplay(wb_fileno, "PC=%x, ---",pipeline_commit_NPC-4);
+                    $fdisplay(wb_fileno, "PC=%x, ---", pipeline_commit_NPC - 4);
             end
 
             // deal with any halting conditions
