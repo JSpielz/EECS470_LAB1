@@ -292,7 +292,8 @@ typedef struct packed {
     logic             rd_mem, wr_mem;
     logic [4:0]       dest_reg_idx;
     logic             halt, illegal, csr_op, valid;
-    logic [2:0]       mem_size; // byte, half-word or word
+    logic             rd_unsigned; // whether this data is read signed or unsigned
+    MEM_SIZE          mem_size;
 } EX_MEM_PACKET;
 
 /**

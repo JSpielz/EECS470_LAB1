@@ -295,7 +295,8 @@ module testbench;
         $display("iillegal 1:%h",     pipeline_0.ex_mem_reg.illegal);
         $display("ivalid 1:%h",       pipeline_0.ex_mem_reg.valid);
         $display("icsr_op 1:%h",      pipeline_0.ex_mem_reg.csr_op);
-        $display("imem_size 1:%h",    pipeline_0.ex_mem_reg.mem_size);
+        // haven't updated VTUBER to use rd_unsigned yet
+        $display("imem_size 1:%h",    {pipeline_0.ex_mem_reg.rd_unsigned, pipeline_0.ex_mem_reg.mem_size});
 
         // MEM signals (5) - prefix 'm'
         $display("mmem_data 16:%h",   pipeline_0.mem2proc_data);

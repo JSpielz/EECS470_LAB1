@@ -108,7 +108,8 @@ module stage_ex (
     assign ex_packet.illegal      = id_ex_reg.illegal;
     assign ex_packet.csr_op       = id_ex_reg.csr_op;
     assign ex_packet.valid        = id_ex_reg.valid;
-    assign ex_packet.mem_size     = id_ex_reg.inst.r.funct3
+    assign ex_packet.rd_unsigned  = id_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
+    assign ex_packet.mem_size     = MEM_SIZE'(id_ex_reg.inst.r.funct3[1:0]);
 
     logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
     logic brcond_result;

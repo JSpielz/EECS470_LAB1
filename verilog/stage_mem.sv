@@ -25,6 +25,10 @@ module stage_mem (
     output logic [`XLEN-1:0] proc2Dmem_data     // Data sent to data-memory
 );
 
+    logic [`XLEN-1:0] read_data;
+
+    assign mem_packet.result = (ex_mem_reg.rd_mem) ? read_data : ex_mem_reg.alu_result;
+
     assign mem_packet.NPC          = ex_mem_reg.NPC;
     assign mem_packet.valid        = ex_mem_reg.valid;
     assign mem_packet.halt         = ex_mem_reg.halt;
@@ -34,25 +38,26 @@ module stage_mem (
 
     assign proc2Dmem_command = (ex_mem_reg.valid && ex_mem_reg.wr_mem) ? BUS_STORE :
                                (ex_mem_reg.valid && ex_mem_reg.rd_mem) ? BUS_LOAD : BUS_NONE;
-    assign proc2Dmem_size = MEM_SIZE'(ex_mem_reg.mem_size[1:0]);
+    assign proc2Dmem_size = ex_mem_reg.mem_size;
     assign proc2Dmem_data = ex_mem_reg.rs2_value;
     assign proc2Dmem_addr = ex_mem_reg.alu_result; // memory address is calculated by the ALU
 
+    // Read data from memory and sign extend the proper bits
     always_comb begin
-        mem_packet.result = ex_mem_reg.alu_result;
-        if (ex_mem_reg.rd_mem) begin
-            if (~ex_mem_reg.mem_size[2]) begin //is this an signed/unsigned load?
-                if (ex_mem_reg.mem_size[1:0] == 2'b0)
-                    mem_packet.result = {{(`XLEN-8){Dmem2proc_data[7]}}, Dmem2proc_data[7:0]};
-                else if (ex_mem_reg.mem_size[1:0] == 2'b01)
-                    mem_packet.result = {{(`XLEN-16){Dmem2proc_data[15]}}, Dmem2proc_data[15:0]};
-                else mem_packet.result = Dmem2proc_data;
-            end else begin
-                if (ex_mem_reg.mem_size[1:0] == 2'b0)
-                    mem_packet.result = {{(`XLEN-8){1'b0}}, Dmem2proc_data[7:0]};
-                else if (ex_mem_reg.mem_size[1:0] == 2'b01)
-                    mem_packet.result = {{(`XLEN-16){1'b0}}, Dmem2proc_data[15:0]};
-                else mem_packet.result = Dmem2proc_data;
+        read_data = Dmem2proc_data;
+        if (~ex_mem_reg.rd_unsigned) begin
+            // signed: sign-extend the data
+            if (ex_mem_reg.mem_size[1:0] == BYTE) begin
+                read_data[`XLEN-1:8] = {(`XLEN-8){Dmem2proc_data[7]}};
+            end else if (ex_mem_reg.mem_size == HALF) begin
+                read_data[`XLEN-1:16] = {(`XLEN-16){Dmem2proc_data[15]}};
+            end
+        end else begin
+            // unsigned: zero-extend the data
+            if (ex_mem_reg.mem_size == BYTE) begin
+                read_data[`XLEN-1:8] = 0;
+            end else if (ex_mem_reg.mem_size == HALF) begin
+                read_data[`XLEN-1:16] = 0;
             end
         end
     end
