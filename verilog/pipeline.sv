@@ -145,10 +145,10 @@ module pipeline (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid           (next_if_valid),
-        .ex_mem_take_branch (ex_mem_reg.take_branch),
-        .ex_mem_target_pc   (ex_mem_reg.alu_result),
-        .Imem2proc_data     (mem2proc_data),
+        .if_valid         (next_if_valid),
+        .take_branch      (ex_mem_reg.take_branch),
+        .branch_target_pc (ex_mem_reg.alu_result),
+        .Imem2proc_data   (mem2proc_data),
 
         // Outputs
         .if_packet      (if_packet),
