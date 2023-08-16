@@ -129,7 +129,7 @@ int get_time();
 
 
 // Helper function for ncurses gui setup
-WINDOW *create_newwin(int height, int width, int starty, int startx, int color){
+WINDOW *create_newwin(int height, int width, int starty, int startx, int color) {
     WINDOW *local_win;
     local_win = newwin(height, width, starty, startx);
     wbkgd(local_win,COLOR_PAIR(color));
@@ -140,16 +140,16 @@ WINDOW *create_newwin(int height, int width, int starty, int startx, int color){
 }
 
 // Function to draw positive edge or negative edge in clock window
-void update_clock(char clock_val){
+void update_clock(char clock_val) {
     static char cur_clock_val = 0;
     // Adding extra check on cycles because:
     //  - if the user, right at the beginning of the simulation, jumps to a new
     //    time right after a negative clock edge, the clock won't be drawn
-    if((clock_val != cur_clock_val) || strncmp(cycles[history_num],"      0",7) == 1){
+    if ((clock_val != cur_clock_val) || strncmp(cycles[history_num],"      0",7) == 1) {
         mvwaddch(clock_win,3,7,ACS_VLINE | A_BOLD);
-        if(clock_val == 1){
+        if (clock_val == 1) {
 
-            //we have a posedge
+            // we have a posedge
             mvwaddch(clock_win,2,1,' ');
             waddch(clock_win,' ');
             waddch(clock_win,' ');
@@ -178,7 +178,7 @@ void update_clock(char clock_val){
             waddch(clock_win,' ');
         } else {
 
-            //we have a negedge
+            // we have a negedge
             mvwaddch(clock_win,4,1,' ');
             waddch(clock_win,' ');
             waddch(clock_win,' ');
@@ -215,9 +215,9 @@ void update_clock(char clock_val){
 // Color pairs are (foreground color, background color)
 // If you don't like the dark backgrounds, a safe bet is to have
 //   COLOR_BLUE/BLACK foreground and COLOR_WHITE background
-void setup_gui(FILE *fp){
+void setup_gui(FILE *fp) {
     initscr();
-    if(has_colors()){
+    if (has_colors()) {
         start_color();
         init_pair(1,COLOR_CYAN,COLOR_BLACK);    // shell background
         init_pair(2,COLOR_YELLOW,COLOR_RED);
@@ -236,23 +236,23 @@ void setup_gui(FILE *fp){
     wrefresh(stdscr);
     int pipe_width=0;
 
-    //instantiate the title window at top of screen
+    // instantiate the title window at top of screen
     title_win = create_newwin(3,COLS,0,0,4);
     mvwprintw(title_win,1,1,"SIMULATION INTERFACE V1");
     mvwprintw(title_win,1,COLS-22,"BEN KEMPKE/JOSH SMITH");
     wrefresh(title_win);
 
-    //instantiate time window at right hand side of screen
+    // instantiate time window at right hand side of screen
     time_win = create_newwin(3,10,8,COLS-10,5);
     mvwprintw(time_win,0,3,"TIME");
     wrefresh(time_win);
 
-    //instantiate a sim time window which states the actual simlator time
+    // instantiate a sim time window which states the actual simlator time
     sim_time_win = create_newwin(3,10,11,COLS-10,5);
     mvwprintw(sim_time_win,0,1,"SIM TIME");
     wrefresh(sim_time_win);
 
-    //instantiate a window to show which clock edge this is
+    // instantiate a window to show which clock edge this is
     clock_win = create_newwin(6,15,8,COLS-25,5);
     mvwprintw(clock_win,0,5,"CLOCK");
     mvwprintw(clock_win,1,1,"cycle:");
@@ -270,7 +270,7 @@ void setup_gui(FILE *fp){
     }
     wrefresh(arf_win);
 
-    //instantiate window to visualize instructions in pipeline below title
+    // instantiate window to visualize instructions in pipeline below title
     pipe_win = create_newwin(5,COLS,3,0,7);
     pipe_width = COLS/6;
     mvwprintw(pipe_win,0,(COLS-8)/2,"PIPELINE");
@@ -283,53 +283,53 @@ void setup_gui(FILE *fp){
     wattroff(pipe_win,A_UNDERLINE);
     wrefresh(pipe_win);
 
-    //instantiate window to visualize IF stage (including IF/ID)
+    // instantiate window to visualize IF stage (including IF/ID)
     if_win = create_newwin((num_if_regs+2),30,8,0,5);
     mvwprintw(if_win,0,10,"IF STAGE");
     wrefresh(if_win);
 
-    //instantiate window to visualize IF/ID signals
+    // instantiate window to visualize IF/ID signals
     if_id_win = create_newwin((num_if_id_regs+2),30,8+(num_if_regs+2),0,5);
     mvwprintw(if_id_win,0,12,"IF/ID");
     wrefresh(if_id_win);
 
-    //instantiate a window to visualize ID stage
+    // instantiate a window to visualize ID stage
     id_win = create_newwin((num_id_regs+2),30,8,30,5);
     mvwprintw(id_win,0,10,"ID STAGE");
     wrefresh(id_win);
 
-    //instantiate a window to visualize ID/EX signals
+    // instantiate a window to visualize ID/EX signals
     id_ex_win = create_newwin((num_id_ex_regs+2),30,8,60,5);
     mvwprintw(id_ex_win,0,12,"ID/EX");
     wrefresh(id_ex_win);
 
-    //instantiate a window to visualize EX stage
+    // instantiate a window to visualize EX stage
     ex_win = create_newwin((num_ex_regs+2),30,8,90,5);
     mvwprintw(ex_win,0,10,"EX STAGE");
     wrefresh(ex_win);
 
-    //instantiate a window to visualize EX/MEM
+    // instantiate a window to visualize EX/MEM
     ex_mem_win = create_newwin((num_ex_mem_regs+2),30,LINES-7-(num_ex_mem_regs+2),0,5);
     mvwprintw(ex_mem_win,0,12,"EX/MEM");
     wrefresh(ex_mem_win);
 
-    //instantiate a window to visualize MEM stage
+    // instantiate a window to visualize MEM stage
     mem_win = create_newwin((num_mem_regs+2),30,LINES-7-(num_mem_regs+2),30,5);
     mvwprintw(mem_win,0,10,"MEM STAGE");
     wrefresh(mem_win);
 
-    //instantiate a window to visualize MEM/WB
+    // instantiate a window to visualize MEM/WB
     mem_wb_win = create_newwin((num_mem_wb_regs+2),30,LINES-7-(num_mem_wb_regs+2),60,5);
     mvwprintw(mem_wb_win,0,12,"MEM/WB");
     wrefresh(mem_wb_win);
 
 
-    //instantiate a window to visualize WB stage
+    // instantiate a window to visualize WB stage
     wb_win = create_newwin((num_wb_regs+2),30,LINES-7-(num_wb_regs+2),90,5);
     mvwprintw(wb_win,0,10,"WB STAGE");
     wrefresh(wb_win);
 
-    //instantiate an instructional window to help out the user some
+    // instantiate an instructional window to help out the user some
     instr_win = create_newwin(7,30,LINES-7,0,5);
     mvwprintw(instr_win,0,9,"INSTRUCTIONS");
     wattron(instr_win,COLOR_PAIR(5));
@@ -360,7 +360,7 @@ void setup_gui(FILE *fp){
 // from time history_num_in (this is the index into all of the data arrays).
 // If the value changed from what was previously display, the signal has its
 // display color inverted to make it pop out.
-void parsedata(int history_num_in){
+void parsedata(int history_num_in) {
     static int old_history_num_in=0;
     static int old_head_position=0;
     static int old_tail_position=0;
@@ -388,7 +388,7 @@ void parsedata(int history_num_in){
     wrefresh(title_win);
 
     // Handle updating the pipeline window
-    for(i=0; i < NUM_STAGES; i++) {
+    for (i=0; i < NUM_STAGES; i++) {
         strncpy(tmp_buf,inst_contents[history_num_in]+i*9,8);
         tmp_buf[9] = '\0';
         sscanf(tmp_buf,"%8x", &tmp_val);
@@ -423,7 +423,7 @@ void parsedata(int history_num_in){
 
 
     // Handle updating the IF window
-    for(i=0;i<num_if_regs;i++){
+    for (i=0;i<num_if_regs;i++) {
         if (strcmp(if_contents[history_num_in][i],
                 if_contents[old_history_num_in][i]))
             wattron(if_win, A_REVERSE);
@@ -434,7 +434,7 @@ void parsedata(int history_num_in){
     wrefresh(if_win);
 
     // Handle updating the IF/ID window
-    for(i=0;i<num_if_id_regs;i++){
+    for (i=0;i<num_if_id_regs;i++) {
         if (strcmp(if_id_contents[history_num_in][i],
                 if_id_contents[old_history_num_in][i]))
             wattron(if_id_win, A_REVERSE);
@@ -445,7 +445,7 @@ void parsedata(int history_num_in){
     wrefresh(if_id_win);
 
     // Handle updating the ID window
-    for(i=0;i<num_id_regs;i++){
+    for (i=0;i<num_id_regs;i++) {
         if (strcmp(id_contents[history_num_in][i],
                 id_contents[old_history_num_in][i]))
             wattron(id_win, A_REVERSE);
@@ -457,7 +457,7 @@ void parsedata(int history_num_in){
 
 
     // Handle updating the ID/EX window
-    for(i=0;i<num_id_ex_regs;i++){
+    for (i=0;i<num_id_ex_regs;i++) {
         if (strcmp(id_ex_contents[history_num_in][i],
                 id_ex_contents[old_history_num_in][i]))
             wattron(id_ex_win, A_REVERSE);
@@ -468,7 +468,7 @@ void parsedata(int history_num_in){
     wrefresh(id_ex_win);
 
     // Handle updating the EX window
-    for(i=0;i<num_ex_regs;i++){
+    for (i=0;i<num_ex_regs;i++) {
         if (strcmp(ex_contents[history_num_in][i],
                 ex_contents[old_history_num_in][i]))
             wattron(ex_win, A_REVERSE);
@@ -479,7 +479,7 @@ void parsedata(int history_num_in){
     wrefresh(ex_win);
 
     // Handle updating the EX/MEM window
-    for(i=0;i<num_ex_mem_regs;i++){
+    for (i=0;i<num_ex_mem_regs;i++) {
         if (strcmp(ex_mem_contents[history_num_in][i],
                 ex_mem_contents[old_history_num_in][i]))
             wattron(ex_mem_win, A_REVERSE);
@@ -490,7 +490,7 @@ void parsedata(int history_num_in){
     wrefresh(ex_mem_win);
 
     // Handle updating the MEM window
-    for(i=0;i<num_mem_regs;i++){
+    for (i=0;i<num_mem_regs;i++) {
         if (strcmp(mem_contents[history_num_in][i],
                 mem_contents[old_history_num_in][i]))
             wattron(mem_win, A_REVERSE);
@@ -501,7 +501,7 @@ void parsedata(int history_num_in){
     wrefresh(mem_win);
 
     // Handle updating the MEM/WB window
-    for(i=0;i<num_mem_wb_regs;i++){
+    for (i=0;i<num_mem_wb_regs;i++) {
         if (strcmp(mem_wb_contents[history_num_in][i],
                 mem_wb_contents[old_history_num_in][i]))
             wattron(mem_wb_win, A_REVERSE);
@@ -512,7 +512,7 @@ void parsedata(int history_num_in){
     wrefresh(mem_wb_win);
 
     // Handle updating the WB window
-    for(i=0;i<num_wb_regs;i++){
+    for (i=0;i<num_wb_regs;i++) {
         if (strcmp(wb_contents[history_num_in][i],
                 wb_contents[old_history_num_in][i]))
             wattron(wb_win, A_REVERSE);
@@ -524,7 +524,7 @@ void parsedata(int history_num_in){
 
     // Handle updating the misc. window
     int row=1,col=1;
-    for (i=0;i<num_misc_regs;i++){
+    for (i=0;i<num_misc_regs;i++) {
         if (strcmp(misc_contents[history_num_in][i],
                 misc_contents[old_history_num_in][i]))
             wattron(misc_win, A_REVERSE);
@@ -540,20 +540,20 @@ void parsedata(int history_num_in){
     }
     wrefresh(misc_win);
 
-    //update the time window
+    // update the time window
     mvwaddstr(time_win,1,1,timebuffer[history_num_in]);
     wrefresh(time_win);
 
-    //update to the correct clock edge for this history
+    // update to the correct clock edge for this history
     mvwaddstr(clock_win,1,7,cycles[history_num_in]);
     update_clock(clocks[history_num_in]);
 
-    //save the old history index to check for changes later
+    // save the old history index to check for changes later
     old_history_num_in = history_num_in;
 }
 
 // Parse a line of data output from the testbench
-int processinput(){
+int processinput() {
     static int byte_num = 0;
     static int if_reg_num = 0;
     static int if_id_reg_num = 0;
@@ -569,17 +569,17 @@ int processinput(){
     char name_buf[32];
     char val_buf[32];
 
-    //get rid of newline character
+    // get rid of newline character
     readbuffer[strlen(readbuffer)-1] = 0;
 
-    if(strncmp(readbuffer,"t",1) == 0){
+    if (strncmp(readbuffer,"t",1) == 0) {
 
-        //We are getting the timestamp
+        // We are getting the timestamp
         strcpy(timebuffer[history_num],readbuffer+1);
-    }else if(strncmp(readbuffer,"c",1) == 0){
+    } else if (strncmp(readbuffer,"c",1) == 0) {
 
-        //We have a clock edge/cycle count signal
-        if(strncmp(readbuffer+1,"0",1) == 0)
+        // We have a clock edge/cycle count signal
+        if (strncmp(readbuffer+1,"0",1) == 0)
             clocks[history_num] = 0;
         else
             clocks[history_num] = 1;
@@ -590,23 +590,23 @@ int processinput(){
         if (strncmp(cycles[history_num],"       ",7) == 0)
             cycles[history_num][6] = '0';
 
-    }else if(strncmp(readbuffer,"z",1) == 0){
+    } else if (strncmp(readbuffer,"z",1) == 0) {
 
         // we have a reset signal
-        if(strncmp(readbuffer+1,"0",1) == 0)
+        if (strncmp(readbuffer+1,"0",1) == 0)
             resets[history_num] = 0;
         else
             resets[history_num] = 1;
 
-    }else if(strncmp(readbuffer,"a",1) == 0){
+    } else if (strncmp(readbuffer,"a",1) == 0) {
         // We are getting ARF registers
         strcpy(arf_contents[history_num], readbuffer+1);
 
-    }else if(strncmp(readbuffer,"p",1) == 0){
+    } else if (strncmp(readbuffer,"p",1) == 0) {
         // We are getting information about which instructions are in each stage
         strcpy(inst_contents[history_num], readbuffer+1);
 
-    }else if(strncmp(readbuffer,"f",1) == 0){
+    } else if (strncmp(readbuffer,"f",1) == 0) {
         // We are getting an IF register
 
         // If this is the first time we've seen the register,
@@ -622,7 +622,7 @@ int processinput(){
         }
 
         if_reg_num++;
-    }else if(strncmp(readbuffer,"g",1) == 0){
+    } else if (strncmp(readbuffer,"g",1) == 0) {
         // We are getting an IF/ID register
 
         // If this is the first time we've seen the register,
@@ -638,7 +638,7 @@ int processinput(){
         }
 
         if_id_reg_num++;
-    }else if(strncmp(readbuffer,"d",1) == 0){
+    } else if (strncmp(readbuffer,"d",1) == 0) {
         // We are getting an ID register
 
         // If this is the first time we've seen the register,
@@ -654,7 +654,7 @@ int processinput(){
         }
 
         id_reg_num++;
-    }else if(strncmp(readbuffer,"h",1) == 0){
+    } else if (strncmp(readbuffer,"h",1) == 0) {
         // We are getting an ID/EX register
 
         // If this is the first time we've seen the register,
@@ -670,7 +670,7 @@ int processinput(){
         }
 
         id_ex_reg_num++;
-    }else if(strncmp(readbuffer,"e",1) == 0){
+    } else if (strncmp(readbuffer,"e",1) == 0) {
         // We are getting an EX register
 
         // If this is the first time we've seen the register,
@@ -686,7 +686,7 @@ int processinput(){
         }
 
         ex_reg_num++;
-    }else if(strncmp(readbuffer,"i",1) == 0){
+    } else if (strncmp(readbuffer,"i",1) == 0) {
         // We are getting an EX/MEM register
 
         // If this is the first time we've seen the register,
@@ -702,7 +702,7 @@ int processinput(){
         }
 
         ex_mem_reg_num++;
-    }else if(strncmp(readbuffer,"m",1) == 0){
+    } else if (strncmp(readbuffer,"m",1) == 0) {
         // We are getting a MEM register
 
         // If this is the first time we've seen the register,
@@ -718,7 +718,7 @@ int processinput(){
         }
 
         mem_reg_num++;
-    }else if(strncmp(readbuffer,"j",1) == 0){
+    } else if (strncmp(readbuffer,"j",1) == 0) {
         // We are getting an MEM/WB register
 
         // If this is the first time we've seen the register,
@@ -734,7 +734,7 @@ int processinput(){
         }
 
         mem_wb_reg_num++;
-    }else if(strncmp(readbuffer,"w",1) == 0){
+    } else if (strncmp(readbuffer,"w",1) == 0) {
         // We are getting a WB register
 
         // If this is the first time we've seen the register,
@@ -750,9 +750,9 @@ int processinput(){
         }
 
         wb_reg_num++;
-    }else if(strncmp(readbuffer,"v",1) == 0){
+    } else if (strncmp(readbuffer,"v",1) == 0) {
 
-        //we are processing misc register/wire data
+        // we are processing misc register/wire data
         // If this is the first time we've seen the register,
         // add name and data to arrays
         if (!setup_registers) {
@@ -771,7 +771,7 @@ int processinput(){
         // the register arrays.
         setup_registers = 1;
 
-        //we've received our last data segment, now go process it
+        // we've received our last data segment, now go process it
         byte_num = 0;
         if_reg_num = 0;
         if_id_reg_num = 0;
@@ -784,20 +784,20 @@ int processinput(){
         wb_reg_num = 0;
         misc_reg_num = 0;
 
-        //update the simulator time, this won't change with 'b's
+        // update the simulator time, this won't change with 'b's
         mvwaddstr(sim_time_win,1,1,timebuffer[history_num]);
         wrefresh(sim_time_win);
 
-        //tell the parent application we're ready to move on
+        // tell the parent application we're ready to move on
         return(1);
     }
     return(0);
 }
 
-//this initializes a ncurses window and sets up the arrays for exchanging reg information
+// this initializes a ncurses window and sets up the arrays for exchanging reg information
 extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_regs, int ex_regs,
                            int ex_mem_regs, int mem_regs, int mem_wb_regs, int wb_regs,
-                           int misc_regs){
+                           int misc_regs) {
     int nbytes;
     int ready_val;
 
@@ -818,13 +818,13 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
     pipe(writepipe);
     stdout_save = dup(1);
     childpid = fork();
-    if(childpid == 0){
+    if (childpid == 0) {
         close(PARENT_WRITE);
         close(PARENT_READ);
         fp = fdopen(CHILD_READ, "r");
         fp2 = fopen("program.out","w");
 
-        //allocate room on the heap for the reg data
+        // allocate room on the heap for the reg data
         inst_contents     = (char**) malloc(NUM_HISTORY*sizeof(char*));
         arf_contents      = (char**) malloc(NUM_HISTORY*sizeof(char*));
         int i=0;
@@ -856,7 +856,7 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
         misc_reg_names    = (char**) malloc(num_misc_regs*sizeof(char*));
 
         int j=0;
-        for(;i<NUM_HISTORY;i++){
+        for (;i<NUM_HISTORY;i++) {
             timebuffer[i]       = (char*) malloc(8);
             cycles[i]           = (char*) malloc(7);
             inst_contents[i]    = (char*) malloc(NUM_STAGES*10);
@@ -883,24 +883,24 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
         char cycle_flag = 0;
         char done_received = 0;
         memset(readbuffer,'\0',sizeof(readbuffer));
-        while(!quit_flag){
+        while (!quit_flag) {
             if (!done_received) {
                 fgets(readbuffer, sizeof(readbuffer), fp);
                 ready_val = processinput();
             }
-            if(strcmp(readbuffer,"DONE") == 0) {
+            if (strcmp(readbuffer,"DONE") == 0) {
                 done_received = 1;
                 done_time = history_num - 1;
             }
-            if(ready_val == 1 || done_received == 1){
-                if(echo_data == 0 && done_received == 1) {
+            if (ready_val == 1 || done_received == 1) {
+                if (echo_data == 0 && done_received == 1) {
                     running = 0;
                     timeout(-1);
                     echo_data = 1;
                     history_num--;
                     history_num%=NUM_HISTORY;
                 }
-                if(echo_data != 0){
+                if (echo_data != 0) {
                     parsedata(history_num);
                 }
                 history_num++;
@@ -909,7 +909,7 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
                     time_wrapped = 1;
                 history_num%=NUM_HISTORY;
 
-                //we're done reading the reg values for this iteration
+                // we're done reading the reg values for this iteration
                 if (done_received != 1) {
                     write(CHILD_WRITE, "n", 1);
                     write(CHILD_WRITE, &mem_addr, 2);
@@ -919,36 +919,36 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
                 if (history_num==0) hist_num_temp = NUM_HISTORY-1;
                 char echo_data_tmp,continue_flag_tmp;
 
-                while(continue_flag == 0){
+                while (continue_flag == 0) {
                     resp=getch();
-                    if(running == 1){
+                    if (running == 1) {
                         continue_flag = 1;
                     }
-                    if(running == 0 || resp == 'p'){
-                        if(resp == 'n' && hist_num_temp == (history_num-1)%NUM_HISTORY){
+                    if (running == 0 || resp == 'p') {
+                        if (resp == 'n' && hist_num_temp == (history_num-1)%NUM_HISTORY) {
                             if (!done_received)
                                 continue_flag = 1;
-                        }else if(resp == 'n'){
-                            //forward in time, but not up to present yet
+                        } else if (resp == 'n') {
+                            // forward in time, but not up to present yet
                             hist_num_temp++;
                             hist_num_temp%=NUM_HISTORY;
                             parsedata(hist_num_temp);
-                        }else if(resp == 'r'){
+                        } else if (resp == 'r') {
                             echo_data = 0;
                             running = 1;
                             timeout(0);
                             continue_flag = 1;
-                        }else if(resp == 'p'){
+                        } else if (resp == 'p') {
                             echo_data = 1;
                             timeout(-1);
                             running = 0;
                             parsedata(hist_num_temp);
-                        }else if(resp == 'q'){
-                            //quit
+                        } else if (resp == 'q') {
+                            // quit
                             continue_flag = 1;
                             quit_flag = 1;
-                        }else if(resp == 'b'){
-                            //We're goin BACK IN TIME, woohoo!
+                        } else if (resp == 'b') {
+                            // We're goin BACK IN TIME, woohoo!
                             // Make sure not to wrap around to NUM_HISTORY-1 if we don't have valid
                             // data there (time_wrapped set to 1 when we wrap around to history 0)
                             if (hist_num_temp > 0) {
@@ -958,7 +958,7 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
                                 hist_num_temp = NUM_HISTORY-1;
                                 parsedata(hist_num_temp);
                             }
-                        }else if(resp == 'g' || resp == 'c'){
+                        } else if (resp == 'g' || resp == 'c') {
                             // See if user wants to jump to clock cycle instead of sim time
                             cycle_flag = (resp == 'c');
 
@@ -1037,7 +1037,7 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
                         running = 0;
                         timeout(-1);
                         continue_flag = 0;
-                        //parsedata(hist_num_temp);
+                        // parsedata(hist_num_temp);
                     }
                 }
             }
@@ -1046,14 +1046,14 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
         delwin(title_win);
         endwin();
         fflush(stdout);
-        if(resp == 'q'){
+        if (resp == 'q') {
             fclose(fp2);
             write(CHILD_WRITE, "Z", 1);
             exit(0);
         }
         readbuffer[0] = 0;
-        while(strncmp(readbuffer,"DONE",4) != 0){
-            if(fgets(readbuffer, sizeof(readbuffer), fp) != NULL)
+        while (strncmp(readbuffer,"DONE",4) != 0) {
+            if (fgets(readbuffer, sizeof(readbuffer), fp) != NULL)
                 fputs(readbuffer, fp2);
         }
         fclose(fp2);
@@ -1072,17 +1072,17 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
 
 
 // Function to make testbench block until debugger is ready to proceed
-extern "C" int waitforresponse(){
+extern "C" int waitforresponse() {
     static int mem_start = 0;
     char c=0;
-    while(c!='n' && c!='Z') read(PARENT_READ,&c,1);
-    if(c=='Z') exit(0);
+    while (c!='n' && c!='Z') read(PARENT_READ,&c,1);
+    if (c=='Z') exit(0);
     mem_start = read(PARENT_READ,&c,1);
     mem_start = mem_start << 8 + read(PARENT_READ,&c,1);
     return(mem_start);
 }
 
-extern "C" void flushpipe(){
+extern "C" void flushpipe() {
     char c=0;
     read(PARENT_READ, &c, 1);
 }
@@ -1095,9 +1095,9 @@ char *get_opcode_str(int inst, int valid_inst)
 
     if (valid_inst == ((int)'x' - (int)'0'))
         str = "-";
-    else if(!valid_inst)
+    else if (!valid_inst)
         str = "-";
-    else if(inst==NOOP_INST)
+    else if (inst==NOOP_INST)
         str = "nop";
     else {
         inst_t dummy_inst;
@@ -1117,7 +1117,7 @@ void parse_register(char *readbuf, int reg_num, char*** contents, char** reg_nam
 
     sscanf(readbuf,"%*c%s %d:%s",name_buf,&tmp_len,val_buf);
     int i=0;
-    for (;i<NUM_HISTORY;i++){
+    for (;i<NUM_HISTORY;i++) {
         contents[i][reg_num] = (char*) malloc((tmp_len+1)*sizeof(char));
     }
     strcpy(contents[history_num][reg_num],val_buf);
@@ -1140,7 +1140,7 @@ int get_time() {
     int i;
 
     resp=wgetch(title_win);
-    while(resp != 'g' && resp != KEY_ENTER && resp != ERR && ptr < 6) {
+    while (resp != 'g' && resp != KEY_ENTER && resp != ERR && ptr < 6) {
         if (isdigit((char)resp)) {
             waddch(title_win,(char)resp);
             wrefresh(title_win);
@@ -1152,7 +1152,7 @@ int get_time() {
     // Clean up title window
     wattroff(title_win,A_REVERSE);
     mvwprintw(title_win,1,col,"           ");
-    for(i=0;i<ptr;i++)
+    for (i=0;i<ptr;i++)
         waddch(title_win,' ');
 
     wrefresh(title_win);
