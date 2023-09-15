@@ -92,9 +92,8 @@ output:
 # familiar, but there are new variables for supporting the compilation of assembly and C
 # source programs into riscv machine code files to be loaded into the processor's memory
 
-# don't be afraid of changing these, but be diligent about testing changes and using git commits
+# don't be afraid to change these, but be diligent about testing changes and using git commits
 # there should be no need to change anything for project 3
-
 
 # this is a global clock period variable used in the tcl script and referenced in testbenches
 export CLOCK_PERIOD = 30.0
@@ -178,8 +177,6 @@ SOURCES = pipeline.sv \
 
 SYNTH_FILES = synth/pipeline.vg
 
-# the .vg rule is automatically generated below when the name of the file matches its top level module
-
 # the normal simulation executable will run your testbench on the original modules
 simv: $(TESTBENCH) $(SOURCES) | $(HEADERS)
 	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
@@ -189,18 +186,14 @@ simv: $(TESTBENCH) $(SOURCES) | $(HEADERS)
 # NOTE: we reference variables with $(VARIABLE), and can make use of the automatic variables: ^, @, <, etc
 # see: https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html for explanations
 
-synth/pipeline.vg: $(SOURCES) | $(TCL_SCRIPT) $(HEADERS)
+%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS)
 	@$(call PRINT_COLOR, 5, synthesizing the $* module)
 	@$(call PRINT_COLOR, 3, this might take a while...)
 	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
 	# pipefail causes the command to exit on failure even though it's piping to tee
-	set -o pipefail; cd synth && MODULE=pipeline SOURCES="$^" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
+	set -o pipefail; cd synth && MODULE=$* SOURCES="$(SOURCES)" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
 # this also generates many other files, see the tcl script's introduction for info on each of them
-
-# add all sources as extra dependencies for each SYNTH_FILES target
-# this is used when SOURCES="$^" uses the automatic variable $^ to reference all dependencies
-$(SYNTH_FILES): $(SOURCES)
 
 # the synthesis executable runs your testbench on the synthesized versions of your modules
 syn_simv: $(TESTBENCH) $(SYNTH_FILES) | $(HEADERS)
@@ -226,11 +219,9 @@ slack:
 # then that link file is converted to a .mem hex file
 
 # find the test program files and separate them based on suffix of .s or .c
-ASSEMBLY := $(wildcard programs/*.s)
-C_CODE   := $(wildcard programs/*.c)
-
 # remove crt.s from ASSEMBLY as it is not actually a program
-ASSEMBLY := $(filter-out $(CRT),$(ASSEMBY))
+ASSEMBLY := $(filter-out $(CRT),$(wildcard programs/*.s))
+C_CODE   := $(wildcard programs/*.c)
 
 # concatenate ASSEMBLY and C_CODE to list every program
 PROGRAMS := $(ASSEMBLY:programs/%.s=output/%) $(C_CODE:programs/%.c=output/%)
