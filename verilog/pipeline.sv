@@ -4,7 +4,7 @@
 //                                                                     //
 //  Description :  Top-level module of the verisimple pipeline;        //
 //                 This instantiates and connects the 5 stages of the  //
-//                 Verisimple pipeline togeather.                      //
+//                 Verisimple pipeline together.                       //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
@@ -17,10 +17,10 @@ module pipeline (
     input [63:0] mem2proc_data,     // Data coming back from memory
     input [3:0]  mem2proc_tag,      // Tag from memory about current reply
 
-    output logic [1:0]       proc2mem_command, // command sent to memory
+    output logic [1:0]       proc2mem_command, // Command sent to memory
     output logic [`XLEN-1:0] proc2mem_addr,    // Address sent to memory
     output logic [63:0]      proc2mem_data,    // Data sent to memory
-    output MEM_SIZE          proc2mem_size,    // data size sent to memory
+    output MEM_SIZE          proc2mem_size,    // Data size sent to memory
 
     // Note: these are assigned at the very bottom of the module
     output logic [3:0]       pipeline_completed_insts,
@@ -113,8 +113,8 @@ module pipeline (
     //                                              //
     //////////////////////////////////////////////////
 
-    // This state controls the stall signal that artificially forces fetch to
-    // stall until the previous instruction has completed.
+    // This state controls the stall signal that artificially forces IF
+    // to stall until the previous instruction has completed.
     // For project 3, start by setting this to always be 1
 
     logic next_if_valid;
@@ -140,10 +140,10 @@ module pipeline (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid         (next_if_valid),
-        .take_branch      (ex_mem_reg.take_branch),
-        .branch_target_pc (ex_mem_reg.alu_result),
-        .Imem2proc_data   (mem2proc_data),
+        .if_valid       (next_if_valid),
+        .take_branch    (ex_mem_reg.take_branch),
+        .branch_target  (ex_mem_reg.alu_result),
+        .Imem2proc_data (mem2proc_data),
 
         // Outputs
         .if_packet      (if_packet),
@@ -208,13 +208,14 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            id_ex_reg <= `SD '{{`XLEN{1'b0}},
-                {`XLEN{1'b0}},
-                {`XLEN{1'b0}},
-                {`XLEN{1'b0}},
+            id_ex_reg <= `SD '{
+                `NOP, // we can't simply assign 0 because NOP is non-zero
+                {`XLEN{1'b0}}, // PC
+                {`XLEN{1'b0}}, // NPC
+                {`XLEN{1'b0}}, // rs1 select
+                {`XLEN{1'b0}}, // rs2 select
                 OPA_IS_RS1,
                 OPB_IS_RS2,
-                `NOP, // we can't simply assign 0 because NOP is non-zero
                 `ZERO_REG,
                 ALU_ADD,
                 1'b0, // rd_mem
