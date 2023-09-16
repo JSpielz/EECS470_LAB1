@@ -187,9 +187,7 @@ synth/%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS)
 	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
 	# pipefail causes the command to exit on failure even though it's piping to tee
 	set -o pipefail; cd synth && MODULE=$* SOURCES="$(SOURCES)" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
-	set -o pipefail; cd synth && MODULE=$* SOURCES="$(SOURCES)" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
-# this also generates many other files, see the tcl script's introduction for info on each of them
 
 # the synthesis executable runs your testbench on the synthesized versions of your modules
 syn_simv: $(TESTBENCH) $(SYNTH_FILES) $(HEADERS)
