@@ -210,7 +210,7 @@ module testbench;
 
         @(posedge clock);
         @(posedge clock);
-        `SD;
+        #1;
         // This reset is at an odd time to avoid the pos & neg clock edges
 
         reset = 1'b0;
@@ -229,11 +229,11 @@ module testbench;
     // till simulation ends
     always @(posedge clock) begin
         if(reset) begin
-            clock_count <= `SD 0;
-            instr_count <= `SD 0;
+            clock_count <= 0;
+            instr_count <= 0;
         end else begin
-            clock_count <= `SD (clock_count + 1);
-            instr_count <= `SD (instr_count + pipeline_completed_insts);
+            clock_count <= (clock_count + 1);
+            instr_count <= (instr_count + pipeline_completed_insts);
         end
     end
 
@@ -244,8 +244,7 @@ module testbench;
                      $realtime);
             debug_counter <= 0;
         end else begin
-            `SD;
-            `SD;
+            #2;
 
             // print the pipeline debug outputs via c code to the pipeline output file
             print_cycles();

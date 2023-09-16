@@ -19,9 +19,6 @@
 
 // NOTE: the global CLOCK_PERIOD is defined in the Makefile
 
-// standard delay - use after all non-blocking assignments
-`define SD #1
-
 // useful boolean single-bit definitions
 `define FALSE 1'h0
 `define TRUE  1'h1

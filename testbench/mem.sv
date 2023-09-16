@@ -77,9 +77,9 @@ module mem (
                     waiting_for_bus[i] = 1'b0;
             end
         end
-        mem2proc_response <= `SD next_mem2proc_response;
-        mem2proc_data     <= `SD next_mem2proc_data;
-        mem2proc_tag      <= `SD next_mem2proc_tag;
+        mem2proc_response <= next_mem2proc_response;
+        mem2proc_data     <= next_mem2proc_data;
+        mem2proc_tag      <= next_mem2proc_tag;
     end
 `else
     wire valid_address = (proc2mem_addr<`MEM_SIZE_IN_BYTES);
@@ -160,9 +160,9 @@ module mem (
                     waiting_for_bus[i] = 1'b0;
             end
         end
-        mem2proc_response <= `SD next_mem2proc_response;
-        mem2proc_data     <= `SD next_mem2proc_data;
-        mem2proc_tag      <= `SD next_mem2proc_tag;
+        mem2proc_response <= next_mem2proc_response;
+        mem2proc_data     <= next_mem2proc_data;
+        mem2proc_tag      <= next_mem2proc_tag;
     end
 `endif //CACHE_MODE
 

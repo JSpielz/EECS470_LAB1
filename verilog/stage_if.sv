@@ -27,11 +27,11 @@ module stage_if (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            PC_reg <= `SD 0;             // initial PC value is 0 (the memory address where our program starts)
+            PC_reg <= 0;             // initial PC value is 0 (the memory address where our program starts)
         end else if (take_branch) begin
-            PC_reg <= `SD branch_target; // update to a taken branch (does not depend on valid bit)
+            PC_reg <= branch_target; // update to a taken branch (does not depend on valid bit)
         end else if (if_valid) begin
-            PC_reg <= `SD PC_reg + 4;    // or transition to next PC if valid
+            PC_reg <= PC_reg + 4;    // or transition to next PC if valid
         end
     end
 

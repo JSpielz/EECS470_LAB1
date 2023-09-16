@@ -46,7 +46,7 @@ module regfile (
     // Write port
     always_ff @(posedge clock) begin
         if (write_en && write_idx != `ZERO_REG) begin
-            registers[write_idx] <= `SD write_data;
+            registers[write_idx] <= write_data;
         end
     end
 

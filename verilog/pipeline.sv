@@ -123,10 +123,10 @@ module pipeline (
     always_ff @(posedge clock) begin
         if (reset) begin
             // start valid, other stages (ID,EX,MEM,WB) start as invalid
-            next_if_valid <= `SD 1;
+            next_if_valid <= 1;
         end else begin
             // valid bit will cycle through the pipeline and come back from the wb stage
-            next_if_valid <= `SD mem_wb_reg.valid;
+            next_if_valid <= mem_wb_reg.valid;
         end
     end
 
@@ -165,12 +165,12 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            if_id_reg.inst  <= `SD `NOP;
-            if_id_reg.valid <= `SD `FALSE;
-            if_id_reg.NPC   <= `SD 0;
-            if_id_reg.PC    <= `SD 0;
+            if_id_reg.inst  <= `NOP;
+            if_id_reg.valid <= `FALSE;
+            if_id_reg.NPC   <= 0;
+            if_id_reg.PC    <= 0;
         end else if (if_id_enable) begin
-            if_id_reg <= `SD if_packet;
+            if_id_reg <= if_packet;
         end
     end
 
@@ -208,7 +208,7 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            id_ex_reg <= `SD '{
+            id_ex_reg <= '{
                 `NOP, // we can't simply assign 0 because NOP is non-zero
                 {`XLEN{1'b0}}, // PC
                 {`XLEN{1'b0}}, // NPC
@@ -228,7 +228,7 @@ module pipeline (
                 1'b0  // valid
             };
         end else if (id_ex_enable) begin
-            id_ex_reg <= `SD id_packet;
+            id_ex_reg <= id_packet;
         end
     end
 
@@ -261,11 +261,11 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            ex_mem_inst_dbg <= `SD `NOP; // debug output
-            ex_mem_reg      <= `SD 0;    // the defaults can all be zero!
+            ex_mem_inst_dbg <= `NOP; // debug output
+            ex_mem_reg      <= 0;    // the defaults can all be zero!
         end else if (ex_mem_enable) begin
-            ex_mem_inst_dbg <= `SD id_ex_inst_dbg; // debug output, just forwarded from ID
-            ex_mem_reg      <= `SD ex_packet;
+            ex_mem_inst_dbg <= id_ex_inst_dbg; // debug output, just forwarded from ID
+            ex_mem_reg      <= ex_packet;
         end
     end
 
@@ -302,11 +302,11 @@ module pipeline (
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
-            mem_wb_inst_dbg <= `SD `NOP; // debug output
-            mem_wb_reg      <= `SD 0;    // the defaults can all be zero!
+            mem_wb_inst_dbg <= `NOP; // debug output
+            mem_wb_reg      <= 0;    // the defaults can all be zero!
         end else if (mem_wb_enable) begin
-            mem_wb_inst_dbg <= `SD ex_mem_inst_dbg; // debug output, just forwarded from EX
-            mem_wb_reg      <= `SD mem_packet;
+            mem_wb_inst_dbg <= ex_mem_inst_dbg; // debug output, just forwarded from EX
+            mem_wb_reg      <= mem_packet;
         end
     end
 
