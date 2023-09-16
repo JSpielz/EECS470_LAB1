@@ -137,7 +137,7 @@ module stage_ex (
             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_reg.inst);
             OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(id_ex_reg.inst);
             OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(id_ex_reg.inst);
-            default:     opa_mux_out = `XLEN'hfacefeed; // face feed
+            default:      opb_mux_out = `XLEN'hfacefeed; // face feed
         endcase
     end
 
