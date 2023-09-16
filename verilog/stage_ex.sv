@@ -58,7 +58,7 @@ module alu (
         endcase
     end
 
-endmodule // module alu
+endmodule // alu
 
 
 // Conditional branch module: compute whether to take conditional branches
@@ -86,7 +86,7 @@ module conditional_branch (
         endcase
     end
 
-endmodule // module conditional_branch
+endmodule // conditional_branch
 
 
 module stage_ex (
@@ -163,4 +163,4 @@ module stage_ex (
         .take(take_conditional)
     );
 
-endmodule // module stage_ex
+endmodule // stage_ex

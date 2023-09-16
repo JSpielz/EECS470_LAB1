@@ -345,4 +345,4 @@ module pipeline (
     assign pipeline_commit_wr_data = wb_regfile_data;
     assign pipeline_commit_NPC     = mem_wb_reg.NPC;
 
-endmodule // module pipeline
+endmodule // pipeline

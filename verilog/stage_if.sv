@@ -48,4 +48,4 @@ module stage_if (
 
     assign if_packet.valid = if_valid;
 
-endmodule // module stage_if
+endmodule // stage_if

@@ -35,4 +35,4 @@ module stage_wb (
     // use it specify ZERO_REG as the destination.
     assign wb_regfile_data = (mem_wb_reg.take_branch) ? mem_wb_reg.NPC : mem_wb_reg.result;
 
-endmodule // module stage_wb
+endmodule // stage_wb

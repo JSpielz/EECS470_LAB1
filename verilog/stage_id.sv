@@ -195,7 +195,7 @@ module decoder (
         end // if (valid)
     end // always
 
-endmodule // module decoder
+endmodule // decoder
 
 
 module stage_id (
@@ -256,4 +256,4 @@ module stage_id (
         .illegal       (id_packet.illegal)
     );
 
-endmodule // module stage_id
+endmodule // stage_id
