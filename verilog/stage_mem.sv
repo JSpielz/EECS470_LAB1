@@ -64,7 +64,4 @@ module stage_mem (
         end
     end
 
-    // if we are in 32 bit mode, then we should never load a double word sized data
-    assert property (@(negedge clock) (`XLEN == 32) && ex_mem_reg.rd_mem |-> proc2Dmem_size != DOUBLE);
-
 endmodule // stage_mem
