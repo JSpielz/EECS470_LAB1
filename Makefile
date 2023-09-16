@@ -153,56 +153,49 @@ endif
 # NOTE: the executables are not the only things you need to compile
 # you must also create a .mem file for each program you run
 # which will be loaded into mem.sv by the testbench on startup
+# To run a program on simv or syn_simv, see the program memory compilation section
 
-# To actually run a program on simv or syn_simv, see the program compilation section below
-# you can also use the legacy targets 'sim' and 'syn' that use the legacy program.mem file
-
-# NOTE: we're able to use these filenames without directories due to the VPATH declaration above
-# Make will automatically expand these to their actual paths when used as dependencies
 HEADERS = sys_defs.svh \
           ISA.svh
 
-TESTBENCH = testbench.sv \
-            pipe_print.c \
-            mem.sv
+TESTBENCH = testbench/testbench.sv \
+            testbench/pipe_print.c \
+            testbench/mem.sv
 
 # you could simplify this line with $(wildcard verilog/*.sv) - but the manual way is more explicit
-SOURCES = pipeline.sv \
-          regfile.sv \
-          stage_if.sv \
-          stage_id.sv \
-          stage_ex.sv \
-          stage_mem.sv \
-          stage_wb.sv
+SOURCES = verilog/pipeline.sv \
+          verilog/regfile.sv \
+          verilog/stage_if.sv \
+          verilog/stage_id.sv \
+          verilog/stage_ex.sv \
+          verilog/stage_mem.sv \
+          verilog/stage_wb.sv
 
 SYNTH_FILES = synth/pipeline.vg
 
 # the normal simulation executable will run your testbench on the original modules
-simv: $(TESTBENCH) $(SOURCES) | $(HEADERS)
+simv: $(TESTBENCH) $(SOURCES) $(HEADERS)
 	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
 	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
-	$(VCS) $^ -o $@
+	$(VCS) $(TESTBENCH) $(SOURCES) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
-# NOTE: we reference variables with $(VARIABLE), and can make use of the automatic variables: ^, @, <, etc
-# see: https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html for explanations
 
-%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS)
+# this also generates many other files, see the tcl script's introduction for info on each of them
+synth/%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS)
 	@$(call PRINT_COLOR, 5, synthesizing the $* module)
 	@$(call PRINT_COLOR, 3, this might take a while...)
 	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
 	# pipefail causes the command to exit on failure even though it's piping to tee
 	set -o pipefail; cd synth && MODULE=$* SOURCES="$(SOURCES)" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
+	set -o pipefail; cd synth && MODULE=$* SOURCES="$(SOURCES)" dc_shell-t -f $(TCL_SCRIPT) | tee pipeline_synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
 # this also generates many other files, see the tcl script's introduction for info on each of them
 
 # the synthesis executable runs your testbench on the synthesized versions of your modules
-syn_simv: $(TESTBENCH) $(SYNTH_FILES) | $(HEADERS)
+syn_simv: $(TESTBENCH) $(SYNTH_FILES) $(HEADERS)
 	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
-	$(VCS) +define+SYNTH $^ $(LIB) -o $@
+	$(VCS) +define+SYNTH $(TESTBENCH) $(SYNTH_FILES) $(LIB) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
-# we need to link the synthesized modules against LIB, so this differs slightly from simv above
-# but we still compile with the same non-synthesizable testbench
-# NOTE: LIB has to come after the other sources as it doesn't define a timescale, and must inherit it from a previous module
 
 # a phony target to view the slack in the *.rep synthesis report file
 slack:
@@ -219,16 +212,10 @@ slack:
 # then that link file is converted to a .mem hex file
 
 # find the test program files and separate them based on suffix of .s or .c
-<<<<<<< HEAD
-# remove crt.s from ASSEMBLY as it is not actually a program
-ASSEMBLY := $(filter-out $(CRT),$(wildcard programs/*.s))
-C_CODE   := $(wildcard programs/*.c)
-=======
 # filter out files that aren't themselves programs
 NON_PROGRAMS = $(CRT)
 ASSEMBLY = $(filter-out $(NON_PROGRAMS),$(wildcard programs/*.s))
 C_CODE   = $(filter-out $(NON_PROGRAMS),$(wildcard programs/*.c))
->>>>>>> eb15716 (Makfile: filter-out CRT from programs)
 
 # concatenate ASSEMBLY and C_CODE to list every program
 PROGRAMS = $(ASSEMBLY:programs/%.s=output/%) $(C_CODE:programs/%.c=output/%)
