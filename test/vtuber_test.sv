@@ -1,13 +1,13 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  visual_testbench.v                                  //
+//   Modulename :  vtuber_test.sv                                      //
 //                                                                     //
 //  Description :  Testbench module for the verisimple pipeline        //
-//                   for the visual debugger                           //
+//                 for the VisUal TestBencheR                          //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "verilog/sys_defs.svh"
 
 extern void initcurses(int,int,int,int,int,int,int,int,int,int);
 extern void flushpipe();

@@ -6,7 +6,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "verilog/sys_defs.svh"
 
 // these link to the pipe_print.c file in this directory, and are used below to print
 // detailed output to the pipeline_output_file, initialized by open_pipeline_output_file()

@@ -10,7 +10,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "verilog/sys_defs.svh"
 
 module stage_mem (
     input EX_MEM_PACKET ex_mem_reg,

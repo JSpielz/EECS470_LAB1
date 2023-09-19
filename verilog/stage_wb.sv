@@ -11,7 +11,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "verilog/sys_defs.svh"
 
 module stage_wb (
     input MEM_WB_PACKET mem_wb_reg,

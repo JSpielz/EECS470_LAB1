@@ -155,12 +155,12 @@ endif
 # which will be loaded into mem.sv by the testbench on startup
 # To run a program on simv or syn_simv, see the program memory compilation section
 
-HEADERS = sys_defs.svh \
-          ISA.svh
+HEADERS = verilog/sys_defs.svh \
+          verilog/ISA.svh
 
-TESTBENCH = testbench/testbench.sv \
-            testbench/pipe_print.c \
-            testbench/mem.sv
+TESTBENCH = test/pipeline_test.sv \
+            test/pipeline_print.c \
+            test/mem.sv
 
 # you could simplify this line with $(wildcard verilog/*.sv) - but the manual way is more explicit
 SOURCES = verilog/pipeline.sv \
