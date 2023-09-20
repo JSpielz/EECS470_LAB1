@@ -24,7 +24,7 @@ Your assignment is to modify the VeriSimpleV processor to remove the
 stalls and implement hazard and forwarding logic as described in
 lecture and the text. See the specification for more details.
 
-## Project Files
+### Project Files
 
 For this project, you are provided with most of the code and the entire
 build and test system. This is a quick overview of the Makefile and the
