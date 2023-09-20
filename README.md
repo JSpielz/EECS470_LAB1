@@ -5,7 +5,7 @@ Welcome to the EECS 470 Project 3 VeriSimpleV Processor!
 
 This is the repository for a 5-stage, pipelined, synthesizable, RISC-V
 processor which will be the basis of your final project. VeriSimpleV is
-based on the common 5-stage pipeline mentioned in class.
+based on the common 5-stage pipeline mentioned in class and the text.
 
 See the [Project Specification](https://drive.google.com/file/d/1XaPiocfSfWfQdJxsrXNeeH1_XXoLH6jF/view?usp=drive_link)
 and the [RISC-V Introduction slides](https://drive.google.com/file/d/1xsHJ_FIMXR7fHx27GREDBSqr7L3B3Ql_/view?usp=drive_link)
@@ -15,10 +15,10 @@ for more details on the processor and assignment.
 
 The processor is unfinished! The provided implementation
 *has no hazard detection logic!* To accommodate this, the provided
-processor only allows one instruction in the pipeline at a time to be
+processor only allows one instruction in the pipeline at a time, to be
 absolutely certain there are no hazards. The provided processor is
-correct, and it will produce the  output for all programs, but it has a
-miserable CPI of 5.0.
+correct, and it will produce the correct output for all programs, but
+it has a miserable CPI of 5.0.
 
 Your assignment is to modify the VeriSimpleV processor to remove the
 stalls and implement hazard and forwarding logic as described in
