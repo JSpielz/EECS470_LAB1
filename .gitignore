@@ -34,12 +34,18 @@ verdi*
 novas*
 *fsdb*
 
-# per-run output files
-*.out
-*.wb
-*.ppln
+# program memory compilation
 *.elf
 *.mem
 *.dump
 *.dump_*
+
+# per-run output files
+*.out
+*.wb
+*.ppln
+
+# ignore the output folder
+# don't ignore the correct_out folder
 output/
+!correct_out/*
