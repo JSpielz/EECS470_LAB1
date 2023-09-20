@@ -5,7 +5,7 @@
 # Welcome to the EECS 470 design compiler synthesis script!
 # this will synthesize a module with predefined constraints using the synopsys design compiler
 # and supports optional hierarchical synthesis or module parameters
-# this is written in the Tool Command Language for Synopsys Design Compiler
+# this is written in the Tool command language for Synopsys Design Compiler
 # see the tcl_reference.tcl file for a general Tcl syntax reference
 # it requires a number of environment variables as arguments, see below
 
