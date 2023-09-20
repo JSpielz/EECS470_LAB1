@@ -11,8 +11,8 @@
 
 # reference table of all make targets:
 
-# make  <- runs the default target, set explicitly below as 'make rv32_fib_rec.out'
-.DEFAULT_GOAL = rv32_fib_rec.out
+# make  <- runs the default target, set explicitly below as 'make no_hazard.out'
+.DEFAULT_GOAL = no_hazard.out
 # ^ this overrides using the first listed target as the default
 
 # ---- Program Execution ---- #
@@ -232,8 +232,8 @@ ASLINKERS  = programs/aslinker.lds
 %.mem: %.elf
 	$(ELF2HEX) 8 8192 $< > $@
 	@$(call PRINT_COLOR, 6, created memory file $@)
-	@$(call PRINT_COLOR, 3, NOTE: to see RISC-V assembly run: '"make $*.dump"'')
-	@$(call PRINT_COLOR, 3, for \*.c sources also try: '"make $*.debug.dump"'')
+	@$(call PRINT_COLOR, 3, NOTE: to see RISC-V assembly run: '"make $*.dump"')
+	@$(call PRINT_COLOR, 3, for \*.c sources also try: '"make $*.debug.dump"')
 
 # compile all programs in one command (use 'make -j' to run multithreaded)
 compile_all: $(PROGRAMS:=.mem)
