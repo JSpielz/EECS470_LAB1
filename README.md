@@ -65,7 +65,7 @@ will assemble a RISC-V `*.mem` file which will be loaded into `mem.sv`
 by the testbench, and will also compile the processor and run the
 program.
 
-All of the ```<my_program>.abc`'' targets are linked to do both the
+All of the "`<my_program>.abc`" targets are linked to do both the
 executable compilation step and the `.mem` compilation steps if
 necessary, so you can run each without needing to run anything else
 first.
