@@ -39,7 +39,7 @@ stage. There are 5 files for the pipeline stages:
 is instantiated inside the ID stage. Finally, the stages are tied
 together by the pipeline module in `pipeline.sv`.
 
-The `sys_defs.svh` file contains all of the `typedef's` and ``define's`
+The `sys_defs.svh` file contains all of the `typedef's` and ```define's``
 that are used in the pipeline and testbench. The testbench and
 associated non-synthesizable verilog can be found in the `test/`
 folder. Note that the memory module defined in `test/mem.sv` is
