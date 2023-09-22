@@ -31,7 +31,7 @@ build and test system. This is a quick overview of the Makefile and the
 verilog files you will be editing. See the lab 4 slides for an extended
 discussion.
 
-The \VeriSimpleV{} pipeline is broken up into 9 files in the `verilog/`
+The VeriSimpleV pipeline is broken up into 9 files in the `verilog/`
 folder. There are 2 headers: `sys_defs.svh` defines data structures and
 typedefs, and `ISA.svh` define decoding information used by the ID
 stage. There are 5 files for the pipeline stages:
