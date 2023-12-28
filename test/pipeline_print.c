@@ -115,98 +115,53 @@ char* decode_inst(int inst)
     }
 }
 
-static int cycle_count = 0;
 static FILE* ppfile = NULL;
-
 
 void open_pipeline_output_file(char* file_name)
 {
-    if (ppfile == NULL)
-        ppfile = fopen(file_name, "w");
+    ppfile = fopen(file_name, "w");
 }
 
-void print_header(char* str)
-{
-    if (ppfile != NULL)
-        fprintf(ppfile, "%s", str);
-}
-
-void print_cycles()
-{
-    if (ppfile != NULL)
-        fprintf(ppfile, "\n%5d:", cycle_count++);
-}
-
-
-void print_stage(char* div, int inst, int npc, int valid_inst)
-{
-    char *str;
-
-    if (!valid_inst)
-        str = "-";
-    else
-        str = decode_inst(inst);
-
-    if (ppfile != NULL)
-        fprintf(ppfile, "%s%4d:%-8s", div, npc, str);
-}
-
-void print_close()
+void close_pipeline_output_file()
 {
     fprintf(ppfile, "\n");
     fclose(ppfile);
     ppfile = NULL;
 }
 
-void print_reg(int wb_reg_wr_data_out_hi, int wb_reg_wr_data_out_lo,
-               int wb_reg_wr_idx_out, int wb_reg_wr_en_out)
+void print_header()
 {
-    if (ppfile == NULL)
-        return;
-
-    if (wb_reg_wr_en_out)
-        if ( (wb_reg_wr_data_out_hi == 0) ||
-            ((wb_reg_wr_data_out_hi == -1) && (wb_reg_wr_data_out_lo < 0)))
-            fprintf(ppfile, "r%d=%d  ", wb_reg_wr_idx_out, wb_reg_wr_data_out_lo);
-        else
-            fprintf(ppfile, "r%d=0x%x%x  ", wb_reg_wr_idx_out,
-                    wb_reg_wr_data_out_hi, wb_reg_wr_data_out_lo);
-
+    fprintf(ppfile, "Cycle |     IF      |     ID      |     EX      |     MEM     |     WB      |    Reg WB    | MEM Bus");
 }
 
-void print_membus(int proc2mem_command, int mem2proc_response,
-                  int proc2mem_addr_hi, int proc2mem_addr_lo,
+void print_cycles(int clock_count)
+{
+    fprintf(ppfile, "\n%5d ", clock_count);
+}
+
+void print_stage(int inst, int npc, int valid_inst)
+{
+    if (!valid_inst)
+        fprintf(ppfile, "|%4s:%-8s", "-", "-");
+    else
+        fprintf(ppfile, "|%Xx:%-8s", npc, decode_inst(inst));
+}
+
+void print_reg(int wb_data, int wb_idx, int wb_en)
+{
+    if (wb_en)
+        fprintf(ppfile, "| r%02d=%-8X ", wb_idx, wb_data);
+    else
+        fprintf(ppfile, "|              ");
+}
+
+void print_membus(int proc2mem_command, int proc2mem_addr,
                   int proc2mem_data_hi, int proc2mem_data_lo)
 {
-    if (ppfile == NULL)
-        return;
-
-    switch(proc2mem_command)
-    {
-        case 1: fprintf(ppfile, "BUS_LOAD  MEM["); break;
-        case 2: fprintf(ppfile, "BUS_STORE MEM["); break;
-        default: return; break;
-    }
-
-    if ( (proc2mem_addr_hi == 0) ||
-        ((proc2mem_addr_hi == -1) && (proc2mem_addr_lo < 0)))
-        fprintf(ppfile, "%d", proc2mem_addr_lo);
-    else
-        fprintf(ppfile, "0x%x%x", proc2mem_addr_hi, proc2mem_addr_lo);
     if (proc2mem_command == 1)
-    {
-        fprintf(ppfile, "]");
-    } else {
-        fprintf(ppfile, "] = ");
-        if ( (proc2mem_data_hi == 0)||
-            ((proc2mem_data_hi == -1) && (proc2mem_data_lo < 0)))
-            fprintf(ppfile, "%d", proc2mem_data_lo);
-        else
-            fprintf(ppfile, "0x%x%x", proc2mem_data_hi, proc2mem_data_lo);
-    }
-    if(mem2proc_response) {
-        fprintf(ppfile, " accepted %d", mem2proc_response);
-    } else {
-        fprintf(ppfile, " rejected");
-    }
+        fprintf(ppfile, "| LOAD  [%X]", proc2mem_addr);
+    else if (proc2mem_command == 2)
+        fprintf(ppfile, "| STORE [%X] = %X", proc2mem_addr, proc2mem_data_lo);
+    else
+        fprintf(ppfile, "|"); // this doesn't actually happen in p3 :/
 }
