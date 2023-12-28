@@ -8,8 +8,8 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "verilog/sys_defs.svh"
-`include "verilog/ISA.svh"
+`include "sys_defs.svh"
+`include "ISA.svh"
 
 // Decode an instruction: generate useful datapath control signals by matching the RISC-V ISA
 // This module is purely combinational

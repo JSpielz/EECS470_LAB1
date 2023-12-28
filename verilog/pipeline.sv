@@ -8,7 +8,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "verilog/sys_defs.svh"
+`include "sys_defs.svh"
 
 module pipeline (
     input        clock,             // System clock

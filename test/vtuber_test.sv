@@ -7,7 +7,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "verilog/sys_defs.svh"
+`include "sys_defs.svh"
 
 extern void initcurses(int,int,int,int,int,int,int,int,int,int);
 extern void flushpipe();

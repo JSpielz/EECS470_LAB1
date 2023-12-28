@@ -9,7 +9,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "verilog/sys_defs.svh"
+`include "sys_defs.svh"
 
 module mem (
     input             clk,           // Memory clock
