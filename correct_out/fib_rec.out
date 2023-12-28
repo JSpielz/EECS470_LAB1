@@ -1,6 +1,6 @@
-Loading memory file: programs/rv32_fib_rec.mem
-Using writeback output file: output/rv32_fib_rec.wb
-Using pipeline output file: output/rv32_fib_rec.ppln
+Loading memory file: programs/fib_rec.mem
+Using writeback output file: output/fib_rec.wb
+Using pipeline output file: output/fib_rec.ppln
 @@
 @@
 @@                     0  Asserting System reset......

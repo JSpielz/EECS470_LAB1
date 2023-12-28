@@ -1,6 +1,6 @@
-Loading memory file: programs/rv32_copy.mem
-Using writeback output file: output/rv32_copy.wb
-Using pipeline output file: output/rv32_copy.ppln
+Loading memory file: programs/copy.mem
+Using writeback output file: output/copy.wb
+Using pipeline output file: output/copy.ppln
 @@
 @@
 @@                     0  Asserting System reset......
