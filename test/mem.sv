@@ -117,11 +117,9 @@ module mem (
                             loaded_data[i] = {56'b0, c.byte_level[proc2mem_addr[2:0]]};
                         end
                         HALF: begin
-                            assert(proc2mem_addr[0] == 0);
                             loaded_data[i] = {48'b0, c.half_level[proc2mem_addr[2:1]]};
                         end
                         WORD: begin
-                            assert(proc2mem_addr[1:0] == 0);
                             loaded_data[i] = {32'b0, c.word_level[proc2mem_addr[2]]};
                         end
                         DOUBLE:
@@ -135,17 +133,14 @@ module mem (
                             unified_memory[proc2mem_addr[`XLEN-1:3]] = c.byte_level;
                         end
                         HALF: begin
-                            assert(proc2mem_addr[0] == 0);
                             c.half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
                             unified_memory[proc2mem_addr[`XLEN-1:3]] = c.half_level;
                         end
                         WORD: begin
-                            assert(proc2mem_addr[1:0] == 0);
                             c.word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
                             unified_memory[proc2mem_addr[`XLEN-1:3]] = c.word_level;
                         end
                         default: begin
-                            assert(proc2mem_addr[1:0] == 0);
                             c.byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
                             unified_memory[proc2mem_addr[`XLEN-1:3]] = c.word_level;
                         end
@@ -168,6 +163,9 @@ module mem (
 
     // Initialise the entire memory
     initial begin
+        // This posedge is very important, it ensures that we don't enter a race
+        // race condition with either of the negedge blocks above.
+        @(posedge clk);
         for(int i=0; i<`MEM_64BIT_LINES; i=i+1) begin
             unified_memory[i] = 64'h0;
         end
