@@ -404,10 +404,12 @@ nuke: clean clean_output clean_synth clean_programs
 
 clean_exe:
 	@$(call PRINT_COLOR, 3, removing compiled executable files)
-	rm -rf *simv *.daidir csrc *.key   # created by simv/syn_simv/vis_simv
-	rm -rf vcdplus.vpd vc_hdrs.h       # created by simv/syn_simv/vis_simv
-	rm -rf verdi* novas* *fsdb*        # verdi files
-	rm -rf dve* inter.vpd DVEfiles     # old DVE debugger
+	rm -rf *simv *.daidir csrc *.key      # created by simv/syn_simv/vis_simv
+	rm -rf vcdplus.vpd vc_hdrs.h          # created by simv/syn_simv/vis_simv
+	rm -rf unifiedInference.log xprop.log # created by simv/syn_simv/vis_simv
+
+	rm -rf verdi* novas* *fsdb*           # verdi files
+	rm -rf dve* inter.vpd DVEfiles        # old DVE debugger
 
 clean_run_files:
 	@$(call PRINT_COLOR, 3, removing per-run outputs)
