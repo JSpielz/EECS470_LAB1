@@ -2,8 +2,8 @@
 //                                                                     //
 //   Modulename :  sys_defs.svh                                        //
 //                                                                     //
-//  Description :  This file has the macro-defines for macros used in  //
-//                 the pipeline design.                                //
+//  Description :  This file defines macros and data structures used   //
+//                 throughout the processor.                           //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 

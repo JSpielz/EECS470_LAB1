@@ -2,7 +2,7 @@
 //                                                                     //
 //   Modulename :  testbench.sv                                        //
 //                                                                     //
-//  Description :  Testbench module for the verisimple pipeline;       //
+//  Description :  Testbench module for the verisimple processor.      //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +72,7 @@ module testbench;
 
 
     // Instantiate the Pipeline
-    pipeline core (
+    cpu verisimpleV (
         // Inputs
         .clock             (clock),
         .reset             (reset),

@@ -37,7 +37,7 @@ typedefs, and `ISA.svh` define decoding information used by the ID
 stage. There are 5 files for the pipeline stages:
 `stage_{if,id,ex,mem,wb}.sv`. The register file is in `regfile.sv` and
 is instantiated inside the ID stage. Finally, the stages are tied
-together by the pipeline module in `pipeline.sv`.
+together by the cpu module in `cpu.sv`.
 
 The `sys_defs.svh` file contains all of the `typedef`s and `define`s
 that are used in the pipeline and testbench. The testbench and
@@ -50,7 +50,7 @@ not synthesizable.
 Start the project by removing the provided stalling behavior, then
 implement the structural hazard logic for the milestone.
 
-The provided stalling behavior is set in the `verilog/pipeline.sv`
+The provided stalling behavior is set in the `verilog/cpu.sv`
 file. You should open the file and find the `always_ff` block where the
 `next_if_valid` signal is set. This is the start of a `valid` bit
 which is passed between the stages along with the instruction, and it

@@ -1,8 +1,8 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  pipeline.sv                                         //
+//   Modulename :  cpu.sv                                              //
 //                                                                     //
-//  Description :  Top-level module of the verisimple pipeline;        //
+//  Description :  Top-level module of the verisimple processor;       //
 //                 This instantiates and connects the 5 stages of the  //
 //                 Verisimple pipeline together.                       //
 //                                                                     //
@@ -10,7 +10,7 @@
 
 `include "sys_defs.svh"
 
-module pipeline (
+module cpu (
     input           clock,             // System clock
     input           reset,             // System reset
     input [3:0]     mem2proc_response, // Tag from memory about current request

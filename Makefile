@@ -140,12 +140,12 @@ endif
 HEADERS = verilog/sys_defs.svh \
           verilog/ISA.svh
 
-TESTBENCH = test/pipeline_test.sv \
+TESTBENCH = test/cpu_test.sv \
             test/pipeline_print.c \
             test/mem.sv
 
-# you could simplify this line with $(wildcard verilog/*.sv) - but the manual way is more explicit
-SOURCES = verilog/pipeline.sv \
+# This could simplify to $(wildcard verilog/*.sv) - but the manual way is more explicit
+SOURCES = verilog/cpu.sv \
           verilog/regfile.sv \
           verilog/stage_if.sv \
           verilog/stage_id.sv \
@@ -153,7 +153,7 @@ SOURCES = verilog/pipeline.sv \
           verilog/stage_mem.sv \
           verilog/stage_wb.sv
 
-SYNTH_FILES = synth/pipeline.vg
+SYNTH_FILES = synth/cpu.vg
 
 # the normal simulation executable will run your testbench on the original modules
 simv: $(TESTBENCH) $(SOURCES) $(HEADERS)
