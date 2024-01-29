@@ -301,7 +301,7 @@ output:
 OUTPUTS = $(PROGRAMS:programs/%=output/%)
 
 # run a program and produce output files
-$(OUTPUTS:=.out): output/%.out: programs/%.mem simv | output
+output/%.out: programs/%.mem simv | output
 	@$(call PRINT_COLOR, 5, running simv on $<)
 	./simv +MEMORY=$< +WRITEBACK=$(@D)/$*.wb +PIPELINE=$(@D)/$*.ppln > $@
 	@$(call PRINT_COLOR, 6, finished running simv on $<)
@@ -314,7 +314,7 @@ $(OUTPUTS:=.out): output/%.out: programs/%.mem simv | output
 
 # this does the same as simv, but adds .syn to the output files and compiles syn_simv instead
 # run synthesis with: 'make <my_program>.syn.out'
-$(OUTPUTS:=.syn.out): output/%.syn.out: programs/%.mem syn_simv | output
+output/%.syn.out: programs/%.mem syn_simv | output
 	@$(call PRINT_COLOR, 5, running syn_simv on $<)
 	@$(call PRINT_COLOR, 3, this might take a while...)
 	./syn_simv +MEMORY=$< +WRITEBACK=$(@D)/$*.syn.wb +PIPELINE=$(@D)/$*.syn.ppln > $@
@@ -329,8 +329,8 @@ $(OUTPUTS:=.syn.out): output/%.syn.out: programs/%.mem syn_simv | output
 %.wb %.ppln: %.out ;
 
 # run all programs in one command (use 'make -j' to run multithreaded)
-simulate_all: simv compile_all $(OUTPUTS:=.out)
-simulate_all_syn: syn_simv compile_all $(OUTPUTS:=.syn.out)
+simulate_all: simv compile_all $(PROGRAMS:programs/%=output/%.out)
+simulate_all_syn: syn_simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
 .PHONY: simulate_all simulate_all_syn
 
 ###################
