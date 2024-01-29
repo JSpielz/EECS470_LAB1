@@ -16,16 +16,16 @@
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
 module alu (
-    input [`XLEN-1:0] opa,
-    input [`XLEN-1:0] opb,
-    ALU_FUNC          func,
+    input DATA opa,
+    input DATA opb,
+    ALU_FUNC   func,
 
-    output logic [`XLEN-1:0] result
+    output DATA result
 );
 
-    logic signed [`XLEN-1:0]   signed_opa, signed_opb;
-    logic signed [2*`XLEN-1:0] signed_mul, mixed_mul;
-    logic        [2*`XLEN-1:0] unsigned_mul;
+    logic signed [31:0]   signed_opa, signed_opb;
+    logic signed [63:0] signed_mul, mixed_mul;
+    logic        [63:0] unsigned_mul;
 
     assign signed_opa   = opa;
     assign signed_opb   = opb;
@@ -49,12 +49,12 @@ module alu (
             ALU_SRL:    result = opa >> opb[4:0];
             ALU_SLL:    result = opa << opb[4:0];
             ALU_SRA:    result = signed_opa >>> opb[4:0]; // arithmetic from logical shift
-            ALU_MUL:    result = signed_mul[`XLEN-1:0];
-            ALU_MULH:   result = signed_mul[2*`XLEN-1:`XLEN];
-            ALU_MULHSU: result = mixed_mul[2*`XLEN-1:`XLEN];
-            ALU_MULHU:  result = unsigned_mul[2*`XLEN-1:`XLEN];
+            ALU_MUL:    result = signed_mul[31:0];
+            ALU_MULH:   result = signed_mul[63:32];
+            ALU_MULHSU: result = mixed_mul[63:32];
+            ALU_MULHU:  result = unsigned_mul[63:32];
 
-            default:    result = `XLEN'hfacebeec;  // here to prevent latches
+            default:    result = 32'hfacebeec;  // here to prevent latches
         endcase
     end
 
@@ -64,14 +64,14 @@ endmodule // alu
 // Conditional branch module: compute whether to take conditional branches
 // This module is purely combinational
 module conditional_branch (
-    input [2:0]       func, // Specifies which condition to check
-    input [`XLEN-1:0] rs1,  // Value to check against condition
-    input [`XLEN-1:0] rs2,
+    input [2:0] func, // Specifies which condition to check
+    input DATA  rs1,  // Value to check against condition
+    input DATA  rs2,
 
     output logic take // True/False condition result
 );
 
-    logic signed [`XLEN-1:0] signed_rs1, signed_rs2;
+    logic signed [31:0] signed_rs1, signed_rs2;
     assign signed_rs1 = rs1;
     assign signed_rs2 = rs2;
     always_comb begin
@@ -95,7 +95,7 @@ module stage_ex (
     output EX_MEM_PACKET ex_packet
 );
 
-    logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+    DATA opa_mux_out, opb_mux_out;
     logic take_conditional;
 
     // Pass-throughs
@@ -124,7 +124,7 @@ module stage_ex (
             OPA_IS_NPC:  opa_mux_out = id_ex_reg.NPC;
             OPA_IS_PC:   opa_mux_out = id_ex_reg.PC;
             OPA_IS_ZERO: opa_mux_out = 0;
-            default:     opa_mux_out = `XLEN'hdeadface; // dead face
+            default:     opa_mux_out = 32'hdeadface; // dead face
         endcase
     end
 
@@ -137,7 +137,7 @@ module stage_ex (
             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(id_ex_reg.inst);
             OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(id_ex_reg.inst);
             OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(id_ex_reg.inst);
-            default:      opb_mux_out = `XLEN'hfacefeed; // face feed
+            default:      opb_mux_out = 32'hfacefeed; // face feed
         endcase
     end
 

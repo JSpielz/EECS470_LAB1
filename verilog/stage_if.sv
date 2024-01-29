@@ -11,18 +11,18 @@
 `include "sys_defs.svh"
 
 module stage_if (
-    input             clock,          // system clock
-    input             reset,          // system reset
-    input             if_valid,       // only go to next PC when true
-    input             take_branch,    // taken-branch signal
-    input [`XLEN-1:0] branch_target,  // target pc: use if take_branch is TRUE
-    input [63:0]      Imem2proc_data, // data coming back from Instruction memory
+    input        clock,          // system clock
+    input        reset,          // system reset
+    input        if_valid,       // only go to next PC when true
+    input        take_branch,    // taken-branch signal
+    input ADDR   branch_target,  // target pc: use if take_branch is TRUE
+    input [63:0] Imem2proc_data, // data coming back from Instruction memory
 
-    output IF_ID_PACKET      if_packet,
-    output logic [`XLEN-1:0] proc2Imem_addr // address sent to Instruction memory
+    output IF_ID_PACKET if_packet,
+    output ADDR proc2Imem_addr // address sent to Instruction memory
 );
 
-    logic [`XLEN-1:0] PC_reg; // PC we are currently fetching
+    ADDR PC_reg; // PC we are currently fetching
 
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
@@ -37,7 +37,7 @@ module stage_if (
 
     // address of the instruction we're fetching (64 bit memory lines)
     // mem always gives us 8=2^3 bytes, so ignore the last 3 bits
-    assign proc2Imem_addr = {PC_reg[`XLEN-1:3], 3'b0};
+    assign proc2Imem_addr = {PC_reg[31:3], 3'b0};
 
     // this mux is because the Imem gives us 64 bits not 32 bits
     assign if_packet.inst = (~if_valid) ? `NOP :

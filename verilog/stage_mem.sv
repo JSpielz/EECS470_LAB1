@@ -16,16 +16,16 @@ module stage_mem (
     input EX_MEM_PACKET ex_mem_reg,
     // the BUS_LOAD response will magically be present in the *same* cycle it's requested (0ns latency)
     // this will not be true in project 4 (100ns latency)
-    input [`XLEN-1:0]   Dmem2proc_data,
+    input DATA           Dmem2proc_data,
 
-    output MEM_WB_PACKET     mem_packet,
-    output logic [1:0]       proc2Dmem_command, // The memory command
-    output MEM_SIZE          proc2Dmem_size,    // Size of data to read or write
-    output logic [`XLEN-1:0] proc2Dmem_addr,    // Address sent to Data memory
-    output logic [`XLEN-1:0] proc2Dmem_data     // Data sent to Data memory
+    output MEM_WB_PACKET mem_packet,
+    output BUS_COMMAND   proc2Dmem_command, // The memory command
+    output MEM_SIZE      proc2Dmem_size,    // Size of data to read or write
+    output ADDR          proc2Dmem_addr,    // Address sent to Data memory
+    output DATA          proc2Dmem_data     // Data sent to Data memory
 );
 
-    logic [`XLEN-1:0] read_data;
+    logic [31:0] read_data;
 
     assign mem_packet.result = (ex_mem_reg.rd_mem) ? read_data : ex_mem_reg.alu_result;
 
@@ -50,16 +50,16 @@ module stage_mem (
         if (ex_mem_reg.rd_unsigned) begin
             // unsigned: zero-extend the data
             if (ex_mem_reg.mem_size == BYTE) begin
-                read_data[`XLEN-1:8] = 0;
+                read_data[31:8] = 0;
             end else if (ex_mem_reg.mem_size == HALF) begin
-                read_data[`XLEN-1:16] = 0;
+                read_data[31:16] = 0;
             end
         end else begin
             // signed: sign-extend the data
             if (ex_mem_reg.mem_size[1:0] == BYTE) begin
-                read_data[`XLEN-1:8] = {(`XLEN-8){Dmem2proc_data[7]}};
+                read_data[31:8] = {(24){Dmem2proc_data[7]}};
             end else if (ex_mem_reg.mem_size == HALF) begin
-                read_data[`XLEN-1:16] = {(`XLEN-16){Dmem2proc_data[15]}};
+                read_data[31:16] = {(16){Dmem2proc_data[15]}};
             end
         end
     end

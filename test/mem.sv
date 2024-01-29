@@ -12,22 +12,24 @@
 `include "sys_defs.svh"
 
 module mem (
-    input             clk,           // Memory clock
-    input [`XLEN-1:0] proc2mem_addr, // address for current command
-                                     // support for memory model with byte level addressing
-    input [63:0]      proc2mem_data, // address for current command
+    input           clk,           // Memory clock
+    input ADDR      proc2mem_addr, // address for current command
+                                  // support for memory model with byte level addressing
+    input MEM_BLOCK proc2mem_data, // address for current command
 `ifndef CACHE_MODE
-    input MEM_SIZE    proc2mem_size, // BYTE, HALF, WORD or DOUBLE
+    input MEM_SIZE  proc2mem_size, // BYTE, HALF, WORD or DOUBLE
 `endif
-    input [1:0]       proc2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    input [1:0]     proc2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
 
-    output logic [3:0]  mem2proc_response, // 0 = can't accept, other=tag of transaction
-    output logic [63:0] mem2proc_data,     // data resulting from a load
-    output logic [3:0]  mem2proc_tag       // 0 = no value, other=tag of transaction
+    output logic [3:0] mem2proc_response, // 0 = can't accept, other=tag of transaction
+    output MEM_BLOCK   mem2proc_data,     // data resulting from a load
+    output logic [3:0] mem2proc_tag       // 0 = no value, other=tag of transaction
 );
 
-    logic [63:0] next_mem2proc_data;
-    logic [3:0]  next_mem2proc_response, next_mem2proc_tag;
+    MEM_BLOCK   next_mem2proc_data;
+    logic [3:0] next_mem2proc_response, next_mem2proc_tag;
+    wire [31:3] block_addr = proc2mem_addr[31:3];
+    wire [2:0] byte_addr = proc2mem_addr[2:0];
 
     logic [63:0]                   unified_memory [`MEM_64BIT_LINES - 1:0];
     logic [63:0]                   loaded_data    [`NUM_MEM_TAGS:1];
@@ -64,9 +66,9 @@ module mem (
 
                 if(proc2mem_command == BUS_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
-                    loaded_data[i]     = unified_memory[proc2mem_addr[`XLEN-1:3]];
+                    loaded_data[i]     = unified_memory[block_addr];
                 end else begin
-                    unified_memory[proc2mem_addr[`XLEN-1:3]]=proc2mem_data;
+                    unified_memory[block_addr] = proc2mem_data;
                 end
             end
 
@@ -83,7 +85,7 @@ module mem (
     end
 `else
     wire valid_address = (proc2mem_addr<`MEM_SIZE_IN_BYTES);
-    EXAMPLE_CACHE_BLOCK c;
+    MEM_BLOCK c;
     // temporary wires for byte level selection because verilog does not support variable range selection
     always @(negedge clk) begin
         next_mem2proc_tag      = 4'b0;
@@ -105,13 +107,13 @@ module mem (
                                           // though this could be done via a non-number
                                           // definition for this macro
                 //filling up these temp variables
-                c.byte_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
-                c.half_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
-                c.word_level = unified_memory[proc2mem_addr[`XLEN-1:3]];
+                c.byte_level = unified_memory[block_addr];
+                c.half_level = unified_memory[block_addr];
+                c.word_level = unified_memory[block_addr];
 
                 if(proc2mem_command == BUS_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
-                    loaded_data[i]     = unified_memory[proc2mem_addr[`XLEN-1:3]];
+                    loaded_data[i]     = unified_memory[block_addr];
                     case (proc2mem_size)
                         BYTE: begin
                             loaded_data[i] = {56'b0, c.byte_level[proc2mem_addr[2:0]]};
@@ -122,33 +124,34 @@ module mem (
                         WORD: begin
                             loaded_data[i] = {32'b0, c.word_level[proc2mem_addr[2]]};
                         end
-                        DOUBLE:
-                            loaded_data[i] = unified_memory[proc2mem_addr[`XLEN-1:3]];
+                        DOUBLE: begin
+                            loaded_data[i] = unified_memory[block_addr];
+                        end
                     endcase
 
                 end else begin
                     case (proc2mem_size)
                         BYTE: begin
                             c.byte_level[proc2mem_addr[2:0]] = proc2mem_data[7:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.byte_level;
+                            unified_memory[block_addr] = c.byte_level;
                         end
                         HALF: begin
                             c.half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.half_level;
+                            unified_memory[block_addr] = c.half_level;
                         end
                         WORD: begin
                             c.word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.word_level;
+                            unified_memory[block_addr] = c.word_level;
                         end
-                        default: begin
+                        DOUBLE: begin
                             c.byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                            unified_memory[proc2mem_addr[`XLEN-1:3]] = c.word_level;
+                            unified_memory[block_addr] = c.word_level;
                         end
                     endcase
                 end
             end
 
-            if((cycles_left[i]==16'd0) && waiting_for_bus[i] && !bus_filled) begin
+            if ((cycles_left[i]==16'd0) && waiting_for_bus[i] && !bus_filled) begin
                     bus_filled         = 1'b1;
                     next_mem2proc_tag  = i;
                     next_mem2proc_data = loaded_data[i];

@@ -16,9 +16,9 @@
 module stage_wb (
     input MEM_WB_PACKET mem_wb_reg,
 
-    output logic             wb_regfile_en,  // register write enable
-    output logic [4:0]       wb_regfile_idx, // register write index
-    output logic [`XLEN-1:0] wb_regfile_data // register write data
+    output logic   wb_regfile_en,  // register write enable
+    output REG_IDX wb_regfile_idx, // register write index
+    output DATA    wb_regfile_data // register write data
 );
 
     // This enable computation is sort of overkill since the reg file

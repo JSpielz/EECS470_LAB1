@@ -10,16 +10,16 @@
 `include "sys_defs.svh"
 
 module regfile (
-    input             clock, // system clock
+    input         clock, // system clock
     // note: no system reset, register values must be written before they can be read
-    input [4:0]       read_idx_1, read_idx_2, write_idx,
-    input             write_en,
-    input [`XLEN-1:0] write_data,
+    input REG_IDX read_idx_1, read_idx_2, write_idx,
+    input         write_en,
+    input DATA    write_data,
 
-    output logic [`XLEN-1:0] read_out_1, read_out_2
+    output DATA   read_out_1, read_out_2
 );
 
-    logic [31:1] [`XLEN-1:0] registers; // 31 XLEN-length Registers (0 is known)
+    logic [31:1] [31:0] registers; // 31 32-length Registers (0 is known)
 
     // Read port 1
     always_comb begin

@@ -23,8 +23,10 @@
 `define FALSE 1'h0
 `define TRUE  1'h1
 
-// data length
-`define XLEN 32
+// word and register sizes
+typedef logic [31:0] ADDR;
+typedef logic [31:0] DATA;
+typedef logic [4:0] REG_IDX;
 
 // the zero register
 // In RISC-V, any read of this register returns zero and any writes are thrown away
@@ -48,11 +50,13 @@
 `define MEM_SIZE_IN_BYTES (64*1024)
 `define MEM_64BIT_LINES   (`MEM_SIZE_IN_BYTES/8)
 
+// A memory or cache block
 typedef union packed {
     logic [7:0][7:0]  byte_level;
     logic [3:0][15:0] half_level;
     logic [1:0][31:0] word_level;
-} EXAMPLE_CACHE_BLOCK;
+    logic      [63:0] dbbl_level;
+} MEM_BLOCK;
 
 typedef enum logic [1:0] {
     BYTE   = 2'h0,
@@ -243,10 +247,10 @@ typedef union packed {
  * Data exchanged from the IF to the ID stage
  */
 typedef struct packed {
-    INST              inst;
-    logic [`XLEN-1:0] PC;
-    logic [`XLEN-1:0] NPC; // PC + 4
-    logic             valid;
+    INST  inst;
+    ADDR  PC;
+    ADDR  NPC; // PC + 4
+    logic valid;
 } IF_ID_PACKET;
 
 /**
@@ -254,27 +258,27 @@ typedef struct packed {
  * Data exchanged from the ID to the EX stage
  */
 typedef struct packed {
-    INST              inst;
-    logic [`XLEN-1:0] PC;
-    logic [`XLEN-1:0] NPC; // PC + 4
+    INST inst;
+    ADDR PC;
+    ADDR NPC; // PC + 4
 
-    logic [`XLEN-1:0] rs1_value; // reg A value
-    logic [`XLEN-1:0] rs2_value; // reg B value
+    DATA rs1_value; // reg A value
+    DATA rs2_value; // reg B value
 
     ALU_OPA_SELECT opa_select; // ALU opa mux select (ALU_OPA_xxx *)
     ALU_OPB_SELECT opb_select; // ALU opb mux select (ALU_OPB_xxx *)
 
-    logic [4:0] dest_reg_idx;  // destination (writeback) register index
-    ALU_FUNC    alu_func;      // ALU function select (ALU_xxx *)
-    logic       rd_mem;        // Does inst read memory?
-    logic       wr_mem;        // Does inst write memory?
-    logic       cond_branch;   // Is inst a conditional branch?
-    logic       uncond_branch; // Is inst an unconditional branch?
-    logic       halt;          // Is this a halt?
-    logic       illegal;       // Is this instruction illegal?
-    logic       csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
+    REG_IDX  dest_reg_idx;  // destination (writeback) register index
+    ALU_FUNC alu_func;      // ALU function select (ALU_xxx *)
+    logic    rd_mem;        // Does inst read memory?
+    logic    wr_mem;        // Does inst write memory?
+    logic    cond_branch;   // Is inst a conditional branch?
+    logic    uncond_branch; // Is inst an unconditional branch?
+    logic    halt;          // Is this a halt?
+    logic    illegal;       // Is this instruction illegal?
+    logic    csr_op;        // Is this a CSR operation? (we only used this as a cheap way to get return code)
 
-    logic       valid;
+    logic    valid;
 } ID_EX_PACKET;
 
 /**
@@ -282,21 +286,21 @@ typedef struct packed {
  * Data exchanged from the EX to the MEM stage
  */
 typedef struct packed {
-    logic [`XLEN-1:0] alu_result;
-    logic [`XLEN-1:0] NPC;
+    DATA alu_result;
+    ADDR NPC;
 
-    logic             take_branch; // Is this a taken branch?
+    logic    take_branch; // Is this a taken branch?
     // Pass-through from decode stage
-    logic [`XLEN-1:0] rs2_value;
-    logic             rd_mem;
-    logic             wr_mem;
-    logic [4:0]       dest_reg_idx;
-    logic             halt;
-    logic             illegal;
-    logic             csr_op;
-    logic             rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
-    MEM_SIZE          mem_size;
-    logic             valid;
+    DATA     rs2_value;
+    logic    rd_mem;
+    logic    wr_mem;
+    REG_IDX  dest_reg_idx;
+    logic    halt;
+    logic    illegal;
+    logic    csr_op;
+    logic    rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
+    MEM_SIZE mem_size;
+    logic    valid;
 } EX_MEM_PACKET;
 
 /**
@@ -306,13 +310,13 @@ typedef struct packed {
  * Does not include data sent from the MEM stage to memory
  */
 typedef struct packed {
-    logic [`XLEN-1:0] result;
-    logic [`XLEN-1:0] NPC;
-    logic [4:0]       dest_reg_idx; // writeback destination (ZERO_REG if no writeback)
-    logic             take_branch;
-    logic             halt;    // not used by wb stage
-    logic             illegal; // not used by wb stage
-    logic             valid;
+    DATA    result;
+    ADDR    NPC;
+    REG_IDX dest_reg_idx; // writeback destination (ZERO_REG if no writeback)
+    logic   take_branch;
+    logic   halt;    // not used by wb stage
+    logic   illegal; // not used by wb stage
+    logic   valid;
 } MEM_WB_PACKET;
 
 /**
