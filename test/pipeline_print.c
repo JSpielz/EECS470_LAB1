@@ -144,7 +144,7 @@ void print_stage(int inst, int npc, int valid_inst)
     if (!valid_inst)
         fprintf(ppfile, "|%4s:%-8s", "-", "-");
     else
-        fprintf(ppfile, "|%Xx:%-8s", npc, decode_inst(inst));
+        fprintf(ppfile, "|%4X:%-8s", npc, decode_inst(inst));
 }
 
 void print_reg(int wb_data, int wb_idx, int wb_en)
