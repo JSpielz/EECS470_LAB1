@@ -39,6 +39,8 @@ module mem (
     logic acquire_tag;
     logic bus_filled;
 
+    MEM_BLOCK load_data;
+
 `ifdef CACHE_MODE
     wire valid_address = (proc2mem_addr[2:0] == 3'b0) &
                          (proc2mem_addr < `MEM_SIZE_IN_BYTES);
@@ -69,8 +71,9 @@ module mem (
                                           // definition for this macro
 `ifdef CACHE_MODE
                 if (proc2mem_command == BUS_LOAD) begin
+                    load_data = unified_memory[block_addr];
                     waiting_for_bus[i] = 1'b1;
-                    loaded_data[i]     = unified_memory[block_addr];
+                    loaded_data[i]     = load_data;
                 end else begin
                     unified_memory[block_addr] = proc2mem_data;
                 end
@@ -78,13 +81,14 @@ module mem (
                 // filling up the block data
                 block = unified_memory[block_addr];
                 if (proc2mem_command == BUS_LOAD) begin
-                    waiting_for_bus[i] = 1'b1;
                     case (proc2mem_size)
-                        BYTE:   loaded_data[i] = {56'b0, block.byte_level[byte_addr[2:0]]};
-                        HALF:   loaded_data[i] = {48'b0, block.half_level[byte_addr[2:1]]};
-                        WORD:   loaded_data[i] = {32'b0, block.word_level[byte_addr[2]]};
-                        DOUBLE: loaded_data[i] = block;
+                        BYTE:   load_data = {56'b0, block.byte_level[byte_addr[2:0]]};
+                        HALF:   load_data = {48'b0, block.half_level[byte_addr[2:1]]};
+                        WORD:   load_data = {32'b0, block.word_level[byte_addr[2]]};
+                        DOUBLE: load_data = block;
                     endcase
+                    waiting_for_bus[i] = 1'b1;
+                    loaded_data[i] = load_data;
 
                 end else begin
                     case (proc2mem_size)
