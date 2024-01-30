@@ -39,11 +39,15 @@ module mem (
     logic acquire_tag;
     logic bus_filled;
 
-// Implement the Memory function
 `ifdef CACHE_MODE
     wire valid_address = (proc2mem_addr[2:0] == 3'b0) &
                          (proc2mem_addr < `MEM_SIZE_IN_BYTES);
+`else
+    wire valid_address = (proc2mem_addr < `MEM_SIZE_IN_BYTES);
+`endif
 
+// Implement the Memory function
+`ifdef CACHE_MODE
     always @(negedge clock) begin
         next_mem2proc_tag      = 4'b0;
         next_mem2proc_response = 4'b0;
@@ -84,7 +88,6 @@ module mem (
         mem2proc_tag      <= next_mem2proc_tag;
     end
 `else
-    wire valid_address = (proc2mem_addr < `MEM_SIZE_IN_BYTES);
     MEM_BLOCK c;
     // temporary wires for byte level selection because verilog does not support variable range selection
     always @(negedge clock) begin
