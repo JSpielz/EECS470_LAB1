@@ -209,7 +209,7 @@ module testbench;
 
         // Dump clock and time onto stdout
         $display("c%h%7.0d",clock,clock_count);
-        $display("t%8.0f",$time);
+        $display("t%8.0f",$time-2); // undo the #2 above
         $display("z%h",reset);
 
         // Dump register file contents
