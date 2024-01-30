@@ -258,8 +258,8 @@ compile_all: $(PROGRAMS:=.mem)
 DUMP_PROGRAMS = $(ASSEMBLY:.c=) $(C_CODE:.c=.debug)
 
 # 'make <my_program>.dump' will create both files at once!
-programs/%.dump: programs/%.dump_x programs/%.dump_abi ;
-.PHONY: programs/%.dump
+./%.dump: programs/%.dump_x programs/%.dump_abi ;
+.PHONY: ./%.dump
 # Tell Make to treat the .dump_* files as "precious" and not to rm them as intermediaries to %.dump
 .PRECIOUS: %.dump_x %.dump_abi
 
