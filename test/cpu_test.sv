@@ -34,9 +34,8 @@ module testbench;
     // variables used in the testbench
     logic        clock;
     logic        reset;
-    logic [31:0] clock_count;
+    logic [31:0] clock_count; // also used for terminating infinite loops
     logic [31:0] instr_count;
-    logic [63:0] debug_counter; // counter used for when pipeline infinite loops, forces termination
 
     MEM_COMMAND proc2mem_command;
     ADDR        proc2mem_addr;
@@ -168,22 +167,34 @@ module testbench;
 
 
     // Show contents of a range of Unified Memory, in both hex and decimal
+    // Also output the final processor status
     task show_mem_with_decimal;
+        input EXCEPTION_CODE final_status;
         input [31:0] start_addr;
         input [31:0] end_addr;
         int showing_data;
         begin
+            $display("@@@ Unified Memory contents hex on left, decimal on right: ");
             $display("@@@");
-            showing_data=0;
-            for(int k=start_addr;k<=end_addr; k=k+1)
+            showing_data = 0;
+            for (int k = start_addr; k <= end_addr; k = k+1) begin
                 if (memory.unified_memory[k] != 0) begin
                     $display("@@@ mem[%5d] = %x : %0d", k*8, memory.unified_memory[k],
                                                              memory.unified_memory[k]);
-                    showing_data=1;
-                end else if(showing_data!=0) begin
+                    showing_data = 1;
+                end else if (showing_data != 0) begin
                     $display("@@@");
-                    showing_data=0;
+                    showing_data = 0;
                 end
+            end
+            $display("@@@");
+
+            case (final_status)
+                LOAD_ACCESS_FAULT: $display("@@@ System halted on memory error");
+                HALTED_ON_WFI:     $display("@@@ System halted on WFI instruction");
+                ILLEGAL_INST:      $display("@@@ System halted on illegal instruction");
+                default:           $display("@@@ System halted on unknown error code %x", final_status);
+            endcase
             $display("@@@");
         end
     endtask // task show_mem_with_decimal
@@ -236,10 +247,8 @@ module testbench;
 
 
     always @(negedge clock) begin
-        if(reset) begin
-            $display("@@\n@@  %t : System STILL at reset, can't show anything\n@@",
-                     $realtime);
-            debug_counter <= 0;
+        if (reset) begin
+            $display("@@\n@@  %t : System STILL at reset, can't show anything\n@@", $realtime);
         end else begin
             #2;
 
@@ -257,7 +266,7 @@ module testbench;
 
             // print register write information to the writeback output file
             if (pipeline_completed_insts > 0) begin
-                if(pipeline_commit_wr_en)
+                if (pipeline_commit_wr_en)
                     $fdisplay(wb_fileno, "PC=%x, REG[%d]=%x",
                               pipeline_commit_NPC - 4,
                               pipeline_commit_wr_idx,
@@ -266,32 +275,18 @@ module testbench;
                     $fdisplay(wb_fileno, "PC=%x, ---", pipeline_commit_NPC - 4);
             end
 
-            // deal with any halting conditions
-            if(pipeline_error_status != NO_ERROR || debug_counter > 50000000) begin
-                $display("@@@ Unified Memory contents hex on left, decimal on right: ");
-                show_mem_with_decimal(0,`MEM_64BIT_LINES - 1);
-                // 8Bytes per line, 16kB total
-
-                $display("@@  %t : System halted\n@@", $realtime);
-
-                case(pipeline_error_status)
-                    LOAD_ACCESS_FAULT:
-                        $display("@@@ System halted on memory error");
-                    HALTED_ON_WFI:
-                        $display("@@@ System halted on WFI instruction");
-                    ILLEGAL_INST:
-                        $display("@@@ System halted on illegal instruction");
-                    default:
-                        $display("@@@ System halted on unknown error code %x",
-                            pipeline_error_status);
-                endcase
-                $display("@@@\n@@");
-                output_cpi_file;
+            // stop the processor
+            if (pipeline_error_status != NO_ERROR || clock_count > 50000000) begin
+                // display the final memory and status
+                show_mem_with_decimal(pipeline_error_status, 0,`MEM_64BIT_LINES - 1);
+                // output the final CPI
+                output_cpi_file();
+                // close the writeback and pipeline output files
                 close_pipeline_output_file();
                 $fclose(wb_fileno);
+
                 #100 $finish;
             end
-            debug_counter <= debug_counter + 1;
         end // if(reset)
     end
 
