@@ -71,12 +71,13 @@ necessary, so you can run each without needing to run anything else
 first.
 
 `make <my_program>.out` should be your main command for running
-programs: it creates the `<my_program>.out`, `<my_program>.wb`, and
-`<my_program>.ppln` output, writeback, and pipeline output files in the
-`output/` directory. The output file includes the status of memory and
-the CPI, the writeback file is the list of writes to registers done by
-the program, and the pipeline file is the state of each of the pipeline
-stages as the program is run.
+programs: it creates the `<my_program>.out`, `<my_program>.cpi`,
+`<my_program>.wb`, and `<my_program>.ppln` output, CPI, writeback, and
+pipeline output files in the `output/` directory. The output file
+includes the processor status and the final state of memory, the CPI
+file contains the total runtime and CPI calculation, the writeback file
+is the list of writes to registers done by the program, and the pipeline
+file is the state of each of the pipeline stages as the program is run.
 
 The following Makefile rules are available to run programs on the
 processor:
@@ -85,7 +86,7 @@ processor:
 # ---- Program Execution ---- #
 # These are your main commands for running programs and generating output
 make <my_program>.out      <- run a program on simv
-                              generate *.out, *.wb, and *.ppln files in 'output/'
+                              output *.out, *.cpi, *.wb, and *.ppln files
 make <my_program>.syn.out  <- run a program on syn_simv and do the same
 
 # ---- Executable Compilation ---- #

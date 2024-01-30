@@ -21,20 +21,21 @@ import "DPI-C" function void close_pipeline_output_file();
 
 
 module testbench;
-    // used to parameterize which files are used for memory and writeback/pipeline outputs
-    // "./simv" uses program.mem, writeback.out, and pipeline.out
-    // but now "./simv +MEMORY=<my_program>.mem" loads <my_program>.mem instead
-    // use +WRITEBACK=<my_program>.wb and +PIPELINE=<my_program>.ppln for those outputs as well
-    string program_memory_file;
-    string writeback_output_file;
-    string pipeline_output_file;
+    // string inputs for loading memory and output files
+    // run like: ./simv +MEMORY=programs/<my_program.mem> +OUTPUT=output/<my_program>
+    // this testbench will generate 3 output files based on the output
+    // named OUTPUT.{cpi, wb, ppln} for the cpi, writeback, and pipeline outputs
+    // and the testbench will display to stdout the final memory state of the
+    // processor
+    string program_memory_file, output_name;
+    string cpi_output_file, writeback_output_file, pipeline_output_file;
+    int cpi_fileno, wb_fileno; // verilog uses integer file handles with $fopen and $fclose
 
     // variables used in the testbench
     logic        clock;
     logic        reset;
     logic [31:0] clock_count;
     logic [31:0] instr_count;
-    int          wb_fileno;
     logic [63:0] debug_counter; // counter used for when pipeline infinite loops, forces termination
 
     MEM_COMMAND proc2mem_command;
@@ -136,17 +137,34 @@ module testbench;
     end
 
 
-    // Task to display # of elapsed clock edges
-    task show_clk_count;
-        real cpi;
-        begin
-            cpi = (clock_count + 1.0) / instr_count;
-            $display("@@  %0d cycles / %0d instrs = %f CPI\n@@",
-                      clock_count+1, instr_count, cpi);
-            $display("@@  %4.2f ns total time to execute\n@@\n",
-                      clock_count * `CLOCK_PERIOD);
+    // Count the number of posedges and number of instructions completed
+    // till simulation ends
+    always @(posedge clock) begin
+        if(reset) begin
+            clock_count <= 0;
+            instr_count <= 0;
+        end else begin
+            clock_count <= clock_count + 1;
+            instr_count <= instr_count + pipeline_completed_insts;
         end
-    endtask // task show_clk_count
+    end
+
+
+    // Task to output the final CPI and # of elapsed clock edges
+    task output_cpi_file;
+        real cpi;
+        int num_cycles;
+        begin
+            num_cycles = clock_count + 1;
+            cpi = $itor(num_cycles) / instr_count; // must convert int to real
+            cpi_fileno = $fopen(cpi_output_file);
+            $fdisplay(cpi_fileno, "@@@  %0d cycles / %0d instrs = %f CPI",
+                      num_cycles, instr_count, cpi);
+            $fdisplay(cpi_fileno, "@@@  %4.2f ns total time to execute",
+                      num_cycles * `CLOCK_PERIOD);
+            $fclose(cpi_fileno);
+        end
+    endtask // task output_cpi_file
 
 
     // Show contents of a range of Unified Memory, in both hex and decimal
@@ -172,26 +190,21 @@ module testbench;
 
 
     initial begin
-        //$dumpvars;
-
         // set paramterized strings, see comment at start of module
         if ($value$plusargs("MEMORY=%s", program_memory_file)) begin
             $display("Loading memory file: %s", program_memory_file);
         end else begin
-            $display("Loading default memory file: program.mem");
-            program_memory_file = "program.mem";
+            $display("Did not receive '+MEMORY=' argument. Exiting.");
+            $finish;
         end
-        if ($value$plusargs("WRITEBACK=%s", writeback_output_file)) begin
-            $display("Using writeback output file: %s", writeback_output_file);
+        if ($value$plusargs("OUTPUT=%s", output_name)) begin
+            $display("Outputting files to: %s.{cpi, wb, ppln}", output_name);
+            cpi_output_file       = {output_name,".cpi"};
+            writeback_output_file = {output_name,".wb"};
+            pipeline_output_file  = {output_name,".ppln"};
         end else begin
-            $display("Using default writeback output file: writeback.out");
-            writeback_output_file = "writeback.out";
-        end
-        if ($value$plusargs("PIPELINE=%s", pipeline_output_file)) begin
-            $display("Using pipeline output file: %s", pipeline_output_file);
-        end else begin
-            $display("Using default pipeline output file: pipeline.out");
-            pipeline_output_file = "pipeline.out";
+            $display("Did not receive '+OUTPUT=' argument. Exiting.");
+            $finish;
         end
 
         clock = 1'b0;
@@ -219,19 +232,6 @@ module testbench;
         // Open pipeline output file AFTER throwing the reset otherwise the reset state is displayed
         open_pipeline_output_file(pipeline_output_file);
         print_header();
-    end
-
-
-    // Count the number of posedges and number of instructions completed
-    // till simulation ends
-    always @(posedge clock) begin
-        if(reset) begin
-            clock_count <= 0;
-            instr_count <= 0;
-        end else begin
-            clock_count <= (clock_count + 1);
-            instr_count <= (instr_count + pipeline_completed_insts);
-        end
     end
 
 
@@ -286,7 +286,7 @@ module testbench;
                             pipeline_error_status);
                 endcase
                 $display("@@@\n@@");
-                show_clk_count;
+                output_cpi_file;
                 close_pipeline_output_file();
                 $fclose(wb_fileno);
                 #100 $finish;

@@ -17,7 +17,7 @@
 
 # ---- Program Execution ---- #
 # these are your main commands for running programs and generating output
-# make <my_program>.out      <- run a program on simv and generate .out, .wb, and .ppln files in 'output/'
+# make <my_program>.out      <- run a program on simv and output .out, .cpi, .wb, and .ppln files
 # make <my_program>.syn.out  <- run a program on syn_simv and do the same
 # make simulate_all          <- run every program on simv at once (in parallel with -j)
 # make simulate_all_syn      <- run every program on syn_simv at once (in parallel with -j)
@@ -287,10 +287,10 @@ dump_all: $(DUMP_PROGRAMS:=.dump_x) $(DUMP_PROGRAMS:=.dump_abi)
 # e.g. 'make sampler.out' does the following from a clean directory:
 #   1. compiles simv
 #   2. compiles programs/sampler.s into its .elf and then .mem files (in programs/)
-#   3. runs ./simv +MEMORY=programs/sampler.mem +WRITEBACK=output/sampler.wb +PIPELINE=output/sampler.ppln > output/sampler.out
-#   4. which creates the sampler.out, sampler.wb, and sampler.ppln files in output/
+#   3. runs ./simv +MEMORY=programs/sampler.mem +OUTPUT=output/sampler > output/sampler.out
+#   4. which creates the sampler.out, sampler.cpi, sampler.wb, and sampler.ppln files in output/
 # the same can be done for synthesis by doing 'make sampler.syn.out'
-# which will also create .syn.wb and .syn.ppln files in output/
+# which will also create .syn.cpi, .syn.wb, and .syn.ppln files in output/
 
 # targets built in the 'output/' directory should create output/ if it doesn't exist
 # (it's deleted entirely by 'make nuke')
@@ -298,14 +298,12 @@ dump_all: $(DUMP_PROGRAMS:=.dump_x) $(DUMP_PROGRAMS:=.dump_abi)
 output:
 	mkdir -p output
 
-OUTPUTS = $(PROGRAMS:programs/%=output/%)
-
 # run a program and produce output files
 output/%.out: programs/%.mem simv | output
 	@$(call PRINT_COLOR, 5, running simv on $<)
-	./simv +MEMORY=$< +WRITEBACK=$(@D)/$*.wb +PIPELINE=$(@D)/$*.ppln > $@
+	./simv +MEMORY=$< +OUTPUT=output/$* > $@
 	@$(call PRINT_COLOR, 6, finished running simv on $<)
-	@$(call PRINT_COLOR, 2, output is in $@ $(@D)/$*.wb and $(@D)/$*.ppln)
+	@$(call PRINT_COLOR, 2, output is in output/$*.{out cpi wb ppln})
 # NOTE: this uses a 'static pattern rule' to match a list of known targets to a pattern
 # and then generates the correct rule based on the pattern, where % and $* match
 # so for the target 'output/sampler.out' the % matches 'sampler' and depends on programs/sampler.mem
@@ -317,16 +315,18 @@ output/%.out: programs/%.mem simv | output
 output/%.syn.out: programs/%.mem syn_simv | output
 	@$(call PRINT_COLOR, 5, running syn_simv on $<)
 	@$(call PRINT_COLOR, 3, this might take a while...)
-	./syn_simv +MEMORY=$< +WRITEBACK=$(@D)/$*.syn.wb +PIPELINE=$(@D)/$*.syn.ppln > $@
+	./syn_simv +MEMORY=$< +OUTPUT=output/$*.syn > $@
 	@$(call PRINT_COLOR, 6, finished running syn_simv on $<)
-	@$(call PRINT_COLOR, 2, output is in $@ $(@D)/$*.syn.wb and $(@D)/$*.syn.ppln)
+	@$(call PRINT_COLOR, 2, output is in output/$*.syn.{out cpi wb ppln})
 
 # Allow us to type 'make <my_program>.out' instead of 'make output/<my_program>.out'
 ./%.out: output/%.out ;
 .PHONY: ./%.out
 
-# Declare that creating a %.out file also creates both %.wb and %.ppln files
-%.wb %.ppln: %.out ;
+# Declare that creating a %.out file also creates both %.cpi, %.wb, and %.ppln files
+%.cpi %.wb %.ppln: %.out ;
+
+.PRECIOUS: %.out %.cpi %.wb %.ppln
 
 # run all programs in one command (use 'make -j' to run multithreaded)
 simulate_all: simv compile_all $(PROGRAMS:programs/%=output/%.out)
@@ -413,7 +413,7 @@ clean_exe:
 
 clean_run_files:
 	@$(call PRINT_COLOR, 3, removing per-run outputs)
-	rm -rf output/*.out output/*.wb output/*.ppln
+	rm -rf output/*.out output/*.cpi output/*.wb output/*.ppln
 
 clean_synth:
 	@$(call PRINT_COLOR, 1, removing synthesis files)
