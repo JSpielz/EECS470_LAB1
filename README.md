@@ -7,9 +7,10 @@ This is the repository for a 5-stage, pipelined, synthesizable, RISC-V
 processor which will be the basis of your final project. VeriSimpleV is
 based on the common 5-stage pipeline mentioned in class and the text.
 
-See the [Project Specification](https://drive.google.com/file/d/1XaPiocfSfWfQdJxsrXNeeH1_XXoLH6jF/view?usp=drive_link)
-and the [RISC-V Introduction slides](https://drive.google.com/file/d/1xsHJ_FIMXR7fHx27GREDBSqr7L3B3Ql_/view?usp=drive_link)
-for more details on the processor and assignment.
+See the [Project Specification](https://www.eecs.umich.edu/courses/eecs470/labs/p3_specification.pdf)
+for details on the processor and assignment. There will also be
+additional slides during this week's lab that discuss the project. They
+will be uploaded before the lab.
 
 ## Assignment
 
@@ -23,6 +24,33 @@ it has a miserable CPI of 5.0.
 Your assignment is to modify the VeriSimpleV processor to remove the
 stalls and implement hazard and forwarding logic as described in
 lecture and the text. See the specification for more details.
+
+You will also create multiple short assembly unit tests
+to expose buggy processors.
+
+For this part you will write short RISC-V Assembly unit tests to expose
+memory correctness or CPI bugs in buggy processors. Each test must be 15
+or fewer total lines (including comments) and must run to completion on
+a correct processor. It will then be run on a buggy processor and
+compared to the correct output. If they differ for any of your test
+cases, then you exposed the bug!
+
+RISC-V assembly instructions look like:  
+```
+addi x1, x0, 5    # register 1 = register 0 + 5
+```
+
+You should reference our sample assembly programs in `programs/` to
+write test cases which expose a buggy processor via either memory
+correctness or CPI.
+
+You may submit up to five test cases by adding files to the `programs/`
+folder that match the pattern:  
+`programs/test_[12345].s`
+
+i.e. `programs/test_1.s`
+
+These are only due at the end of the project and not the milestone.
 
 ### Project Files
 
