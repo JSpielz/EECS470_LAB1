@@ -114,7 +114,7 @@ module testbench;
     // Instantiate the Data Memory
     mem memory (
         // Inputs
-        .clk              (clock),
+        .clock            (clock),
         .proc2mem_command (proc2mem_command),
         .proc2mem_addr    (proc2mem_addr),
         .proc2mem_data    (proc2mem_data),

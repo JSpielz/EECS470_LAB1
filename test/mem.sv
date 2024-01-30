@@ -12,9 +12,9 @@
 `include "sys_defs.svh"
 
 module mem (
-    input           clk,           // Memory clock
+    input           clock,         // Memory clock
     input ADDR      proc2mem_addr, // address for current command
-                                  // support for memory model with byte level addressing
+                                   // support for memory model with byte level addressing
     input MEM_BLOCK proc2mem_data, // address for current command
 `ifndef CACHE_MODE
     input MEM_SIZE  proc2mem_size, // BYTE, HALF, WORD or DOUBLE
@@ -44,7 +44,7 @@ module mem (
     wire valid_address = (proc2mem_addr[2:0]==3'b0) &
                          (proc2mem_addr<`MEM_SIZE_IN_BYTES);
 
-    always @(negedge clk) begin
+    always @(negedge clock) begin
         next_mem2proc_tag      = 4'b0;
         next_mem2proc_response = 4'b0;
         next_mem2proc_data     = 64'bx;
@@ -87,7 +87,7 @@ module mem (
     wire valid_address = (proc2mem_addr<`MEM_SIZE_IN_BYTES);
     MEM_BLOCK c;
     // temporary wires for byte level selection because verilog does not support variable range selection
-    always @(negedge clk) begin
+    always @(negedge clock) begin
         next_mem2proc_tag      = 4'b0;
         next_mem2proc_response = 4'b0;
         next_mem2proc_data     = 64'bx;
@@ -168,7 +168,7 @@ module mem (
     initial begin
         // This posedge is very important, it ensures that we don't enter a race
         // race condition with either of the negedge blocks above.
-        @(posedge clk);
+        @(posedge clock);
         for(int i=0; i<`MEM_64BIT_LINES; i=i+1) begin
             unified_memory[i] = 64'h0;
         end
