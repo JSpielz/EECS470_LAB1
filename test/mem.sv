@@ -72,8 +72,6 @@ module mem (
 `ifdef CACHE_MODE
                 if (proc2mem_command == BUS_LOAD) begin
                     load_data = unified_memory[block_addr];
-                    waiting_for_bus[i] = 1'b1;
-                    loaded_data[i]     = load_data;
                 end else begin
                     unified_memory[block_addr] = proc2mem_data;
                 end
@@ -87,8 +85,6 @@ module mem (
                         WORD:   load_data = {32'b0, block.word_level[byte_addr[2]]};
                         DOUBLE: load_data = block;
                     endcase
-                    waiting_for_bus[i] = 1'b1;
-                    loaded_data[i] = load_data;
 
                 end else begin
                     case (proc2mem_size)
@@ -100,6 +96,10 @@ module mem (
                     unified_memory[block_addr] = block;
                 end
 `endif // CACHE_MODE
+                if (proc2mem_command == BUS_LOAD) begin
+                    waiting_for_bus[i] = 1'b1;
+                    loaded_data[i]     = load_data;
+                end
             end
 
             if ((cycles_left[i] == 16'd0) && waiting_for_bus[i] && !bus_filled) begin
