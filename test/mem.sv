@@ -26,15 +26,17 @@ module mem (
     output logic [3:0] mem2proc_tag       // 0 = no value, other=tag of transaction
 );
 
+    logic [63:0] unified_memory [`MEM_64BIT_LINES-1:0];
+
     MEM_BLOCK   next_mem2proc_data;
     logic [3:0] next_mem2proc_response, next_mem2proc_tag;
+
     wire [31:3] block_addr = proc2mem_addr[31:3];
     wire [2:0] byte_addr = proc2mem_addr[2:0];
 
-    logic [63:0]                   unified_memory [`MEM_64BIT_LINES - 1:0];
-    logic [63:0]                   loaded_data    [`NUM_MEM_TAGS:1];
-    logic [`NUM_MEM_TAGS:1] [15:0] cycles_left;
-    logic [`NUM_MEM_TAGS:1]        waiting_for_bus;
+    logic [63:0] loaded_data     [`NUM_MEM_TAGS:1];
+    logic [15:0] cycles_left     [`NUM_MEM_TAGS:1];
+    logic        waiting_for_bus [`NUM_MEM_TAGS:1];
 
     logic acquire_tag, bus_filled, valid_address;
 
