@@ -88,7 +88,7 @@ module mem (
         mem2proc_tag      <= next_mem2proc_tag;
     end
 `else
-    MEM_BLOCK c;
+    MEM_BLOCK block;
     // temporary wires for byte level selection because verilog does not support variable range selection
     always @(negedge clock) begin
         next_mem2proc_tag      = 4'b0;
@@ -109,23 +109,20 @@ module mem (
                                           // must add support for random lantencies
                                           // though this could be done via a non-number
                                           // definition for this macro
-                //filling up these temp variables
-                c.byte_level = unified_memory[block_addr];
-                c.half_level = unified_memory[block_addr];
-                c.word_level = unified_memory[block_addr];
+                // filling up the block data
+                block = unified_memory[block_addr];
 
                 if (proc2mem_command == BUS_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
-                    loaded_data[i]     = unified_memory[block_addr];
                     case (proc2mem_size)
                         BYTE: begin
-                            loaded_data[i] = {56'b0, c.byte_level[proc2mem_addr[2:0]]};
+                            loaded_data[i] = {56'b0, block.byte_level[proc2mem_addr[2:0]]};
                         end
                         HALF: begin
-                            loaded_data[i] = {48'b0, c.half_level[proc2mem_addr[2:1]]};
+                            loaded_data[i] = {48'b0, block.half_level[proc2mem_addr[2:1]]};
                         end
                         WORD: begin
-                            loaded_data[i] = {32'b0, c.word_level[proc2mem_addr[2]]};
+                            loaded_data[i] = {32'b0, block.word_level[proc2mem_addr[2]]};
                         end
                         DOUBLE: begin
                             loaded_data[i] = unified_memory[block_addr];
@@ -135,22 +132,19 @@ module mem (
                 end else begin
                     case (proc2mem_size)
                         BYTE: begin
-                            c.byte_level[proc2mem_addr[2:0]] = proc2mem_data[7:0];
-                            unified_memory[block_addr] = c.byte_level;
+                            block.byte_level[proc2mem_addr[2:0]] = proc2mem_data[7:0];
                         end
                         HALF: begin
-                            c.half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
-                            unified_memory[block_addr] = c.half_level;
+                            block.half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
                         end
                         WORD: begin
-                            c.word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                            unified_memory[block_addr] = c.word_level;
+                            block.word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
                         end
                         DOUBLE: begin
-                            c.byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                            unified_memory[block_addr] = c.word_level;
+                            block.byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
                         end
                     endcase
+                    unified_memory[block_addr] = block;
                 end
             end
 
