@@ -33,9 +33,9 @@ module testbench;
     logic [1:0] proc2mem_command;
     ADDR        proc2mem_addr;
     MEM_BLOCK   proc2mem_data;
-    logic [3:0] mem2proc_response;
+    MEM_TAG     mem2proc_transaction_tag;
     MEM_BLOCK   mem2proc_data;
-    logic [3:0] mem2proc_tag;
+    MEM_TAG     mem2proc_data_tag;
 `ifndef CACHE_MODE
     MEM_SIZE    proc2mem_size;
 `endif
@@ -67,11 +67,11 @@ module testbench;
     // Instantiate the Pipeline
     cpu verisimpleV (
         // Inputs
-        .clock             (clock),
-        .reset             (reset),
-        .mem2proc_response (mem2proc_response),
-        .mem2proc_data     (mem2proc_data),
-        .mem2proc_tag      (mem2proc_tag),
+        .clock (clock),
+        .reset (reset),
+        .mem2proc_transaction_tag (mem2proc_transaction_tag),
+        .mem2proc_data            (mem2proc_data),
+        .mem2proc_data_tag        (mem2proc_data_tag),
 
         // Outputs
         .proc2mem_command (proc2mem_command),
@@ -116,9 +116,9 @@ module testbench;
 `endif
 
         // Outputs
-        .mem2proc_response (mem2proc_response),
-        .mem2proc_data     (mem2proc_data),
-        .mem2proc_tag      (mem2proc_tag)
+        .mem2proc_transaction_tag (mem2proc_transaction_tag),
+        .mem2proc_data            (mem2proc_data),
+        .mem2proc_data_tag        (mem2proc_data_tag)
     );
 
 

@@ -13,9 +13,9 @@
 module cpu (
     input           clock,             // System clock
     input           reset,             // System reset
-    input [3:0]     mem2proc_response, // Tag from memory about current request
+    input MEM_TAG   mem2proc_transaction_tag, // Tag from memory about current request
     input MEM_BLOCK mem2proc_data,     // Data coming back from memory
-    input [3:0]     mem2proc_tag,      // Tag from memory about current reply
+    input MEM_TAG   mem2proc_data_tag, // Tag from memory about current reply
 
     output logic [1:0] proc2mem_command, // Command sent to memory
     output ADDR        proc2mem_addr,    // Address sent to memory
@@ -337,9 +337,9 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign pipeline_completed_insts = {3'b0, mem_wb_reg.valid}; // commit one valid instruction
-    assign pipeline_error_status = mem_wb_reg.illegal        ? ILLEGAL_INST :
-                                   mem_wb_reg.halt           ? HALTED_ON_WFI :
-                                   (mem2proc_response==4'h0) ? LOAD_ACCESS_FAULT : NO_ERROR;
+    assign pipeline_error_status = mem_wb_reg.illegal ? ILLEGAL_INST :
+                                   mem_wb_reg.halt    ? HALTED_ON_WFI :
+                                   (mem2proc_transaction_tag == 4'h0) ? LOAD_ACCESS_FAULT : NO_ERROR;
 
     assign pipeline_commit_wr_en   = wb_regfile_en;
     assign pipeline_commit_wr_idx  = wb_regfile_idx;

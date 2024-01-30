@@ -45,7 +45,10 @@ typedef logic [4:0] REG_IDX;
 // see if you can beat it's CPI in project 4 even with a 100ns latency!
 `define MEM_LATENCY_IN_CYCLES  0
 
+// memory tags represent a unique id for outstanding mem transactions
+// 0 is a sentinel value and is not a valid tag
 `define NUM_MEM_TAGS 15
+typedef logic [3:0] MEM_TAG;
 
 `define MEM_SIZE_IN_BYTES (64*1024)
 `define MEM_64BIT_LINES   (`MEM_SIZE_IN_BYTES/8)

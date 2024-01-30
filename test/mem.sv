@@ -21,15 +21,15 @@ module mem (
 `endif
     input [1:0]     proc2mem_command, // `MEM_NONE `MEM_LOAD or `MEM_STORE
 
-    output logic [3:0] mem2proc_response, // 0 = can't accept, other=tag of transaction
-    output MEM_BLOCK   mem2proc_data,     // data resulting from a load
-    output logic [3:0] mem2proc_tag       // 0 = no value, other=tag of transaction
+    output MEM_TAG   mem2proc_transaction_tag, // 0 = can't accept, other=tag of transaction
+    output MEM_BLOCK mem2proc_data,            // data resulting from a load
+    output MEM_TAG   mem2proc_data_tag         // 0 = no value, other=tag of transaction
 );
 
     logic [63:0] unified_memory [`MEM_64BIT_LINES-1:0];
 
     MEM_BLOCK   next_mem2proc_data;
-    logic [3:0] next_mem2proc_response, next_mem2proc_tag;
+    MEM_TAG     next_mem2proc_transaction_tag, next_mem2proc_data_tag;
 
     wire [31:3] block_addr = proc2mem_addr[31:3];
     wire [2:0] byte_addr = proc2mem_addr[2:0];
@@ -48,9 +48,9 @@ module mem (
 
     // Implement the Memory function
     always @(negedge clock) begin
-        next_mem2proc_tag      = 4'b0;
-        next_mem2proc_response = 4'b0;
-        next_mem2proc_data     = 64'bx;
+        next_mem2proc_transaction_tag = 4'b0;
+        next_mem2proc_data            = 64'bx;
+        next_mem2proc_data_tag        = 4'b0;
 
 `ifdef CACHE_MODE
         valid_address = (proc2mem_addr[2:0] == 3'b0) && (proc2mem_addr < `MEM_SIZE_IN_BYTES);
@@ -94,12 +94,12 @@ module mem (
                 cycles_left[i] = cycles_left[i] - 16'd1;
 
             end else if (acquire_tag && !waiting_for_bus[i]) begin
-                next_mem2proc_response = i;
-                acquire_tag            = 1'b0;
-                cycles_left[i]         = `MEM_LATENCY_IN_CYCLES;
-                                          // must add support for random lantencies
-                                          // though this could be done via a non-number
-                                          // definition for this macro
+                next_mem2proc_transaction_tag = i;
+                acquire_tag    = 1'b0;
+                cycles_left[i] = `MEM_LATENCY_IN_CYCLES;
+                                  // must add support for random lantencies
+                                  // though this could be done via a non-number
+                                  // definition for this macro
                 if (proc2mem_command == MEM_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
                     loaded_data[i]     = load_data;
@@ -108,14 +108,14 @@ module mem (
 
             if ((cycles_left[i] == 16'd0) && waiting_for_bus[i] && !bus_filled) begin
                     bus_filled         = 1'b1;
-                    next_mem2proc_tag  = i;
-                    next_mem2proc_data = loaded_data[i];
                     waiting_for_bus[i] = 1'b0;
+                    next_mem2proc_data_tag = i;
+                    next_mem2proc_data     = loaded_data[i];
             end
         end
-        mem2proc_response <= next_mem2proc_response;
-        mem2proc_data     <= next_mem2proc_data;
-        mem2proc_tag      <= next_mem2proc_tag;
+        mem2proc_transaction_tag <= next_mem2proc_transaction_tag;
+        mem2proc_data            <= next_mem2proc_data;
+        mem2proc_data_tag        <= next_mem2proc_data_tag;
     end
 
     // Initialise the entire memory
@@ -126,9 +126,9 @@ module mem (
         for (int i = 0; i < `MEM_64BIT_LINES; i = i+1) begin
             unified_memory[i] = 64'h0;
         end
-        mem2proc_data = 64'bx;
-        mem2proc_tag = 4'd0;
-        mem2proc_response = 4'd0;
+        mem2proc_transaction_tag = 4'd0;
+        mem2proc_data_tag = 4'd0;
+        mem2proc_data     = 64'bx;
         for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
             loaded_data[i] = 64'bx;
             cycles_left[i] = 16'd0;
