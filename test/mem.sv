@@ -97,9 +97,8 @@ module mem (
                 next_mem2proc_transaction_tag = i;
                 acquire_tag    = 1'b0;
                 cycles_left[i] = `MEM_LATENCY_IN_CYCLES;
-                                  // must add support for random lantencies
-                                  // though this could be done via a non-number
-                                  // definition for this macro
+                // must add support for random lantencies though this could be
+                // done via a non-number definition for this macro
                 if (proc2mem_command == MEM_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
                     loaded_data[i]     = load_data;
@@ -107,10 +106,10 @@ module mem (
             end
 
             if ((cycles_left[i] == 16'd0) && waiting_for_bus[i] && !bus_filled) begin
-                    bus_filled         = 1'b1;
-                    waiting_for_bus[i] = 1'b0;
-                    next_mem2proc_data_tag = i;
-                    next_mem2proc_data     = loaded_data[i];
+                bus_filled         = 1'b1;
+                waiting_for_bus[i] = 1'b0;
+                next_mem2proc_data_tag = i;
+                next_mem2proc_data     = loaded_data[i];
             end
         end
         mem2proc_transaction_tag <= next_mem2proc_transaction_tag;
