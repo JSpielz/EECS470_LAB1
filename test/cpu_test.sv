@@ -168,12 +168,13 @@ module testbench;
 
     // Show contents of a range of Unified Memory, in both hex and decimal
     // Also output the final processor status
-    task show_mem_with_decimal;
+    task show_mem_and_status;
         input EXCEPTION_CODE final_status;
         input [31:0] start_addr;
         input [31:0] end_addr;
         int showing_data;
         begin
+            $display("\nFinal memory state and exit status:\n");
             $display("@@@ Unified Memory contents hex on left, decimal on right: ");
             $display("@@@");
             showing_data = 0;
@@ -197,60 +198,63 @@ module testbench;
             endcase
             $display("@@@");
         end
-    endtask // task show_mem_with_decimal
+    endtask // task show_mem_and_status
 
 
     initial begin
+        $display("\n---- Starting CPU Testbench ----\n");
+
         // set paramterized strings, see comment at start of module
         if ($value$plusargs("MEMORY=%s", program_memory_file)) begin
-            $display("Loading memory file: %s", program_memory_file);
+            $display("Using memory file  : %s", program_memory_file);
         end else begin
-            $display("Did not receive '+MEMORY=' argument. Exiting.");
+            $display("Did not receive '+MEMORY=' argument. Exiting.\n");
             $finish;
         end
         if ($value$plusargs("OUTPUT=%s", output_name)) begin
-            $display("Outputting files to: %s.{cpi, wb, ppln}", output_name);
-            cpi_output_file       = {output_name,".cpi"};
+            $display("Using output files : %s.{cpi, wb, ppln}", output_name);
+            cpi_output_file       = {output_name,".cpi"}; // this is how you concatenate strings in verilog
             writeback_output_file = {output_name,".wb"};
             pipeline_output_file  = {output_name,".ppln"};
+
         end else begin
-            $display("Did not receive '+OUTPUT=' argument. Exiting.");
+            $display("\nDid not receive '+OUTPUT=' argument. Exiting.\n");
             $finish;
         end
 
         clock = 1'b0;
         reset = 1'b0;
 
-        // Pulse the reset signal
-        $display("@@\n@@\n@@  %t  Asserting System reset......", $realtime);
+        $display("\n  %16t : Asserting Reset", $realtime);
         reset = 1'b1;
+
         @(posedge clock);
         @(posedge clock);
 
-        // store the compiled program's hex data into memory
+        $display("  %16t : Loading Unified Memory", $realtime);
+        // load the compiled program's hex data into the memory module
         $readmemh(program_memory_file, memory.unified_memory);
 
         @(posedge clock);
         @(posedge clock);
-        #1;
-        // This reset is at an odd time to avoid the pos & neg clock edges
-
+        #1; // This reset is at an odd time to avoid the pos & neg clock edges
+        $display("  %16t : Deasserting Reset", $realtime);
         reset = 1'b0;
-        $display("@@  %t  Deasserting System reset......\n@@\n@@", $realtime);
 
         wb_fileno = $fopen(writeback_output_file);
+        $fdisplay(wb_fileno, "Register writeback output");
 
         // Open pipeline output file AFTER throwing the reset otherwise the reset state is displayed
         open_pipeline_output_file(pipeline_output_file);
         print_header();
+
+        $display("  %16t : Running Processor", $realtime);
     end
 
 
     always @(negedge clock) begin
-        if (reset) begin
-            $display("@@\n@@  %t : System STILL at reset, can't show anything\n@@", $realtime);
-        end else begin
-            #2;
+        if (!reset) begin
+            #2; // wait a short time to avoid a clock edge
 
             // print the pipeline debug outputs via c code to the pipeline output file
             print_cycles(clock_count);
@@ -277,13 +281,18 @@ module testbench;
 
             // stop the processor
             if (pipeline_error_status != NO_ERROR || clock_count > 50000000) begin
+
+                $display("  %16t : Processor Finished", $realtime);
+
                 // display the final memory and status
-                show_mem_with_decimal(pipeline_error_status, 0,`MEM_64BIT_LINES - 1);
+                show_mem_and_status(pipeline_error_status, 0,`MEM_64BIT_LINES - 1);
                 // output the final CPI
                 output_cpi_file();
                 // close the writeback and pipeline output files
                 close_pipeline_output_file();
                 $fclose(wb_fileno);
+
+                $display("\n---- Finished CPU Testbench ----\n");
 
                 #100 $finish;
             end
