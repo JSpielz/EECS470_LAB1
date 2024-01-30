@@ -86,8 +86,8 @@ module mem (
 `endif // CACHE_MODE
 
         bus_filled  = 1'b0;
-        acquire_tag = ((proc2mem_command == MEM_LOAD) ||
-                       (proc2mem_command == MEM_STORE)) && valid_address;
+        acquire_tag = valid_address && (proc2mem_command == MEM_LOAD ||
+                                        proc2mem_command == MEM_STORE);
 
         for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
             if (cycles_left[i] > 16'd0) begin
