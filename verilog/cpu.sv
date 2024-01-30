@@ -95,12 +95,12 @@ module cpu (
     // but there will be a 100ns latency in project 4
 
     always_comb begin
-        if (proc2Dmem_command != BUS_NONE) begin // read or write DATA from memory
+        if (proc2Dmem_command != MEM_NONE) begin // read or write DATA from memory
             proc2mem_command = proc2Dmem_command;
             proc2mem_addr    = proc2Dmem_addr;
             proc2mem_size    = proc2Dmem_size;  // size is never DOUBLE in project 3
         end else begin                          // read an INSTRUCTION from memory
-            proc2mem_command = BUS_LOAD;
+            proc2mem_command = MEM_LOAD;
             proc2mem_addr    = proc2Imem_addr;
             proc2mem_size    = DOUBLE;          // instructions load a full memory line (64 bits)
         end

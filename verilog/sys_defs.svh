@@ -67,10 +67,10 @@ typedef enum logic [1:0] {
 
 // Memory bus commands
 typedef enum logic [1:0] {
-    BUS_NONE   = 2'h0,
-    BUS_LOAD   = 2'h1,
-    BUS_STORE  = 2'h2
-} BUS_COMMAND;
+    MEM_NONE   = 2'h0,
+    MEM_LOAD   = 2'h1,
+    MEM_STORE  = 2'h2
+} MEM_COMMAND;
 
 ///////////////////////////////
 // ---- Exception Codes ---- //

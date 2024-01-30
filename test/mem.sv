@@ -19,7 +19,7 @@ module mem (
 `ifndef CACHE_MODE
     input MEM_SIZE  proc2mem_size, // BYTE, HALF, WORD or DOUBLE
 `endif
-    input [1:0]     proc2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
+    input [1:0]     proc2mem_command, // `MEM_NONE `MEM_LOAD or `MEM_STORE
 
     output logic [3:0] mem2proc_response, // 0 = can't accept, other=tag of transaction
     output MEM_BLOCK   mem2proc_data,     // data resulting from a load
@@ -55,9 +55,9 @@ module mem (
 `ifdef CACHE_MODE
         valid_address = (proc2mem_addr[2:0] == 3'b0) && (proc2mem_addr < `MEM_SIZE_IN_BYTES);
         if (valid_address) begin
-            if (proc2mem_command == BUS_LOAD) begin
+            if (proc2mem_command == MEM_LOAD) begin
                 load_data = unified_memory[block_addr];
-            end else if (proc2mem_command == BUS_STORE) begin
+            end else if (proc2mem_command == MEM_STORE) begin
                 unified_memory[block_addr] = proc2mem_data;
             end
         end
@@ -66,14 +66,14 @@ module mem (
         if (valid_address) begin
             // filling up the block data
             block = unified_memory[block_addr];
-            if (proc2mem_command == BUS_LOAD) begin
+            if (proc2mem_command == MEM_LOAD) begin
                 case (proc2mem_size)
                     BYTE:   load_data = {56'b0, block.byte_level[byte_addr[2:0]]};
                     HALF:   load_data = {48'b0, block.half_level[byte_addr[2:1]]};
                     WORD:   load_data = {32'b0, block.word_level[byte_addr[2]]};
                     DOUBLE: load_data = block;
                 endcase
-            end else if (proc2mem_command == BUS_STORE) begin
+            end else if (proc2mem_command == MEM_STORE) begin
                 case (proc2mem_size)
                     BYTE:   block.byte_level[byte_addr[2:0]] = proc2mem_data[7:0];
                     HALF:   block.half_level[byte_addr[2:1]] = proc2mem_data[15:0];
@@ -86,8 +86,8 @@ module mem (
 `endif // CACHE_MODE
 
         bus_filled  = 1'b0;
-        acquire_tag = ((proc2mem_command == BUS_LOAD) ||
-                       (proc2mem_command == BUS_STORE)) && valid_address;
+        acquire_tag = ((proc2mem_command == MEM_LOAD) ||
+                       (proc2mem_command == MEM_STORE)) && valid_address;
 
         for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
             if (cycles_left[i] > 16'd0) begin
@@ -100,7 +100,7 @@ module mem (
                                           // must add support for random lantencies
                                           // though this could be done via a non-number
                                           // definition for this macro
-                if (proc2mem_command == BUS_LOAD) begin
+                if (proc2mem_command == MEM_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
                     loaded_data[i]     = load_data;
                 end
@@ -121,7 +121,7 @@ module mem (
     // Initialise the entire memory
     initial begin
         // This posedge is very important, it ensures that we don't enter a race
-        // race condition with either of the negedge blocks above.
+        // condition with the negedge driven block above.
         @(posedge clock);
         for (int i = 0; i < `MEM_64BIT_LINES; i = i+1) begin
             unified_memory[i] = 64'h0;

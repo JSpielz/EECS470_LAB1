@@ -37,7 +37,7 @@ module testbench;
     int          wb_fileno;
     logic [63:0] debug_counter; // counter used for when pipeline infinite loops, forces termination
 
-    BUS_COMMAND proc2mem_command;
+    MEM_COMMAND proc2mem_command;
     ADDR        proc2mem_addr;
     MEM_BLOCK   proc2mem_data;
     logic [3:0] mem2proc_response;
