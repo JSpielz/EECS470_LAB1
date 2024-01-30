@@ -115,34 +115,18 @@ module mem (
                 if (proc2mem_command == BUS_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
                     case (proc2mem_size)
-                        BYTE: begin
-                            loaded_data[i] = {56'b0, block.byte_level[proc2mem_addr[2:0]]};
-                        end
-                        HALF: begin
-                            loaded_data[i] = {48'b0, block.half_level[proc2mem_addr[2:1]]};
-                        end
-                        WORD: begin
-                            loaded_data[i] = {32'b0, block.word_level[proc2mem_addr[2]]};
-                        end
-                        DOUBLE: begin
-                            loaded_data[i] = unified_memory[block_addr];
-                        end
+                        BYTE:   loaded_data[i] = {56'b0, block.byte_level[byte_addr[2:0]]};
+                        HALF:   loaded_data[i] = {48'b0, block.half_level[byte_addr[2:1]]};
+                        WORD:   loaded_data[i] = {32'b0, block.word_level[byte_addr[2]]};
+                        DOUBLE: loaded_data[i] = block;
                     endcase
 
                 end else begin
                     case (proc2mem_size)
-                        BYTE: begin
-                            block.byte_level[proc2mem_addr[2:0]] = proc2mem_data[7:0];
-                        end
-                        HALF: begin
-                            block.half_level[proc2mem_addr[2:1]] = proc2mem_data[15:0];
-                        end
-                        WORD: begin
-                            block.word_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                        end
-                        DOUBLE: begin
-                            block.byte_level[proc2mem_addr[2]] = proc2mem_data[31:0];
-                        end
+                        BYTE:   block.byte_level[byte_addr[2:0]] = proc2mem_data[7:0];
+                        HALF:   block.half_level[byte_addr[2:1]] = proc2mem_data[15:0];
+                        WORD:   block.word_level[byte_addr[2]]   = proc2mem_data[31:0];
+                        DOUBLE: block.byte_level[byte_addr[2]]   = proc2mem_data[31:0];
                     endcase
                     unified_memory[block_addr] = block;
                 end
