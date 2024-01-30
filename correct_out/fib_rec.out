@@ -1,24 +1,3 @@
-Loading memory file: programs/fib_rec.mem
-Using writeback output file: output/fib_rec.wb
-Using pipeline output file: output/fib_rec.ppln
-@@
-@@
-@@                     0  Asserting System reset......
-@@
-@@                     0 : System STILL at reset, can't show anything
-@@
-@@
-@@                   300 : System STILL at reset, can't show anything
-@@
-@@
-@@                   600 : System STILL at reset, can't show anything
-@@
-@@
-@@                   900 : System STILL at reset, can't show anything
-@@
-@@                  1060  Deasserting System reset......
-@@
-@@
 @@@ Unified Memory contents hex on left, decimal on right: 
 @@@
 @@@ mem[    0] = 00001fb700100413 : 34870840525843
@@ -91,12 +70,5 @@ Using pipeline output file: output/fib_rec.ppln
 @@@ mem[ 4088] = 0000000000000010 : 16
 @@@
 @@@
-@@               7428920 : System halted
-@@
 @@@ System halted on WFI instruction
 @@@
-@@
-@@  24760 cycles / 11957 instrs = 2.070754 CPI
-@@
-@@  742770.00 ns total time to execute
-@@

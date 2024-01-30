@@ -1,24 +1,3 @@
-Loading memory file: programs/no_hazard.mem
-Using writeback output file: output/no_hazard.wb
-Using pipeline output file: output/no_hazard.ppln
-@@
-@@
-@@                     0  Asserting System reset......
-@@
-@@                     0 : System STILL at reset, can't show anything
-@@
-@@
-@@                   300 : System STILL at reset, can't show anything
-@@
-@@
-@@                   600 : System STILL at reset, can't show anything
-@@
-@@
-@@                   900 : System STILL at reset, can't show anything
-@@
-@@                  1060  Deasserting System reset......
-@@
-@@
 @@@ Unified Memory contents hex on left, decimal on right: 
 @@@
 @@@ mem[    0] = 0020011300100093 : 9008380371796115
@@ -32,12 +11,5 @@ Using pipeline output file: output/no_hazard.ppln
 @@@ mem[   96] = 0000000300000000 : 12884901888
 @@@
 @@@
-@@                  6320 : System halted
-@@
 @@@ System halted on WFI instruction
 @@@
-@@
-@@  18 cycles / 13 instrs = 1.384615 CPI
-@@
-@@  510.00 ns total time to execute
-@@

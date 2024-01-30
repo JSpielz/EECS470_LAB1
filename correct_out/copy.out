@@ -1,24 +1,3 @@
-Loading memory file: programs/copy.mem
-Using writeback output file: output/copy.wb
-Using pipeline output file: output/copy.ppln
-@@
-@@
-@@                     0  Asserting System reset......
-@@
-@@                     0 : System STILL at reset, can't show anything
-@@
-@@
-@@                   300 : System STILL at reset, can't show anything
-@@
-@@
-@@                   600 : System STILL at reset, can't show anything
-@@
-@@
-@@                   900 : System STILL at reset, can't show anything
-@@
-@@                  1060  Deasserting System reset......
-@@
-@@
 @@@ Unified Memory contents hex on left, decimal on right: 
 @@@
 @@@ mem[    0] = 0000113700000313 : 18927920874259
@@ -61,12 +40,5 @@ Using pipeline output file: output/copy.ppln
 @@@ mem[ 4472] = 0000000000000096 : 150
 @@@
 @@@
-@@                 69620 : System halted
-@@
 @@@ System halted on WFI instruction
 @@@
-@@
-@@  229 cycles / 131 instrs = 1.748092 CPI
-@@
-@@  6840.00 ns total time to execute
-@@
