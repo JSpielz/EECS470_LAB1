@@ -43,6 +43,7 @@ novas*
 
 # per-run output files
 *.out
+*.cpi
 *.wb
 *.ppln
 
