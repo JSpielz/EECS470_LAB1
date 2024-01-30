@@ -36,16 +36,11 @@ module mem (
     logic [`NUM_MEM_TAGS:1] [15:0] cycles_left;
     logic [`NUM_MEM_TAGS:1]        waiting_for_bus;
 
-    logic acquire_tag;
-    logic bus_filled;
+    logic acquire_tag, bus_filled, valid_address;
 
     MEM_BLOCK load_data;
 
-`ifdef CACHE_MODE
-    wire valid_address = (proc2mem_addr[2:0] == 3'b0) &
-                         (proc2mem_addr < `MEM_SIZE_IN_BYTES);
-`else
-    wire valid_address = (proc2mem_addr < `MEM_SIZE_IN_BYTES);
+`ifndef CACHE_MODE
     MEM_BLOCK block;
 `endif
 
@@ -54,11 +49,9 @@ module mem (
         next_mem2proc_tag      = 4'b0;
         next_mem2proc_response = 4'b0;
         next_mem2proc_data     = 64'bx;
-        bus_filled             = 1'b0;
-        acquire_tag            = ((proc2mem_command == BUS_LOAD) ||
-                                  (proc2mem_command == BUS_STORE)) && valid_address;
 
 `ifdef CACHE_MODE
+        valid_address = (proc2mem_addr[2:0] == 3'b0) && (proc2mem_addr < `MEM_SIZE_IN_BYTES);
         if (valid_address) begin
             if (proc2mem_command == BUS_LOAD) begin
                 load_data = unified_memory[block_addr];
@@ -67,6 +60,7 @@ module mem (
             end
         end
 `else
+        valid_address = (proc2mem_addr < `MEM_SIZE_IN_BYTES);
         if (valid_address) begin
             // filling up the block data
             block = unified_memory[block_addr];
@@ -88,6 +82,10 @@ module mem (
             end
         end
 `endif // CACHE_MODE
+
+        bus_filled  = 1'b0;
+        acquire_tag = ((proc2mem_command == BUS_LOAD) ||
+                       (proc2mem_command == BUS_STORE)) && valid_address;
 
         for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
             if (cycles_left[i] > 16'd0) begin
