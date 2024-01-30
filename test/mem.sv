@@ -41,8 +41,8 @@ module mem (
 
 // Implement the Memory function
 `ifdef CACHE_MODE
-    wire valid_address = (proc2mem_addr[2:0]==3'b0) &
-                         (proc2mem_addr<`MEM_SIZE_IN_BYTES);
+    wire valid_address = (proc2mem_addr[2:0] == 3'b0) &
+                         (proc2mem_addr < `MEM_SIZE_IN_BYTES);
 
     always @(negedge clock) begin
         next_mem2proc_tag      = 4'b0;
@@ -52,11 +52,11 @@ module mem (
         acquire_tag            = ((proc2mem_command == BUS_LOAD) ||
                                   (proc2mem_command == BUS_STORE)) && valid_address;
 
-        for(int i=1;i<=`NUM_MEM_TAGS;i=i+1) begin
-            if(cycles_left[i]>16'd0) begin
-                cycles_left[i] = cycles_left[i]-16'd1;
+        for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
+            if (cycles_left[i] > 16'd0) begin
+                cycles_left[i] = cycles_left[i] - 16'd1;
 
-            end else if(acquire_tag && !waiting_for_bus[i]) begin
+            end else if (acquire_tag && !waiting_for_bus[i]) begin
                 next_mem2proc_response = i;
                 acquire_tag            = 1'b0;
                 cycles_left[i]         = `MEM_LATENCY_IN_CYCLES;
@@ -64,7 +64,7 @@ module mem (
                                           // though this could be done via a non-number
                                           // definition for this macro
 
-                if(proc2mem_command == BUS_LOAD) begin
+                if (proc2mem_command == BUS_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
                     loaded_data[i]     = unified_memory[block_addr];
                 end else begin
@@ -72,7 +72,7 @@ module mem (
                 end
             end
 
-            if((cycles_left[i]==16'd0) && waiting_for_bus[i] && !bus_filled) begin
+            if ((cycles_left[i] == 16'd0) && waiting_for_bus[i] && !bus_filled) begin
                     bus_filled         = 1'b1;
                     next_mem2proc_tag  = i;
                     next_mem2proc_data = loaded_data[i];
@@ -84,7 +84,7 @@ module mem (
         mem2proc_tag      <= next_mem2proc_tag;
     end
 `else
-    wire valid_address = (proc2mem_addr<`MEM_SIZE_IN_BYTES);
+    wire valid_address = (proc2mem_addr < `MEM_SIZE_IN_BYTES);
     MEM_BLOCK c;
     // temporary wires for byte level selection because verilog does not support variable range selection
     always @(negedge clock) begin
@@ -95,11 +95,11 @@ module mem (
         acquire_tag            = ((proc2mem_command == BUS_LOAD) ||
                                   (proc2mem_command == BUS_STORE)) && valid_address;
 
-        for(int i=1;i<=`NUM_MEM_TAGS;i=i+1) begin
-            if(cycles_left[i]>16'd0) begin
-                cycles_left[i] = cycles_left[i]-16'd1;
+        for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
+            if (cycles_left[i] > 16'd0) begin
+                cycles_left[i] = cycles_left[i] - 16'd1;
 
-            end else if(acquire_tag && !waiting_for_bus[i]) begin
+            end else if (acquire_tag && !waiting_for_bus[i]) begin
                 next_mem2proc_response = i;
                 acquire_tag            = 1'b0;
                 cycles_left[i]         = `MEM_LATENCY_IN_CYCLES;
@@ -111,7 +111,7 @@ module mem (
                 c.half_level = unified_memory[block_addr];
                 c.word_level = unified_memory[block_addr];
 
-                if(proc2mem_command == BUS_LOAD) begin
+                if (proc2mem_command == BUS_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
                     loaded_data[i]     = unified_memory[block_addr];
                     case (proc2mem_size)
@@ -151,7 +151,7 @@ module mem (
                 end
             end
 
-            if ((cycles_left[i]==16'd0) && waiting_for_bus[i] && !bus_filled) begin
+            if ((cycles_left[i] == 16'd0) && waiting_for_bus[i] && !bus_filled) begin
                     bus_filled         = 1'b1;
                     next_mem2proc_tag  = i;
                     next_mem2proc_data = loaded_data[i];
@@ -169,16 +169,16 @@ module mem (
         // This posedge is very important, it ensures that we don't enter a race
         // race condition with either of the negedge blocks above.
         @(posedge clock);
-        for(int i=0; i<`MEM_64BIT_LINES; i=i+1) begin
+        for (int i = 0; i < `MEM_64BIT_LINES; i = i+1) begin
             unified_memory[i] = 64'h0;
         end
-        mem2proc_data=64'bx;
-        mem2proc_tag=4'd0;
-        mem2proc_response=4'd0;
-        for(int i=1;i<=`NUM_MEM_TAGS;i=i+1) begin
-            loaded_data[i]=64'bx;
-            cycles_left[i]=16'd0;
-            waiting_for_bus[i]=1'b0;
+        mem2proc_data = 64'bx;
+        mem2proc_tag = 4'd0;
+        mem2proc_response = 4'd0;
+        for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
+            loaded_data[i] = 64'bx;
+            cycles_left[i] = 16'd0;
+            waiting_for_bus[i] = 1'b0;
         end
     end
 
