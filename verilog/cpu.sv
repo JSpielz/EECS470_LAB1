@@ -11,11 +11,12 @@
 `include "sys_defs.svh"
 
 module cpu (
-    input           clock,             // System clock
-    input           reset,             // System reset
-    input MEM_TAG   mem2proc_transaction_tag, // Tag from memory about current request
-    input MEM_BLOCK mem2proc_data,     // Data coming back from memory
-    input MEM_TAG   mem2proc_data_tag, // Tag from memory about current reply
+    input clock, // System clock
+    input reset, // System reset
+
+    input MEM_TAG   mem2proc_transaction_tag, // Memory tag for current transaction
+    input MEM_BLOCK mem2proc_data,            // Data coming back from memory
+    input MEM_TAG   mem2proc_data_tag,        // Tag for which transaction data is for
 
     output logic [1:0] proc2mem_command, // Command sent to memory
     output ADDR        proc2mem_addr,    // Address sent to memory

@@ -21,9 +21,9 @@ module mem (
 `endif
     input [1:0]     proc2mem_command, // `MEM_NONE `MEM_LOAD or `MEM_STORE
 
-    output MEM_TAG   mem2proc_transaction_tag, // 0 = can't accept, other=tag of transaction
-    output MEM_BLOCK mem2proc_data,            // data resulting from a load
-    output MEM_TAG   mem2proc_data_tag         // 0 = no value, other=tag of transaction
+    output MEM_TAG   mem2proc_transaction_tag, // Memory tag for current transaction (0 = can't accept)
+    output MEM_BLOCK mem2proc_data,            // Data for a load
+    output MEM_TAG   mem2proc_data_tag         // Tag for finished transactions (0 = no value)
 );
 
     logic [63:0] unified_memory [`MEM_64BIT_LINES-1:0];
