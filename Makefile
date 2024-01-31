@@ -348,10 +348,10 @@ novas.rc: initialnovas.rc
 	sed s/UNIQNAME/$$USER/ initialnovas.rc > novas.rc
 
 %.verdi: programs/%.mem simv novas.rc verdi_dir
-	./simv -gui=verdi +MEMORY=$< +WRITEBACK=/dev/null +PIPELINE=/dev/null
+	./simv -gui=verdi +MEMORY=$< +OUTPUT=output/verdi_output
 
 %.syn.verdi: programs/%.mem syn_simv novas.rc verdi_dir
-	./syn_simv -gui=verdi +MEMORY=$< +WRITEBACK=/dev/null +PIPELINE=/dev/null
+	./syn_simv -gui=verdi +MEMORY=$< +OUTPUT=output/syn_verdi_output
 
 .PHONY: %.verdi
 
