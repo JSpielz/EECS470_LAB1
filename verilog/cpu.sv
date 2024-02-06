@@ -18,7 +18,7 @@ module cpu (
     input MEM_BLOCK mem2proc_data,            // Data coming back from memory
     input MEM_TAG   mem2proc_data_tag,        // Tag for which transaction data is for
 
-    output logic [1:0] proc2mem_command, // Command sent to memory
+    output MEM_COMMAND proc2mem_command, // Command sent to memory
     output ADDR        proc2mem_addr,    // Address sent to memory
     output MEM_BLOCK   proc2mem_data,    // Data sent to memory
     output MEM_SIZE    proc2mem_size,    // Data size sent to memory
