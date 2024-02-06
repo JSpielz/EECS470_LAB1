@@ -13,21 +13,21 @@
 `include "sys_defs.svh"
 
 module stage_mem (
-    input EX_MEM_PACKET ex_mem_reg,
+    input EX_MEM_PACKET  ex_mem_reg,
     // the MEM_LOAD response will magically be present in the *same* cycle it's requested (0ns latency)
     // this will not be true in project 4 (100ns latency)
-    input DATA           Dmem2proc_data,
+    input MEM_BLOCK      Dmem_load_data, // Data loaded from memory
 
     output MEM_WB_PACKET mem_packet,
-    output MEM_COMMAND   proc2Dmem_command, // The memory command
-    output MEM_SIZE      proc2Dmem_size,    // Size of data to read or write
-    output ADDR          proc2Dmem_addr,    // Address sent to Data memory
-    output DATA          proc2Dmem_data     // Data sent to Data memory
+    output MEM_COMMAND   Dmem_command,   // The memory command
+    output MEM_SIZE      Dmem_size,      // Size of data to read or write
+    output ADDR          Dmem_addr,      // Address sent to Data memory
+    output MEM_BLOCK     Dmem_store_data // Data sent to Data memory
 );
 
-    logic [31:0] read_data;
+    DATA load_data;
 
-    assign mem_packet.result = (ex_mem_reg.rd_mem) ? read_data : ex_mem_reg.alu_result;
+    assign mem_packet.result = (ex_mem_reg.rd_mem) ? load_data : ex_mem_reg.alu_result;
 
     // Pass-throughs
     assign mem_packet.NPC          = ex_mem_reg.NPC;
@@ -38,28 +38,28 @@ module stage_mem (
     assign mem_packet.take_branch  = ex_mem_reg.take_branch;
 
     // Outputs from the processor to memory
-    assign proc2Dmem_command = (ex_mem_reg.valid && ex_mem_reg.wr_mem) ? MEM_STORE :
-                               (ex_mem_reg.valid && ex_mem_reg.rd_mem) ? MEM_LOAD : MEM_NONE;
-    assign proc2Dmem_size = ex_mem_reg.mem_size;
-    assign proc2Dmem_data = ex_mem_reg.rs2_value;
-    assign proc2Dmem_addr = ex_mem_reg.alu_result; // Memory address is calculated by the ALU
+    assign Dmem_command = (ex_mem_reg.valid && ex_mem_reg.wr_mem) ? MEM_STORE :
+                          (ex_mem_reg.valid && ex_mem_reg.rd_mem) ? MEM_LOAD : MEM_NONE;
+    assign Dmem_size = ex_mem_reg.mem_size;
+    assign Dmem_addr = ex_mem_reg.alu_result; // Memory address is calculated by the ALU
+    assign Dmem_store_data = {32'b0, ex_mem_reg.rs2_value}; // for p3, just use low 32 bits
 
     // Read data from memory and sign extend the proper bits
     always_comb begin
-        read_data = Dmem2proc_data;
+        load_data = Dmem_load_data[31:0]; // for p3, just use low 32 bits
         if (ex_mem_reg.rd_unsigned) begin
             // unsigned: zero-extend the data
             if (ex_mem_reg.mem_size == BYTE) begin
-                read_data[31:8] = 0;
+                load_data[31:8] = 0;
             end else if (ex_mem_reg.mem_size == HALF) begin
-                read_data[31:16] = 0;
+                load_data[31:16] = 0;
             end
         end else begin
             // signed: sign-extend the data
             if (ex_mem_reg.mem_size[1:0] == BYTE) begin
-                read_data[31:8] = {(24){Dmem2proc_data[7]}};
+                load_data[31:8] = {(24){load_data[7]}};
             end else if (ex_mem_reg.mem_size == HALF) begin
-                read_data[31:16] = {(16){Dmem2proc_data[15]}};
+                load_data[31:16] = {(16){load_data[15]}};
             end
         end
     end

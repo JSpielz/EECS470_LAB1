@@ -61,7 +61,7 @@ module cpu (
     logic if_id_enable, id_ex_enable, ex_mem_enable, mem_wb_enable;
 
     // Outputs from IF-Stage and IF/ID Pipeline Register
-    ADDR proc2Imem_addr;
+    ADDR Imem_addr;
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
@@ -74,10 +74,10 @@ module cpu (
     MEM_WB_PACKET mem_packet, mem_wb_reg;
 
     // Outputs from MEM-Stage to memory
-    ADDR proc2Dmem_addr;
-    DATA proc2Dmem_data;
-    logic [1:0]  proc2Dmem_command;
-    MEM_SIZE     proc2Dmem_size;
+    ADDR        Dmem_addr;
+    MEM_BLOCK   Dmem_store_data;
+    MEM_COMMAND Dmem_command;
+    MEM_SIZE    Dmem_size;
 
     // Outputs from WB-Stage (These loop back to the register file in ID)
     logic   wb_regfile_en;
@@ -96,16 +96,16 @@ module cpu (
     // but there will be a 100ns latency in project 4
 
     always_comb begin
-        if (proc2Dmem_command != MEM_NONE) begin // read or write DATA from memory
-            proc2mem_command = proc2Dmem_command;
-            proc2mem_addr    = proc2Dmem_addr;
-            proc2mem_size    = proc2Dmem_size;  // size is never DOUBLE in project 3
-        end else begin                          // read an INSTRUCTION from memory
+        if (Dmem_command != MEM_NONE) begin  // read or write DATA from memory
+            proc2mem_command = Dmem_command;
+            proc2mem_size    = Dmem_size;   // size is never DOUBLE in project 3
+            proc2mem_addr    = Dmem_addr;
+        end else begin                      // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
-            proc2mem_addr    = proc2Imem_addr;
-            proc2mem_size    = DOUBLE;          // instructions load a full memory line (64 bits)
+            proc2mem_addr    = Imem_addr;
+            proc2mem_size    = DOUBLE;      // instructions load a full memory line (64 bits)
         end
-        proc2mem_data = {32'b0, proc2Dmem_data};
+        proc2mem_data = Dmem_store_data;
     end
 
     //////////////////////////////////////////////////
@@ -141,14 +141,14 @@ module cpu (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid       (if_valid),
-        .take_branch    (ex_mem_reg.take_branch),
-        .branch_target  (ex_mem_reg.alu_result),
-        .Imem2proc_data (mem2proc_data),
+        .if_valid      (if_valid),
+        .take_branch   (ex_mem_reg.take_branch),
+        .branch_target (ex_mem_reg.alu_result),
+        .Imem_data     (mem2proc_data),
 
         // Outputs
-        .if_packet      (if_packet),
-        .proc2Imem_addr (proc2Imem_addr)
+        .if_packet (if_packet),
+        .Imem_addr (Imem_addr)
     );
 
     // debug outputs
@@ -190,10 +190,10 @@ module cpu (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_id_reg        (if_id_reg),
-        .wb_regfile_en    (wb_regfile_en),
-        .wb_regfile_idx   (wb_regfile_idx),
-        .wb_regfile_data  (wb_regfile_data),
+        .if_id_reg       (if_id_reg),
+        .wb_regfile_en   (wb_regfile_en),
+        .wb_regfile_idx  (wb_regfile_idx),
+        .wb_regfile_data (wb_regfile_data),
 
         // Output
         .id_packet (id_packet)
@@ -283,14 +283,14 @@ module cpu (
     stage_mem stage_mem_0 (
         // Inputs
         .ex_mem_reg     (ex_mem_reg),
-        .Dmem2proc_data (mem2proc_data[31:0]), // for p3, we throw away the top 32 bits
+        .Dmem_load_data (mem2proc_data),
 
         // Outputs
-        .mem_packet        (mem_packet),
-        .proc2Dmem_command (proc2Dmem_command),
-        .proc2Dmem_size    (proc2Dmem_size),
-        .proc2Dmem_addr    (proc2Dmem_addr),
-        .proc2Dmem_data    (proc2Dmem_data)
+        .mem_packet      (mem_packet),
+        .Dmem_command    (Dmem_command),
+        .Dmem_size       (Dmem_size),
+        .Dmem_addr       (Dmem_addr),
+        .Dmem_store_data (Dmem_store_data)
     );
 
     //////////////////////////////////////////////////
