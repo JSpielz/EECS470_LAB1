@@ -78,13 +78,15 @@ not synthesizable.
 Start the project by removing the provided stalling behavior, then
 implement the structural hazard logic for the milestone.
 
-The provided stalling behavior is set in the `verilog/cpu.sv`
-file. You should open the file and find the `always_ff` block where the
-`next_if_valid` signal is set. This is the start of a `valid` bit
-which is passed between the stages along with the instruction, and it
-starts at 1 in the IF stage due to `next_if_valid`. The `next_if_valid`
-signal is currently set to read the valid bit from the WB stage, so
-will insert 4 invalid instructions between every valid one.
+The stalling behavior is set in the `verilog/cpu.sv` file. You should
+open the file and find the `assign` statement where the `if_valid`
+signal is set. This is the start of a `valid` bit which is passed
+through the stages along with the instruction, and it starts at 1 in the
+IF stage due to the `start_valid_on_reset` register. After reset
+`if_valid` just reads the valid bit that cycles through to the WB stage,
+causing us to insert 4 invalid instructions between every valid one.
+
+Start by assigning `if_valid` to always equal 1.
 
 ## Makefile Target Reference
 

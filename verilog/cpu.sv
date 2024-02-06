@@ -116,20 +116,20 @@ module cpu (
 
     // This state controls the stall signal that artificially forces IF
     // to stall until the previous instruction has completed.
-    // For project 3, start by setting this to always be 1
+    // For project 3, start by assigning if_valid to always be 1
 
-    logic next_if_valid;
+    logic if_valid, start_valid_on_reset, wb_valid;
 
     // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
-        if (reset) begin
-            // start valid, other stages (ID,EX,MEM,WB) start as invalid
-            next_if_valid <= 1;
-        end else begin
-            // valid bit will cycle through the pipeline and come back from the wb stage
-            next_if_valid <= mem_wb_reg.valid;
-        end
+        // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
+        // Using a separate always_ff is necessary since if_valid is combinational
+        // Assigning if_valid = reset doesn't work as you'd hope :/
+        start_valid_on_reset <= reset;
     end
+
+    // valid bit will cycle through the pipeline and come back from the wb stage
+    assign if_valid = start_valid_on_reset || wb_valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -141,7 +141,7 @@ module cpu (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid       (next_if_valid),
+        .if_valid       (if_valid),
         .take_branch    (ex_mem_reg.take_branch),
         .branch_target  (ex_mem_reg.alu_result),
         .Imem2proc_data (mem2proc_data),
@@ -330,6 +330,12 @@ module cpu (
         .wb_regfile_idx  (wb_regfile_idx),
         .wb_regfile_data (wb_regfile_data)
     );
+
+    // This signal is solely used by if_valid for the initial stalling behavior
+    always_ff @(posedge clock) begin
+        if (reset) wb_valid <= 0;
+        else       wb_valid <= mem_wb_reg.valid;
+    end
 
     //////////////////////////////////////////////////
     //                                              //
