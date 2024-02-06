@@ -1,8 +1,8 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//   Modulename :  testbench.sv                                        //
+//   Modulename :  cpu_test.sv                                         //
 //                                                                     //
-//  Description :  Testbench module for the verisimple processor.      //
+//  Description :  Testbench module for the VeriSimpleV processor.     //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
