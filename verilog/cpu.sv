@@ -24,12 +24,7 @@ module cpu (
     output MEM_SIZE    proc2mem_size,    // Data size sent to memory
 
     // Note: these are assigned at the very bottom of the module
-    output logic [3:0]    pipeline_completed_insts,
-    output EXCEPTION_CODE pipeline_error_status,
-    output REG_IDX        pipeline_commit_wr_idx,
-    output DATA           pipeline_commit_wr_data,
-    output logic          pipeline_commit_wr_en,
-    output ADDR           pipeline_commit_NPC,
+    output COMMIT_PACKET [`N-1:0] committed_insts,
 
     // Debug outputs: these signals are solely used for debugging in testbenches
     // Do not change for project 3
@@ -80,9 +75,7 @@ module cpu (
     MEM_SIZE    Dmem_size;
 
     // Outputs from WB-Stage (These loop back to the register file in ID)
-    logic   wb_regfile_en;
-    REG_IDX wb_regfile_idx;
-    DATA    wb_regfile_data;
+    COMMIT_PACKET wb_packet;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -191,9 +184,9 @@ module cpu (
         .clock (clock),
         .reset (reset),
         .if_id_reg       (if_id_reg),
-        .wb_regfile_en   (wb_regfile_en),
-        .wb_regfile_idx  (wb_regfile_idx),
-        .wb_regfile_data (wb_regfile_data),
+        .wb_regfile_en   (wb_packet.valid),
+        .wb_regfile_idx  (wb_packet.reg_idx),
+        .wb_regfile_data (wb_packet.data),
 
         // Output
         .id_packet (id_packet)
@@ -326,10 +319,8 @@ module cpu (
         // Input
         .mem_wb_reg (mem_wb_reg), // doesn't use all of these
 
-        // Outputs
-        .wb_regfile_en   (wb_regfile_en),
-        .wb_regfile_idx  (wb_regfile_idx),
-        .wb_regfile_data (wb_regfile_data)
+        // Output
+        .wb_packet (wb_packet)
     );
 
     // This signal is solely used by if_valid for the initial stalling behavior
@@ -344,14 +335,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign pipeline_completed_insts = {3'b0, mem_wb_reg.valid}; // commit one valid instruction
-    assign pipeline_error_status = mem_wb_reg.illegal ? ILLEGAL_INST :
-                                   mem_wb_reg.halt    ? HALTED_ON_WFI :
-                                   (mem2proc_transaction_tag == 4'h0) ? LOAD_ACCESS_FAULT : NO_ERROR;
-
-    assign pipeline_commit_wr_en   = wb_regfile_en;
-    assign pipeline_commit_wr_idx  = wb_regfile_idx;
-    assign pipeline_commit_wr_data = wb_regfile_data;
-    assign pipeline_commit_NPC     = mem_wb_reg.NPC;
+    // Output the committed instruction to the testbench for counting
+    assign committed_insts[0] = wb_packet;
 
 endmodule // pipeline

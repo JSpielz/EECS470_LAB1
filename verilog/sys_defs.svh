@@ -23,6 +23,9 @@
 `define FALSE 1'h0
 `define TRUE  1'h1
 
+// superscalar width, the max number of instructions that can commit at once
+`define N 1
+
 // word and register sizes
 typedef logic [31:0] ADDR;
 typedef logic [31:0] DATA;
@@ -329,7 +332,20 @@ typedef struct packed {
 } MEM_WB_PACKET;
 
 /**
- * No WB output packet as it would be more cumbersome than useful
+ * Commit Packet:
+ * This is an output of the processor and used in the testbench for counting
+ * committed instructions
+ *
+ * It also acts as a "WB_PACKET", and can be reused in the final project with
+ * some slight changes
  */
+typedef struct packed {
+    ADDR    NPC;
+    DATA    data;
+    REG_IDX reg_idx;
+    logic   halt;
+    logic   illegal;
+    logic   valid;
+} COMMIT_PACKET;
 
 `endif // __SYS_DEFS_SVH__

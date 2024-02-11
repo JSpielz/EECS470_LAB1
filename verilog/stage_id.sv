@@ -205,12 +205,7 @@ module stage_id (
     assign id_packet.inst = if_id_reg.inst;
     assign id_packet.PC   = if_id_reg.PC;
     assign id_packet.NPC  = if_id_reg.NPC;
-
-    // For counting valid instructions executed
-    // and making the fetch stage die on halts/keeping track of when
-    // to allow the next instruction out of fetch
-    // 0 for HALT and illegal instructions (end processor on halt)
-    assign id_packet.valid = if_id_reg.valid && !id_packet.illegal;
+    assign id_packet.valid = if_id_reg.valid;
 
     logic has_dest_reg;
     assign id_packet.dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;

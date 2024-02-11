@@ -147,9 +147,9 @@ void print_stage(int inst, int npc, int valid_inst)
         fprintf(ppfile, "|%4X:%-8s", npc, decode_inst(inst));
 }
 
-void print_reg(int wb_data, int wb_idx, int wb_en)
+void print_reg(int wb_data, int wb_idx, int wb_valid)
 {
-    if (wb_en)
+    if (wb_valid && wb_idx != 0)
         fprintf(ppfile, "| r%02d=%-8X ", wb_idx, wb_data);
     else
         fprintf(ppfile, "|              ");

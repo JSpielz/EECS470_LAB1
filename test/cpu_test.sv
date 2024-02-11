@@ -47,12 +47,8 @@ module testbench;
     MEM_SIZE    proc2mem_size;
 `endif
 
-    logic [3:0]    pipeline_completed_insts;
-    EXCEPTION_CODE pipeline_error_status;
-    logic [4:0]    pipeline_commit_wr_idx;
-    logic [31:0]   pipeline_commit_wr_data;
-    logic          pipeline_commit_wr_en;
-    logic [31:0]   pipeline_commit_NPC;
+    COMMIT_PACKET [`N-1:0] committed_insts;
+    EXCEPTION_CODE error_status = NO_ERROR;
 
     ADDR  if_NPC_dbg;
     DATA  if_inst_dbg;
@@ -86,12 +82,7 @@ module testbench;
         .proc2mem_data    (proc2mem_data),
         .proc2mem_size    (proc2mem_size),
 
-        .pipeline_completed_insts (pipeline_completed_insts),
-        .pipeline_error_status    (pipeline_error_status),
-        .pipeline_commit_wr_data  (pipeline_commit_wr_data),
-        .pipeline_commit_wr_idx   (pipeline_commit_wr_idx),
-        .pipeline_commit_wr_en    (pipeline_commit_wr_en),
-        .pipeline_commit_NPC      (pipeline_commit_NPC),
+        .committed_insts (committed_insts),
 
         .if_NPC_dbg       (if_NPC_dbg),
         .if_inst_dbg      (if_inst_dbg),
@@ -136,31 +127,16 @@ module testbench;
     end
 
 
-    // Count the number of posedges and number of instructions completed
-    // till simulation ends
-    always @(posedge clock) begin
-        if(reset) begin
-            clock_count <= 0;
-            instr_count <= 0;
-        end else begin
-            clock_count <= clock_count + 1;
-            instr_count <= instr_count + pipeline_completed_insts;
-        end
-    end
-
-
     // Task to output the final CPI and # of elapsed clock edges
     task output_cpi_file;
         real cpi;
-        int num_cycles;
         begin
-            num_cycles = clock_count + 1;
-            cpi = $itor(num_cycles) / instr_count; // must convert int to real
+            cpi = $itor(clock_count) / instr_count; // must convert int to real
             cpi_fileno = $fopen(cpi_output_file);
             $fdisplay(cpi_fileno, "@@@  %0d cycles / %0d instrs = %f CPI",
-                      num_cycles, instr_count, cpi);
+                      clock_count, instr_count, cpi);
             $fdisplay(cpi_fileno, "@@@  %4.2f ns total time to execute",
-                      num_cycles * `CLOCK_PERIOD);
+                      clock_count * `CLOCK_PERIOD);
             $fclose(cpi_fileno);
         end
     endtask // task output_cpi_file
@@ -253,8 +229,14 @@ module testbench;
 
 
     always @(negedge clock) begin
-        if (!reset) begin
+        if (reset) begin
+            // Count the number of cycles and number of instructions committed
+            clock_count = 0;
+            instr_count = 0;
+        end else begin
             #2; // wait a short time to avoid a clock edge
+
+            clock_count = clock_count + 1;
 
             // print the pipeline debug outputs via c code to the pipeline output file
             print_cycles(clock_count);
@@ -263,29 +245,45 @@ module testbench;
             print_stage(id_ex_inst_dbg,  id_ex_NPC_dbg,  {31'b0,id_ex_valid_dbg});
             print_stage(ex_mem_inst_dbg, ex_mem_NPC_dbg, {31'b0,ex_mem_valid_dbg});
             print_stage(mem_wb_inst_dbg, mem_wb_NPC_dbg, {31'b0,mem_wb_valid_dbg});
-            print_reg(pipeline_commit_wr_data,
-                      {27'b0,pipeline_commit_wr_idx}, {31'b0,pipeline_commit_wr_en});
+            print_reg(committed_insts[0].data, {27'b0,committed_insts[0].reg_idx},
+                      {31'b0,committed_insts[0].valid});
             print_membus({30'b0,proc2mem_command}, proc2mem_addr[31:0],
                          proc2mem_data[63:32], proc2mem_data[31:0]);
 
-            // print register write information to the writeback output file
-            if (pipeline_completed_insts > 0) begin
-                if (pipeline_commit_wr_en)
-                    $fdisplay(wb_fileno, "PC=%x, REG[%d]=%x",
-                              pipeline_commit_NPC - 4,
-                              pipeline_commit_wr_idx,
-                              pipeline_commit_wr_data);
-                else
-                    $fdisplay(wb_fileno, "PC=%x, ---", pipeline_commit_NPC - 4);
+            // update any committed instructions
+            for (int n = 0; n < `N; ++n) begin
+                if (committed_insts[n].valid) begin
+                    // update the count for every committed instruction
+                    instr_count = instr_count + 1;
+
+                    // print the committed instructions to the writeback output file
+                    if (committed_insts[n].reg_idx == `ZERO_REG) begin
+                        $fdisplay(wb_fileno, "PC=%x, ---", committed_insts[n].NPC - 4);
+                    end else begin
+                        $fdisplay(wb_fileno, "PC=%x, REG[%d]=%x",
+                                committed_insts[n].NPC - 4,
+                                committed_insts[n].reg_idx,
+                                committed_insts[n].data);
+                    end
+
+                    // exit if we have an illegal instruction or a halt
+                    if (committed_insts[n].illegal) begin
+                        error_status = ILLEGAL_INST;
+                        break;
+                    end else if(committed_insts[n].halt) begin
+                        error_status = HALTED_ON_WFI;
+                        break;
+                    end
+                end // if valid
             end
 
             // stop the processor
-            if (pipeline_error_status != NO_ERROR || clock_count > 50000000) begin
+            if (error_status != NO_ERROR || clock_count > 50000000) begin
 
                 $display("  %16t : Processor Finished", $realtime);
 
                 // display the final memory and status
-                show_mem_and_status(pipeline_error_status, 0,`MEM_64BIT_LINES - 1);
+                show_mem_and_status(error_status, 0,`MEM_64BIT_LINES - 1);
                 // output the final CPI
                 output_cpi_file();
                 // close the writeback and pipeline output files
