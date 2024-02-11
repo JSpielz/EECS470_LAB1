@@ -23,40 +23,58 @@ module alu (
     output DATA result
 );
 
-    logic signed [63:0] signed_mul, mixed_mul;
-    logic        [63:0] unsigned_mul;
-
-    // We let verilog do the full 32-bit multiplication for us.
-    // This gives a large clock period.
-    // You will replace this with your pipelined multiplier in project 4.
-    assign signed_mul   = signed'(opa) * signed'(opb);
-    assign unsigned_mul = opa * opb;
-    assign mixed_mul    = signed'(opa) * signed'({1'b0, opb});
-    // ^ Verilog only does signed multiplication if both arguments are signed
-    // This was a long-standing bug with MULHSU in VeriSimpleV
-
     always_comb begin
         case (alu_func)
-            ALU_ADD:    result = opa + opb;
-            ALU_SUB:    result = opa - opb;
-            ALU_AND:    result = opa & opb;
-            ALU_SLT:    result = signed'(opa) < signed'(opb);
-            ALU_SLTU:   result = opa < opb;
-            ALU_OR:     result = opa | opb;
-            ALU_XOR:    result = opa ^ opb;
-            ALU_SRL:    result = opa >> opb[4:0];
-            ALU_SLL:    result = opa << opb[4:0];
-            ALU_SRA:    result = signed'(opa) >>> opb[4:0]; // arithmetic from logical shift
-            ALU_MUL:    result = signed_mul[31:0];
-            ALU_MULH:   result = signed_mul[63:32];
-            ALU_MULHSU: result = mixed_mul[63:32];
-            ALU_MULHU:  result = unsigned_mul[63:32];
-
-            default:    result = 32'hfacebeec;  // here to prevent latches
+            ALU_ADD:  result = opa + opb;
+            ALU_SUB:  result = opa - opb;
+            ALU_AND:  result = opa & opb;
+            ALU_SLT:  result = signed'(opa) < signed'(opb);
+            ALU_SLTU: result = opa < opb;
+            ALU_OR:   result = opa | opb;
+            ALU_XOR:  result = opa ^ opb;
+            ALU_SRL:  result = opa >> opb[4:0];
+            ALU_SLL:  result = opa << opb[4:0];
+            ALU_SRA:  result = signed'(opa) >>> opb[4:0]; // arithmetic from logical shift
+            // here to prevent latches:
+            default:  result = 32'hfacebeec;
         endcase
     end
 
 endmodule // alu
+
+
+// Mult module: multiplies the registers
+// We let verilog do the full 32-bit multiplication for us, but this gives a large clock period
+// You will replace this with the p2 pipelined multiplier in project 4
+// This module is purely combinational
+module mult (
+    input DATA       rs1,
+    input DATA       rs2,
+    input MULT_FUNC3 func, // Specifies which operation to perform
+
+    output DATA result
+);
+
+    logic signed [63:0] signed_mul, mixed_mul;
+    logic [63:0] unsigned_mul;
+
+    assign unsigned_mul = rs1 * rs2;
+    assign signed_mul   = signed'(rs1) * signed'(rs2);
+    assign mixed_mul    = signed'(rs1) * signed'({1'b0, rs2});
+    // ^ Verilog only does signed multiplication if both arguments are signed
+    // This was a long-standing bug with mixed_mul in VeriSimpleV
+
+    always_comb begin
+        case (func)
+            M_MUL:     result = signed_mul[31:0];
+            M_MULH:    result = signed_mul[63:32];
+            M_MULHSU:  result = mixed_mul[63:32];
+            M_MULHU:   result = unsigned_mul[63:32];
+            default: result = 32'hfacebeec;
+        endcase
+    end
+
+endmodule // mult
 
 
 // Conditional branch module: compute whether to take conditional branches
@@ -90,12 +108,11 @@ module stage_ex (
     output EX_MEM_PACKET ex_packet
 );
 
-    DATA opa_mux_out, opb_mux_out;
+    DATA alu_result, mult_result, opa_mux_out, opb_mux_out;
     logic take_conditional;
 
     // Pass-throughs
     assign ex_packet.NPC          = id_ex_reg.NPC;
-    assign ex_packet.rs2_value    = id_ex_reg.rs2_value;
     assign ex_packet.rd_mem       = id_ex_reg.rd_mem;
     assign ex_packet.wr_mem       = id_ex_reg.wr_mem;
     assign ex_packet.dest_reg_idx = id_ex_reg.dest_reg_idx;
@@ -104,13 +121,19 @@ module stage_ex (
     assign ex_packet.csr_op       = id_ex_reg.csr_op;
     assign ex_packet.valid        = id_ex_reg.valid;
 
-    // Break out the signed/unsigned bit and memory read/write size
-    assign ex_packet.rd_unsigned  = id_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
-    assign ex_packet.mem_size     = MEM_SIZE'(id_ex_reg.inst.r.funct3[1:0]);
+    // Send rs2_value to the mem stage as the data for a store
+    assign ex_packet.rs2_value = id_ex_reg.rs2_value;
 
-    // ultimate "take branch" signal:
+    // Break out the signed/unsigned bit and memory read/write size
+    assign ex_packet.rd_unsigned = id_ex_reg.inst.r.funct3[2]; // 1 if unsigned, 0 if signed
+    assign ex_packet.mem_size    = MEM_SIZE'(id_ex_reg.inst.r.funct3[1:0]);
+
+    // Ultimate "take branch" signal:
     // unconditional, or conditional and the condition is true
     assign ex_packet.take_branch = id_ex_reg.uncond_branch || (id_ex_reg.cond_branch && take_conditional);
+
+    // We split the alu and mult here since they will be split in the final project
+    assign ex_packet.alu_result = (id_ex_reg.mult) ? mult_result : alu_result;
 
     // ALU opA mux
     always_comb begin
@@ -144,7 +167,18 @@ module stage_ex (
         .alu_func(id_ex_reg.alu_func),
 
         // Output
-        .result(ex_packet.alu_result)
+        .result(alu_result)
+    );
+
+    // Instantiate the multiplier
+    mult mult_0 (
+        // Inputs
+        .rs1(id_ex_reg.rs1_value),
+        .rs2(id_ex_reg.rs2_value),
+        .func(id_ex_reg.inst.r.funct3), // which mult operation to perform
+
+        // Output
+        .result(mult_result)
     );
 
     // Instantiate the conditional branch module

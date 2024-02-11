@@ -21,7 +21,7 @@ module decoder (
     output ALU_OPB_SELECT opb_select,
     output logic          has_dest, // if there is a destination register
     output ALU_FUNC       alu_func,
-    output logic          rd_mem, wr_mem, cond_branch, uncond_branch,
+    output logic          mult, rd_mem, wr_mem, cond_branch, uncond_branch,
     output logic          csr_op, // used for CSR operations, we only use this as a cheap way to get the return code out
     output logic          halt,   // non-zero on a halt
     output logic          illegal // non-zero on an illegal instruction
@@ -36,6 +36,7 @@ module decoder (
         alu_func      = ALU_ADD;
         has_dest      = `FALSE;
         csr_op        = `FALSE;
+        mult          = `FALSE;
         rd_mem        = `FALSE;
         wr_mem        = `FALSE;
         cond_branch   = `FALSE;
@@ -72,16 +73,24 @@ module decoder (
                     opa_select  = OPA_IS_PC;
                     opb_select  = OPB_IS_B_IMM;
                     cond_branch = `TRUE;
+                    // stage_ex uses inst.b.funct3 as the branch function
+                end
+                `RV32_MUL, `RV32_MULH, `RV32_MULHSU, `RV32_MULHU: begin
+                    has_dest   = `TRUE;
+                    mult       = `TRUE;
+                    // stage_ex uses inst.r.funct3 as the mult function
                 end
                 `RV32_LB, `RV32_LH, `RV32_LW,
                 `RV32_LBU, `RV32_LHU: begin
                     has_dest   = `TRUE;
                     opb_select = OPB_IS_I_IMM;
                     rd_mem     = `TRUE;
+                    // stage_ex uses inst.r.funct3 as the load size and signedness
                 end
                 `RV32_SB, `RV32_SH, `RV32_SW: begin
                     opb_select = OPB_IS_S_IMM;
                     wr_mem     = `TRUE;
+                    // stage_ex uses inst.r.funct3 as the store size
                 end
                 `RV32_ADDI: begin
                     has_dest   = `TRUE;
@@ -166,22 +175,6 @@ module decoder (
                     has_dest   = `TRUE;
                     alu_func   = ALU_SRA;
                 end
-                `RV32_MUL: begin
-                    has_dest   = `TRUE;
-                    alu_func   = ALU_MUL;
-                end
-                `RV32_MULH: begin
-                    has_dest   = `TRUE;
-                    alu_func   = ALU_MULH;
-                end
-                `RV32_MULHSU: begin
-                    has_dest   = `TRUE;
-                    alu_func   = ALU_MULHSU;
-                end
-                `RV32_MULHU: begin
-                    has_dest   = `TRUE;
-                    alu_func   = ALU_MULHU;
-                end
                 `RV32_CSRRW, `RV32_CSRRS, `RV32_CSRRC: begin
                     csr_op = `TRUE;
                 end
@@ -217,7 +210,7 @@ module stage_id (
     // and making the fetch stage die on halts/keeping track of when
     // to allow the next instruction out of fetch
     // 0 for HALT and illegal instructions (end processor on halt)
-    assign id_packet.valid = if_id_reg.valid & ~id_packet.illegal;
+    assign id_packet.valid = if_id_reg.valid && !id_packet.illegal;
 
     logic has_dest_reg;
     assign id_packet.dest_reg_idx = (has_dest_reg) ? if_id_reg.inst.r.rd : `ZERO_REG;
@@ -247,6 +240,7 @@ module stage_id (
         .opb_select    (id_packet.opb_select),
         .alu_func      (id_packet.alu_func),
         .has_dest      (has_dest_reg),
+        .mult          (id_packet.mult),
         .rd_mem        (id_packet.rd_mem),
         .wr_mem        (id_packet.wr_mem),
         .cond_branch   (id_packet.cond_branch),

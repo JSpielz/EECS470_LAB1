@@ -115,44 +115,49 @@ typedef enum logic [3:0] {
 
 // ALU opA input mux selects
 typedef enum logic [1:0] {
-    OPA_IS_RS1  = 2'h0,
-    OPA_IS_NPC  = 2'h1,
-    OPA_IS_PC   = 2'h2,
-    OPA_IS_ZERO = 2'h3
+    OPA_IS_RS1,
+    OPA_IS_NPC,
+    OPA_IS_PC,
+    OPA_IS_ZERO
 } ALU_OPA_SELECT;
 
 // ALU opB input mux selects
-typedef enum logic [3:0] {
-    OPB_IS_RS2    = 4'h0,
-    OPB_IS_I_IMM  = 4'h1,
-    OPB_IS_S_IMM  = 4'h2,
-    OPB_IS_B_IMM  = 4'h3,
-    OPB_IS_U_IMM  = 4'h4,
-    OPB_IS_J_IMM  = 4'h5
+typedef enum logic [2:0] {
+    OPB_IS_RS2,
+    OPB_IS_I_IMM,
+    OPB_IS_S_IMM,
+    OPB_IS_B_IMM,
+    OPB_IS_U_IMM,
+    OPB_IS_J_IMM
 } ALU_OPB_SELECT;
 
-// ALU function code input
-// probably want to leave these alone
-typedef enum logic [4:0] {
-    ALU_ADD     = 5'h00,
-    ALU_SUB     = 5'h01,
-    ALU_SLT     = 5'h02,
-    ALU_SLTU    = 5'h03,
-    ALU_AND     = 5'h04,
-    ALU_OR      = 5'h05,
-    ALU_XOR     = 5'h06,
-    ALU_SLL     = 5'h07,
-    ALU_SRL     = 5'h08,
-    ALU_SRA     = 5'h09,
-    ALU_MUL     = 5'h0a,
-    ALU_MULH    = 5'h0b,
-    ALU_MULHSU  = 5'h0c,
-    ALU_MULHU   = 5'h0d,
-    ALU_DIV     = 5'h0e,
-    ALU_DIVU    = 5'h0f,
-    ALU_REM     = 5'h10,
-    ALU_REMU    = 5'h11
+// Which ALU operation to perform
+typedef enum logic [3:0] {
+    ALU_ADD,
+    ALU_SUB,
+    ALU_SLT,
+    ALU_SLTU,
+    ALU_AND,
+    ALU_OR,
+    ALU_XOR,
+    ALU_SLL,
+    ALU_SRL,
+    ALU_SRA
 } ALU_FUNC;
+
+// Mult extension operations
+// These map to the RISC-V M-extension funct3 bits
+// We don't implement any of the DIV or REM operations
+typedef enum logic [2:0] {
+    M_MUL     = 3'b000,
+    M_MULH    = 3'b001,
+    M_MULHSU  = 3'b010,
+    M_MULHU   = 3'b011,
+    M_DIV     = 3'b100,
+    M_DIVU    = 3'b101,
+    M_REM     = 3'b110,
+    M_REMU    = 3'b111
+} MULT_FUNC3;
 
 ///////////////////////////////////
 // ---- Instruction Typedef ---- //
@@ -273,6 +278,7 @@ typedef struct packed {
 
     REG_IDX  dest_reg_idx;  // destination (writeback) register index
     ALU_FUNC alu_func;      // ALU function select (ALU_xxx *)
+    logic    mult;          // Is inst a multiply instruction?
     logic    rd_mem;        // Does inst read memory?
     logic    wr_mem;        // Does inst write memory?
     logic    cond_branch;   // Is inst a conditional branch?
@@ -301,7 +307,7 @@ typedef struct packed {
     logic    halt;
     logic    illegal;
     logic    csr_op;
-    logic    rd_unsigned; // Whether proc2Dmem_data is signed or unsigned
+    logic    rd_unsigned; // Whether our load data is signed or unsigned
     MEM_SIZE mem_size;
     logic    valid;
 } EX_MEM_PACKET;

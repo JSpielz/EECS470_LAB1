@@ -219,6 +219,7 @@ module cpu (
                 OPB_IS_RS2,
                 `ZERO_REG,
                 ALU_ADD,
+                1'b0, // mult
                 1'b0, // rd_mem
                 1'b0, // wr_mem
                 1'b0, // cond
