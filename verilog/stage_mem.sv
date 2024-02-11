@@ -56,7 +56,7 @@ module stage_mem (
             end
         end else begin
             // signed: sign-extend the data
-            if (ex_mem_reg.mem_size[1:0] == BYTE) begin
+            if (ex_mem_reg.mem_size == BYTE) begin
                 load_data[31:8] = {(24){load_data[7]}};
             end else if (ex_mem_reg.mem_size == HALF) begin
                 load_data[31:16] = {(16){load_data[15]}};
