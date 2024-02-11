@@ -16,39 +16,37 @@
 // ALU: computes the result of FUNC applied with operands A and B
 // This module is purely combinational
 module alu (
-    input DATA opa,
-    input DATA opb,
-    ALU_FUNC   func,
+    input DATA     opa,
+    input DATA     opb,
+    input ALU_FUNC alu_func,
 
     output DATA result
 );
 
-    logic signed [31:0]   signed_opa, signed_opb;
     logic signed [63:0] signed_mul, mixed_mul;
     logic        [63:0] unsigned_mul;
-
-    assign signed_opa   = opa;
-    assign signed_opb   = opb;
 
     // We let verilog do the full 32-bit multiplication for us.
     // This gives a large clock period.
     // You will replace this with your pipelined multiplier in project 4.
-    assign signed_mul   = signed_opa * signed_opb;
+    assign signed_mul   = signed'(opa) * signed'(opb);
     assign unsigned_mul = opa * opb;
-    assign mixed_mul    = signed_opa * opb;
+    assign mixed_mul    = signed'(opa) * signed'({1'b0, opb});
+    // ^ Verilog only does signed multiplication if both arguments are signed
+    // This was a long-standing bug with MULHSU in VeriSimpleV
 
     always_comb begin
-        case (func)
+        case (alu_func)
             ALU_ADD:    result = opa + opb;
             ALU_SUB:    result = opa - opb;
             ALU_AND:    result = opa & opb;
-            ALU_SLT:    result = signed_opa < signed_opb;
+            ALU_SLT:    result = signed'(opa) < signed'(opb);
             ALU_SLTU:   result = opa < opb;
             ALU_OR:     result = opa | opb;
             ALU_XOR:    result = opa ^ opb;
             ALU_SRL:    result = opa >> opb[4:0];
             ALU_SLL:    result = opa << opb[4:0];
-            ALU_SRA:    result = signed_opa >>> opb[4:0]; // arithmetic from logical shift
+            ALU_SRA:    result = signed'(opa) >>> opb[4:0]; // arithmetic from logical shift
             ALU_MUL:    result = signed_mul[31:0];
             ALU_MULH:   result = signed_mul[63:32];
             ALU_MULHSU: result = mixed_mul[63:32];
@@ -64,24 +62,21 @@ endmodule // alu
 // Conditional branch module: compute whether to take conditional branches
 // This module is purely combinational
 module conditional_branch (
-    input [2:0] func, // Specifies which condition to check
-    input DATA  rs1,  // Value to check against condition
+    input DATA  rs1,
     input DATA  rs2,
+    input [2:0] func, // Which branch condition to check
 
     output logic take // True/False condition result
 );
 
-    logic signed [31:0] signed_rs1, signed_rs2;
-    assign signed_rs1 = rs1;
-    assign signed_rs2 = rs2;
     always_comb begin
         case (func)
-            3'b000:  take = signed_rs1 == signed_rs2; // BEQ
-            3'b001:  take = signed_rs1 != signed_rs2; // BNE
-            3'b100:  take = signed_rs1 < signed_rs2;  // BLT
-            3'b101:  take = signed_rs1 >= signed_rs2; // BGE
-            3'b110:  take = rs1 < rs2;                // BLTU
-            3'b111:  take = rs1 >= rs2;               // BGEU
+            3'b000:  take = signed'(rs1) == signed'(rs2); // BEQ
+            3'b001:  take = signed'(rs1) != signed'(rs2); // BNE
+            3'b100:  take = signed'(rs1) <  signed'(rs2); // BLT
+            3'b101:  take = signed'(rs1) >= signed'(rs2); // BGE
+            3'b110:  take = rs1 < rs2;                    // BLTU
+            3'b111:  take = rs1 >= rs2;                   // BGEU
             default: take = `FALSE;
         endcase
     end
@@ -146,7 +141,7 @@ module stage_ex (
         // Inputs
         .opa(opa_mux_out),
         .opb(opb_mux_out),
-        .func(id_ex_reg.alu_func),
+        .alu_func(id_ex_reg.alu_func),
 
         // Output
         .result(ex_packet.alu_result)
@@ -155,9 +150,9 @@ module stage_ex (
     // Instantiate the conditional branch module
     conditional_branch conditional_branch_0 (
         // Inputs
-        .func(id_ex_reg.inst.b.funct3), // instruction bits for which condition to check
         .rs1(id_ex_reg.rs1_value),
         .rs2(id_ex_reg.rs2_value),
+        .func(id_ex_reg.inst.b.funct3), // Which branch condition to check
 
         // Output
         .take(take_conditional)
