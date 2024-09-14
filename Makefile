@@ -370,12 +370,12 @@ VTUBER = test/vtuber_test.sv \
 
 VISFLAGS = -lncurses
 
-build/vis.simv: $(HEADERS) $(VTUBER) $(SOURCES)
+build/vis.simv: $(HEADERS) $(VTUBER) $(SOURCES) | build
 	@$(call PRINT_COLOR, 5, compiling visual debugger testbench)
 	$(VCS) $(VISFLAGS) $^ -o $@
 	@$(call PRINT_COLOR, 6, finished compiling visual debugger testbench)
 
-%.vis:  build/%.mem build/vis.simv
+%.vis:  programs/mem/%.mem build/vis.simv
 	cd build && ./vis.simv +MEMORY=../$<
 	@$(call PRINT_COLOR, 6, Fullscreen your terminal for the best VTUBER experience!)
 .PHONY: %.vis
