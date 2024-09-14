@@ -192,7 +192,7 @@ module testbench;
             end
 
             // print the pipeline debug outputs via c code to the pipeline output file
-            print_cycles(clock_count);
+            print_cycles(clock_count - 1);
             print_stage(if_inst_dbg,     if_NPC_dbg,     {31'b0,if_valid_dbg});
             print_stage(if_id_inst_dbg,  if_id_NPC_dbg,  {31'b0,if_id_valid_dbg});
             print_stage(id_ex_inst_dbg,  id_ex_NPC_dbg,  {31'b0,id_ex_valid_dbg});
