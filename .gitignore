@@ -8,6 +8,7 @@
 *.tgz
 
 # verilog compilation
+build/
 *simv
 *.daidir
 *.key
@@ -18,6 +19,7 @@ csrc/
 urgReport/
 
 # synthesis files
+synth/
 *.vg
 *.rep
 *.ddc
@@ -36,6 +38,7 @@ novas*
 *fsdb*
 
 # program memory compilation
+programs/mem/
 *.elf
 *.mem
 *.dump

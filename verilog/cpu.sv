@@ -113,7 +113,7 @@ module cpu (
 
     logic if_valid, start_valid_on_reset, wb_valid;
 
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
         // Using a separate always_ff is necessary since if_valid is combinational
@@ -156,7 +156,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign if_id_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             if_id_reg.inst  <= `NOP;
@@ -199,7 +199,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign id_ex_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             id_ex_reg <= '{
@@ -253,7 +253,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign ex_mem_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             ex_mem_inst_dbg <= `NOP; // debug output
@@ -294,7 +294,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign mem_wb_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             mem_wb_inst_dbg <= `NOP; // debug output

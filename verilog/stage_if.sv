@@ -24,7 +24,6 @@ module stage_if (
 
     ADDR PC_reg; // PC we are currently fetching
 
-    // synopsys sync_set_reset "reset"
     always_ff @(posedge clock) begin
         if (reset) begin
             PC_reg <= 0;             // initial PC value is 0 (the memory address where our program starts)
