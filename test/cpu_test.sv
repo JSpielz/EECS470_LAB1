@@ -187,6 +187,10 @@ module testbench;
 
             clock_count = clock_count + 1;
 
+            if (clock_count % 10000 == 0) begin
+                $display("  %16t : %d cycles", $realtime, clock_count);
+            end
+
             // print the pipeline debug outputs via c code to the pipeline output file
             print_cycles(clock_count);
             print_stage(if_inst_dbg,     if_NPC_dbg,     {31'b0,if_valid_dbg});
