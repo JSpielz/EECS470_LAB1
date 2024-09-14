@@ -46,7 +46,7 @@
 
 # ---- Visual Debugger ---- #
 # make <my_program>.vis  <- run a program on the project 3 vtuber visual debugger!
-# make build/vis.simv          <- compile the vtuber executable from VTUBER and SOURCES
+# make build/vis.simv    <- compile the vtuber executable from VTUBER and SOURCES
 
 # ---- Cleanup ---- #
 # make clean            <- remove per-run files and compiled executable files

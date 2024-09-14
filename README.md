@@ -117,18 +117,18 @@ processor:
 # These are your main commands for running programs and generating output
 make <my_program>.out      <- run a program on simv
                               output *.out, *.cpi, *.wb, and *.ppln files
-make <my_program>.syn.out  <- run a program on syn_simv and do the same
+make <my_program>.syn.out  <- run a program on syn.simv and do the same
 
 # ---- Executable Compilation ---- #
-make simv      <- compiles simv from the TESTBENCH and SOURCES
-make syn_simv  <- compiles syn_simv from TESTBENCH and SYNTH_FILES
-make *.vg      <- synthesize modules in SOURCES for use in syn_simv
-make slack     <- grep the slack status of any synthesized modules
+make build/simv      <- compiles simv from the TESTBENCH and SOURCES
+make build/syn.simv  <- compiles syn.simv from TESTBENCH and SYNTH_FILES
+make synth/cpu.vg    <- synthesize modules in SOURCES for use in syn.simv
+make slack           <- grep the slack status of any synthesized modules
 
 # ---- Program Memory Compilation ---- #
 # Programs to run are in the programs/ directory
-make programs/<my_program>.mem  <- compile a program to a RISC-V memory file
-make compile_all                <- compile every program at once (in parallel with -j)
+make programs/mem/<my_program>.mem  <- compile a program to a RISC-V memory file
+make compile_all                    <- compile every program at once (in parallel with -j)
 
 # ---- Dump Files ---- #
 make <my_program>.dump  <- disassembles compiled memory into RISC-V assembly dump files
@@ -137,11 +137,11 @@ make dump_all           <- create all dump files at once (in parallel with -j)
 
 # ---- Verdi ---- #
 make <my_program>.verdi     <- run a program in verdi via simv
-make <my_program>.syn.verdi <- run a program in verdi via syn_simv
+make <my_program>.syn.verdi <- run a program in verdi via syn.simv
 
 # ---- Visual Debugger ---- #
 make <my_program>.vis  <- run a program on the project 3 vtuber visual debugger!
-make vis_simv          <- compile the vtuber executable from VTUBER and SOURCES
+make build/vis.simv    <- compile the vtuber executable from VTUBER and SOURCES
 
 # ---- Cleanup ---- #
 make clean            <- remove per-run files and compiled executable files
