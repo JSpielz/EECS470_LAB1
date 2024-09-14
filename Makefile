@@ -80,8 +80,8 @@
 export CLOCK_PERIOD = 30.0
 
 # the Verilog Compiler command and arguments
-VCS = vcs -sverilog -xprop=tmerge +vc -Mupdate -Mdir=build/csrc -line -full64 -kdb -lca -nc -no_save \
-      -debug_access+all+reverse $(VCS_BAD_WARNINGS) +define+CLOCK_PERIOD=$(CLOCK_PERIOD) + +incdir+verilog/
+VCS = vcs -sverilog -xprop=tmerge +vc -Mupdate -Mdir=build/csrc -line -full64 -kdb -lca -nc \
+      -debug_access+all+reverse $(VCS_BAD_WARNINGS) +define+CLOCK_PERIOD=$(CLOCK_PERIOD) +incdir+verilog/
 # a SYNTH define is added when compiling for synthesis that can be used in testbenches
 
 # remove certain warnings that generate MB of text but can be safely ignored
@@ -112,7 +112,7 @@ DEBUG_FLAG = -g
 
 # this is our RISC-V compiler toolchain
 # NOTE: you can use a local riscv install to compile programs by setting CAEN to 0
-CAEN = 0
+CAEN = 1
 ifeq (1, $(CAEN))
     GCC     = riscv gcc
     OBJCOPY = riscv objcopy
@@ -141,6 +141,7 @@ HEADERS = verilog/sys_defs.svh \
           verilog/ISA.svh
 
 TESTBENCH = test/cpu_test.sv \
+            test/decode_inst.c \
             test/pipeline_print.c \
             test/mem.sv
 
@@ -294,16 +295,16 @@ dump_all: $(DUMP_PROGRAMS:=.dump_x) $(DUMP_PROGRAMS:=.dump_abi)
 # run a program and produce output files
 output/%.out: programs/mem/%.mem build/simv | output
 	@$(call PRINT_COLOR, 5, running simv on $<)
-	cd build && ./simv +MEMORY=../$< +OUTPUT=../output/$* > ../$@
+	cd build && ./simv +MEMORY=../$< +OUTPUT=../output/$*
 	@$(call PRINT_COLOR, 6, finished running simv on $<)
-	@$(call PRINT_COLOR, 2, output is in output/$*.{out cpi wb ppln})
+	@$(call PRINT_COLOR, 2, output is in output/$*.{out finalmem cpi wb ppln})
 
 # run synthesis with: 'make <my_program>.syn.out'
 # this does the same as simv, but adds .syn to the output files and compiles syn.simv instead
 output/%.syn.out: programs/mem/%.mem build/syn.simv | output
 	@$(call PRINT_COLOR, 5, running syn.simv on $<)
 	@$(call PRINT_COLOR, 3, this might take a while...)
-	cd build && ./syn.simv +MEMORY=../$< +OUTPUT=../output/$*.syn > ../$@
+	cd build && ./syn.simv +MEMORY=../$< +OUTPUT=../output/$*.syn
 	@$(call PRINT_COLOR, 6, finished running syn.simv on $<)
 	@$(call PRINT_COLOR, 2, output is in output/$*.syn.{out cpi wb ppln})
 
