@@ -816,7 +816,7 @@ extern "C" void initcurses(int if_regs, int if_id_regs, int id_regs, int id_ex_r
         close(PARENT_WRITE);
         close(PARENT_READ);
         fp = fdopen(CHILD_READ, "r");
-        fp2 = fopen("program.out","w");
+        fp2 = fopen("output/vtuber.out","w");
 
         // allocate room on the heap for the reg data
         inst_contents     = (char**) malloc(NUM_HISTORY*sizeof(char*));

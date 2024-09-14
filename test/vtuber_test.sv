@@ -40,12 +40,8 @@ module testbench;
     MEM_SIZE    proc2mem_size;
 `endif
 
-    logic [3:0]    pipeline_completed_insts;
-    EXCEPTION_CODE pipeline_error_status;
-    logic [4:0]    pipeline_commit_wr_idx;
-    DATA           pipeline_commit_wr_data;
-    logic          pipeline_commit_wr_en;
-    ADDR           pipeline_commit_NPC;
+    COMMIT_PACKET [`N-1:0] committed_insts;
+    EXCEPTION_CODE error_status = NO_ERROR;
 
     ADDR  if_NPC_dbg;
     DATA  if_inst_dbg;
@@ -79,12 +75,7 @@ module testbench;
         .proc2mem_data    (proc2mem_data),
         .proc2mem_size    (proc2mem_size),
 
-        .pipeline_completed_insts (pipeline_completed_insts),
-        .pipeline_error_status    (pipeline_error_status),
-        .pipeline_commit_wr_data  (pipeline_commit_wr_data),
-        .pipeline_commit_wr_idx   (pipeline_commit_wr_idx),
-        .pipeline_commit_wr_en    (pipeline_commit_wr_en),
-        .pipeline_commit_NPC      (pipeline_commit_NPC),
+        .committed_insts (committed_insts),
 
         .if_NPC_dbg       (if_NPC_dbg),
         .if_inst_dbg      (if_inst_dbg),
@@ -137,7 +128,7 @@ module testbench;
             instr_count <= 0;
         end else begin
             clock_count <= (clock_count + 1);
-            instr_count <= (instr_count + pipeline_completed_insts);
+            instr_count <= (instr_count + committed_insts[0].valid);
         end
     end
 
@@ -191,7 +182,11 @@ module testbench;
             #2;
 
             // deal with any halting conditions
-            if (pipeline_error_status!=NO_ERROR) begin
+            error_status = (!committed_insts[0].valid)  ? NO_ERROR      :
+                             committed_insts[0].illegal ? HALTED_ON_WFI :
+                             committed_insts[0].halt    ? ILLEGAL_INST  : NO_ERROR;
+
+            if (error_status!=NO_ERROR) begin
                 #100
                 $display("\nDONE\n");
                 waitforresponse();
@@ -238,7 +233,7 @@ module testbench;
         // IF signals (5) - prefix 'f'
         $display("fNPC 8:%h",         verisimpleV.if_packet.NPC);
         $display("finst 8:%h",        verisimpleV.if_packet.inst);
-        $display("fImem_addr 8:%h",   verisimpleV.stage_if_0.proc2Imem_addr);
+        $display("fImem_addr 8:%h",   verisimpleV.stage_if_0.Imem_addr);
         $display("fPC_reg 8:%h",      verisimpleV.stage_if_0.PC_reg);
         $display("fvalid 1:%h",       verisimpleV.if_packet.valid);
 
@@ -308,9 +303,9 @@ module testbench;
         // MEM signals (5) - prefix 'm'
         $display("mmem_data 16:%h",   verisimpleV.mem2proc_data);
         $display("mmem_result 8:%h",  verisimpleV.mem_wb_reg.result);
-        $display("m2Dmem_data 16:%h", verisimpleV.proc2mem_data);
-        $display("m2Dmem_addr 8:%h",  verisimpleV.proc2Dmem_addr);
-        $display("m2Dmem_cmd 1:%h",   verisimpleV.proc2Dmem_command);
+        $display("m2Dmem_data 16:%h", verisimpleV.Dmem_store_data);
+        $display("m2Dmem_addr 8:%h",  verisimpleV.Dmem_addr);
+        $display("m2Dmem_cmd 1:%h",   verisimpleV.Dmem_command);
 
         // MEM/WB signals (9) - prefix 'j'
         $display("jenable 1:%h",      verisimpleV.mem_wb_enable);
@@ -324,13 +319,13 @@ module testbench;
         $display("jvalid 1:%h",       verisimpleV.mem_wb_reg.valid);
 
         // WB signals (3) - prefix 'w'
-        $display("wwr_data 8:%h",     verisimpleV.wb_regfile_data);
-        $display("wwr_idx 2:%h",      verisimpleV.wb_regfile_idx);
-        $display("wwr_en 1:%h",       verisimpleV.wb_regfile_en);
+        $display("wwr_data 8:%h",     verisimpleV.wb_packet.data);
+        $display("wwr_idx 2:%h",      verisimpleV.wb_packet.reg_idx);
+        $display("wwr_en 1:%h",       verisimpleV.wb_packet.valid);
 
         // Misc signals(2) - prefix 'v'
-        $display("vcompleted 1:%h",   pipeline_completed_insts);
-        $display("vpipe_err 1:%h",    pipeline_error_status);
+        $display("vcompleted 1:%h",   committed_insts[0].valid);
+        $display("vpipe_err 1:%h",    error_status);
 
         // must come last
         $display("break");

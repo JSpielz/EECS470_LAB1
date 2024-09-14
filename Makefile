@@ -18,20 +18,20 @@
 # ---- Program Execution ---- #
 # these are your main commands for running programs and generating output
 # make <my_program>.out      <- run a program on simv and output .out, .cpi, .wb, and .ppln files
-# make <my_program>.syn.out  <- run a program on syn_simv and do the same
+# make <my_program>.syn.out  <- run a program on syn.simv and do the same
 # make simulate_all          <- run every program on simv at once (in parallel with -j)
-# make simulate_all_syn      <- run every program on syn_simv at once (in parallel with -j)
+# make simulate_all.syn      <- run every program on syn.simv at once (in parallel with -j)
 
 # ---- Executable Compilation ---- #
-# make simv      <- compiles simv from the TESTBENCH and SOURCES
-# make syn_simv  <- compiles syn_simv from TESTBENCH and SYNTH_FILES
-# make *.vg      <- synthesize modules in SOURCES for use in syn_simv
-# make slack     <- grep the slack status of any synthesized modules
+# make build/simv      <- compiles simv from the TESTBENCH and SOURCES
+# make build/syn.simv  <- compiles syn.simv from TESTBENCH and SYNTH_FILES
+# make synth/*.vg      <- synthesize modules in SOURCES for use in syn.simv
+# make slack           <- grep the slack status of any synthesized modules
 
 # ---- Program Memory Compilation ---- #
 # NOTE: programs to run are in the programs/ directory
-# make programs/<my_program>.mem  <- compiles a program to a RISC-V memory file for running on the processor
-# make compile_all                <- compile every program at once (in parallel with -j)
+# make programs/mem/<my_program>.mem  <- compiles a program to a RISC-V memory file for running on the processor
+# make compile_all                    <- compile every program at once (in parallel with -j)
 
 # ---- Dump Files ---- #
 # make <my_program>.dump  <- disassembles <my_program>.mem into .dump_x and .dump_abi RISC-V assembly files
@@ -42,11 +42,11 @@
 
 # ---- Verdi ---- #
 # make <my_program>.verdi     <- run a program in verdi via simv
-# make <my_program>.syn.verdi <- run a program in verdi via syn_simv
+# make <my_program>.syn.verdi <- run a program in verdi via syn.simv
 
 # ---- Visual Debugger ---- #
 # make <my_program>.vis  <- run a program on the project 3 vtuber visual debugger!
-# make vis_simv          <- compile the vtuber executable from VTUBER and SOURCES
+# make build/vis.simv    <- compile the vtuber executable from VTUBER and SOURCES
 
 # ---- Cleanup ---- #
 # make clean            <- remove per-run files and compiled executable files
@@ -80,18 +80,18 @@
 export CLOCK_PERIOD = 30.0
 
 # the Verilog Compiler command and arguments
-VCS = SW_VCS=2020.12-SP2-1 vcs -sverilog -xprop=tmerge +vc -Mupdate -line -full64 -kdb -lca -nc \
+VCS = vcs -sverilog -xprop=tmerge +vc -Mupdate -Mdir=build/csrc -line -full64 -kdb -lca -nc \
       -debug_access+all+reverse $(VCS_BAD_WARNINGS) +define+CLOCK_PERIOD=$(CLOCK_PERIOD) +incdir+verilog/
 # a SYNTH define is added when compiling for synthesis that can be used in testbenches
 
 # remove certain warnings that generate MB of text but can be safely ignored
-VCS_BAD_WARNINGS = +warn=noTFIPC +warn=noDEBUG_DEP +warn=noENUMASSIGN
+VCS_BAD_WARNINGS = +warn=noTFIPC +warn=noDEBUG_DEP +warn=noENUMASSIGN +warn=noLCA_FEATURES_ENABLED
 
 # a reference library of standard structural cells that we link against when synthesizing
-LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
+LIB = /usr/caen/misc/class/eecs470/lib/verilog/lec25dscc25.v
 
 # the EECS 470 synthesis script
-TCL_SCRIPT = synth/470synth.tcl
+TCL_SCRIPT = 470synth.tcl
 
 # Set the shell's pipefail option: causes return values through pipes to match the last non-zero value
 # (useful for, i.e. piping to `tee`)
@@ -132,15 +132,16 @@ endif
 ####################################
 
 # NOTE: the executables are not the only things you need to compile
-# you must also create a programs/*.mem file for each program you run
+# you must also create a build/*.mem file for each program you run
 # which will be loaded into test/mem.sv by the testbench on startup
-# To run a program on simv or syn_simv, see the program execution section
+# To run a program on simv or syn.simv, see the program execution section
 # This is done automatically with 'make <my_program>.out'
 
 HEADERS = verilog/sys_defs.svh \
           verilog/ISA.svh
 
 TESTBENCH = test/cpu_test.sv \
+            test/decode_inst.c \
             test/pipeline_print.c \
             test/mem.sv
 
@@ -156,24 +157,23 @@ SOURCES = verilog/cpu.sv \
 SYNTH_FILES = synth/cpu.vg
 
 # the normal simulation executable will run your testbench on the original modules
-simv: $(TESTBENCH) $(SOURCES) $(HEADERS)
+build/simv: $(TESTBENCH) $(SOURCES) $(HEADERS) | build
 	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
-	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
 	$(VCS) $(filter-out $(HEADERS),$^) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
 
-# this also generates many other files, see the tcl script's introduction for info on each of them
-synth/%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS)
+# a make pattern rule to generate the .vg synthesis files
+# pattern rules use the % as a wildcard to match multiple possible targets
+synth/%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS) | synth
 	@$(call PRINT_COLOR, 5, synthesizing the $* module)
 	@$(call PRINT_COLOR, 3, this might take a while...)
-	@$(call PRINT_COLOR, 3, NOTE: if this is slow to startup: run '"module load vcs verdi synopsys-synth"')
 	cd synth && \
 	MODULE=$* SOURCES="$(SOURCES)" \
-	dc_shell-t -f $(notdir $(TCL_SCRIPT)) | tee $*_synth.out
+	dc_shell-t -f ../$(TCL_SCRIPT) | tee $*-synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
 
 # the synthesis executable runs your testbench on the synthesized versions of your modules
-syn_simv: $(TESTBENCH) $(SYNTH_FILES) $(HEADERS)
+build/syn.simv: $(TESTBENCH) $(SYNTH_FILES) $(HEADERS) | build
 	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
 	$(VCS) +define+SYNTH $(filter-out $(HEADERS),$^) $(LIB) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
@@ -213,17 +213,17 @@ LINKERS    = programs/linker.lds
 ASLINKERS  = programs/aslinker.lds
 
 # make elf files from assembly code
-%.elf: %.s $(ASLINKERS)
+programs/mem/%.elf: programs/%.s $(ASLINKERS) | programs/mem
 	@$(call PRINT_COLOR, 5, compiling assembly file $<)
 	$(GCC) $(ASFLAGS) $< -T $(ASLINKERS) -o $@
 
 # make elf files from C source code
-%.elf: %.c $(CRT) $(LINKERS)
+programs/mem/%.elf: programs/%.c $(CRT) $(LINKERS) | programs/mem
 	@$(call PRINT_COLOR, 5, compiling C code file $<)
 	$(GCC) $(CFLAGS) $(OFLAGS) $(CRT) $< -T $(LINKERS) -o $@
 
 # C programs can also be compiled in debug mode, this is solely meant for use in the .dump files below
-%.debug.elf: %.c $(CRT) $(LINKERS)
+programs/mem/%.debug.elf: programs/%.c $(CRT) $(LINKERS) | programs/mem
 	@$(call PRINT_COLOR, 5, compiling debug C code file $<)
 	$(GCC) $(CFLAGS) $(OFLAGS) $(CRT) $< -T $(LINKERS) -o $@
 	$(GCC) $(DEBUG_FLAG) $(CFLAGS) $(OFLAGS) $(CRT) $< -T $(LINKERS) -o $@
@@ -231,17 +231,17 @@ ASLINKERS  = programs/aslinker.lds
 # declare the .elf files as intermediate files.
 # Make will automatically rm intermediate files after they're used in a recipe
 # and it won't remake them until their sources are updated or they're needed again
-.INTERMEDIATE: %.elf
+.INTERMEDIATE: programs/mem/%.elf
 
 # turn any elf file into a hex memory file ready for the testbench
-%.mem: %.elf
+programs/mem/%.mem: programs/mem/%.elf
 	$(ELF2HEX) 8 8192 $< > $@
 	@$(call PRINT_COLOR, 6, created memory file $@)
 	@$(call PRINT_COLOR, 3, NOTE: to see RISC-V assembly run: '"make $*.dump"')
 	@$(call PRINT_COLOR, 3, for \*.c sources also try: '"make $*.debug.dump"')
 
 # compile all programs in one command (use 'make -j' to run multithreaded)
-compile_all: $(PROGRAMS:=.mem)
+compile_all: $(PROGRAMS:programs/%=programs/mem/%.mem)
 .PHONY: compile_all
 
 ########################
@@ -255,7 +255,7 @@ compile_all: $(PROGRAMS:=.mem)
 # these are useful for the C sources because the debug flag makes the assembly more understandable
 # because it includes some of the original C operations and function/variable names
 
-DUMP_PROGRAMS = $(ASSEMBLY:.c=) $(C_CODE:.c=.debug)
+DUMP_PROGRAMS = $(ASSEMBLY:.s=) $(C_CODE:.c=.debug)
 
 # 'make <my_program>.dump' will create both files at once!
 ./%.dump: programs/%.dump_x programs/%.dump_abi ;
@@ -264,13 +264,13 @@ DUMP_PROGRAMS = $(ASSEMBLY:.c=) $(C_CODE:.c=.debug)
 .PRECIOUS: %.dump_x %.dump_abi
 
 # use the numberic x0-x31 register names
-%.dump_x: %.elf
+programs/%.dump_x: programs/mem/%.elf
 	@$(call PRINT_COLOR, 5, disassembling $<)
 	$(OBJDUMP) $(OBJDFLAGS) $< > $@
 	@$(call PRINT_COLOR, 6, created numeric dump file $@)
 
 # use the Application Binary Interface register names (sp, a0, etc.)
-%.dump_abi: %.elf
+programs/%.dump_abi: programs/mem/%.elf
 	@$(call PRINT_COLOR, 5, disassembling $<)
 	$(OBJDUMP) $(OBJFLAGS) $< > $@
 	@$(call PRINT_COLOR, 6, created abi dump file $@)
@@ -283,40 +283,29 @@ dump_all: $(DUMP_PROGRAMS:=.dump_x) $(DUMP_PROGRAMS:=.dump_abi)
 # ---- Program Execution ---- #
 ###############################
 
-# run one of the executables (simv/syn_simv) using the chosen program
+# run one of the executables (simv/syn.simv) using the chosen program
 # e.g. 'make sampler.out' does the following from a clean directory:
 #   1. compiles simv
 #   2. compiles programs/sampler.s into its .elf and then .mem files (in programs/)
-#   3. runs ./simv +MEMORY=programs/sampler.mem +OUTPUT=output/sampler > output/sampler.out
+#   3. runs cd build && ./simv +MEMORY=../programs/sampler.mem +OUTPUT=../output/sampler > ../output/sampler.out
 #   4. which creates the sampler.out, sampler.cpi, sampler.wb, and sampler.ppln files in output/
 # the same can be done for synthesis by doing 'make sampler.syn.out'
 # which will also create .syn.cpi, .syn.wb, and .syn.ppln files in output/
 
-# targets built in the 'output/' directory should create output/ if it doesn't exist
-# (it's deleted entirely by 'make nuke')
-# NOTE: place it after the pipe "|" as an order-only pre-requisite
-output:
-	mkdir -p output
-
 # run a program and produce output files
-output/%.out: programs/%.mem simv | output
+output/%.out: programs/mem/%.mem build/simv | output
 	@$(call PRINT_COLOR, 5, running simv on $<)
-	./simv +MEMORY=$< +OUTPUT=output/$* > $@
+	cd build && ./simv +MEMORY=../$< +OUTPUT=../output/$*
 	@$(call PRINT_COLOR, 6, finished running simv on $<)
-	@$(call PRINT_COLOR, 2, output is in output/$*.{out cpi wb ppln})
-# NOTE: this uses a 'static pattern rule' to match a list of known targets to a pattern
-# and then generates the correct rule based on the pattern, where % and $* match
-# so for the target 'output/sampler.out' the % matches 'sampler' and depends on programs/sampler.mem
-# see: https://www.gnu.org/software/make/manual/html_node/Static-Usage.html
-# $(@D) is an automatic variable for the directory of the target, in this case, 'output'
+	@$(call PRINT_COLOR, 2, output is in output/$*.{out finalmem cpi wb ppln})
 
-# this does the same as simv, but adds .syn to the output files and compiles syn_simv instead
 # run synthesis with: 'make <my_program>.syn.out'
-output/%.syn.out: programs/%.mem syn_simv | output
-	@$(call PRINT_COLOR, 5, running syn_simv on $<)
+# this does the same as simv, but adds .syn to the output files and compiles syn.simv instead
+output/%.syn.out: programs/mem/%.mem build/syn.simv | output
+	@$(call PRINT_COLOR, 5, running syn.simv on $<)
 	@$(call PRINT_COLOR, 3, this might take a while...)
-	./syn_simv +MEMORY=$< +OUTPUT=output/$*.syn > $@
-	@$(call PRINT_COLOR, 6, finished running syn_simv on $<)
+	cd build && ./syn.simv +MEMORY=../$< +OUTPUT=../output/$*.syn
+	@$(call PRINT_COLOR, 6, finished running syn.simv on $<)
 	@$(call PRINT_COLOR, 2, output is in output/$*.syn.{out cpi wb ppln})
 
 # Allow us to type 'make <my_program>.out' instead of 'make output/<my_program>.out'
@@ -329,9 +318,9 @@ output/%.syn.out: programs/%.mem syn_simv | output
 .PRECIOUS: %.out %.cpi %.wb %.ppln
 
 # run all programs in one command (use 'make -j' to run multithreaded)
-simulate_all: simv compile_all $(PROGRAMS:programs/%=output/%.out)
-simulate_all_syn: syn_simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
-.PHONY: simulate_all simulate_all_syn
+simulate_all: build/simv compile_all $(PROGRAMS:programs/%=output/%.out)
+simulate_all.syn: build/syn.simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
+.PHONY: simulate_all simulate_all.syn
 
 ###################
 # ---- Verdi ---- #
@@ -339,19 +328,30 @@ simulate_all_syn: syn_simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
 
 # run verdi on a program with: 'make <my_program>.verdi' or 'make <my_program>.syn.verdi'
 
-# this creates a directory verdi will use if it doesn't exist yet
-verdi_dir:
-	mkdir -p /tmp/$${USER}470
-.PHONY: verdi_dir
+# Options to launch Verdi when running the executable
+RUN_VERDI_OPTS = -gui=verdi -verdi_opts "-ultra" -no_save
+# Not sure why no_save is needed right now. Otherwise prints an error
+VERDI_DIR = /tmp/$(USER)470
+VERDI_TEMPLATE = /usr/caen/misc/class/eecs470/verdi-config/initialnovas.rc
 
-novas.rc: initialnovas.rc
-	sed s/UNIQNAME/$$USER/ initialnovas.rc > novas.rc
+# verdi hates us: we must use the /tmp folder for all verdi files or it will crash
+# this adds much unecessary complexity in the makefile
+# A directory for verdi, specified in the build/novas.rc file.
+$(VERDI_DIR) $(VERDI_DIR)/verdiLog:
+	mkdir -p $@
+# Symbolic link from the build folder to VERDI_DIR in /tmp
+build/verdiLog: $(VERDI_DIR)/verdiLog build
+	ln -s $(VERDI_DIR)/verdiLog build
+# make a custom novas.rc for your username matching VERDI_DIR
+build/novas.rc: $(VERDI_TEMPLATE) | build
+	sed s/UNIQNAME/$${USER}/ $< > $@
 
-%.verdi: programs/%.mem simv novas.rc verdi_dir | output
-	./simv -gui=verdi +MEMORY=$< +OUTPUT=output/verdi_output
+# now the actual targets to launch verdi
+%.verdi: programs/mem/%.mem build/simv build/novas.rc build/verdiLog $(VERDI_DIR)
+	cd build && ./simv $(RUN_VERDI_OPTS) +MEMORY=../$< +OUTPUT=../output/verdi_output
 
-%.syn.verdi: programs/%.mem syn_simv novas.rc verdi_dir | output
-	./syn_simv -gui=verdi +MEMORY=$< +OUTPUT=output/syn_verdi_output
+%.syn.verdi: programs/mem/%.mem build/syn.simv build/novas.rc build/verdiLog $(VERDI_DIR)
+	cd build && ./syn.simv $(RUN_VERDI_OPTS) +MEMORY=../$< +OUTPUT=../output/syn_verdi_output
 
 .PHONY: %.verdi
 
@@ -370,15 +370,26 @@ VTUBER = test/vtuber_test.sv \
 
 VISFLAGS = -lncurses
 
-vis_simv: $(HEADERS) $(VTUBER) $(SOURCES)
+build/vis.simv: $(HEADERS) $(VTUBER) $(SOURCES) | build
 	@$(call PRINT_COLOR, 5, compiling visual debugger testbench)
-	$(VCS) $(VISFLAGS) $^ -o vis_simv
+	$(VCS) $(VISFLAGS) $^ -o $@
 	@$(call PRINT_COLOR, 6, finished compiling visual debugger testbench)
 
-%.vis: programs/%.mem vis_simv
-	./vis_simv +MEMORY=$<
+%.vis:  programs/mem/%.mem build/vis.simv
+	cd build && ./vis.simv +MEMORY=../$<
 	@$(call PRINT_COLOR, 6, Fullscreen your terminal for the best VTUBER experience!)
 .PHONY: %.vis
+
+###############################
+# ---- Build Directories ---- #
+###############################
+
+# Directories for holding build files or run outputs
+# Targets that need these directories should add them after a pipe.
+# ex: "target: dep1 dep2 ... | build"
+build synth output programs/mem:
+	mkdir -p $@
+# Don't leave any files in these, they will be deleted by clean commands
 
 #####################
 # ---- Cleanup ---- #
@@ -399,33 +410,32 @@ clean: clean_exe clean_run_files
 
 # removes all extra synthesis files and the entire output directory
 # use cautiously, this can cause hours of recompiling in project 4
-nuke: clean clean_output clean_synth clean_programs
+nuke: clean clean_synth clean_programs
 	@$(call PRINT_COLOR, 6, note: nuke is split into multiple commands you can call separately: $^)
 
 clean_exe:
 	@$(call PRINT_COLOR, 3, removing compiled executable files)
-	rm -rf *simv *.daidir csrc *.key      # created by simv/syn_simv/vis_simv
-	rm -rf vcdplus.vpd vc_hdrs.h          # created by simv/syn_simv/vis_simv
-	rm -rf unifiedInference.log xprop.log # created by simv/syn_simv/vis_simv
+	rm -rf build
+	rm -rf *simv *.daidir csrc *.key      # created by simv/syn.simv/vis.simv
+	rm -rf vcdplus.vpd vc_hdrs.h          # created by simv/syn.simv/vis.simv
+	rm -rf unifiedInference.log xprop.log # created by simv/syn.simv/vis.simv
 
 	rm -rf verdi* novas* *fsdb*           # verdi files
 	rm -rf dve* inter.vpd DVEfiles        # old DVE debugger
 
 clean_run_files:
 	@$(call PRINT_COLOR, 3, removing per-run outputs)
+	rm -rf output
 	rm -rf output/*.out output/*.cpi output/*.wb output/*.ppln
 
 clean_synth:
 	@$(call PRINT_COLOR, 1, removing synthesis files)
-	cd synth && rm -rf *.vg *_svsim.sv *.res *.rep *.ddc *.chk *.syn *.out *.db *.svf *.mr *.pvl command.log
-
-clean_output:
-	@$(call PRINT_COLOR, 1, removing entire output directory)
-	rm -rf output/
+	rm -rf synth
+	rm -rf *.vg *_svsim.sv *.res *.rep *.ddc *.chk *.syn *-synth.out *.db *.svf *.mr *.pvl command.log
 
 clean_programs:
 	@$(call PRINT_COLOR, 3, removing program memory files)
-	rm -rf programs/*.mem
+	rm -rf programs/mem
 	@$(call PRINT_COLOR, 3, removing dump files)
 	rm -rf programs/*.dump*
 

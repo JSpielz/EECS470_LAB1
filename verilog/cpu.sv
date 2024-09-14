@@ -18,18 +18,13 @@ module cpu (
     input MEM_BLOCK mem2proc_data,            // Data coming back from memory
     input MEM_TAG   mem2proc_data_tag,        // Tag for which transaction data is for
 
-    output logic [1:0] proc2mem_command, // Command sent to memory
+    output MEM_COMMAND proc2mem_command, // Command sent to memory
     output ADDR        proc2mem_addr,    // Address sent to memory
     output MEM_BLOCK   proc2mem_data,    // Data sent to memory
     output MEM_SIZE    proc2mem_size,    // Data size sent to memory
 
     // Note: these are assigned at the very bottom of the module
-    output logic [3:0]    pipeline_completed_insts,
-    output EXCEPTION_CODE pipeline_error_status,
-    output REG_IDX        pipeline_commit_wr_idx,
-    output DATA           pipeline_commit_wr_data,
-    output logic          pipeline_commit_wr_en,
-    output ADDR           pipeline_commit_NPC,
+    output COMMIT_PACKET [`N-1:0] committed_insts,
 
     // Debug outputs: these signals are solely used for debugging in testbenches
     // Do not change for project 3
@@ -61,7 +56,7 @@ module cpu (
     logic if_id_enable, id_ex_enable, ex_mem_enable, mem_wb_enable;
 
     // Outputs from IF-Stage and IF/ID Pipeline Register
-    ADDR proc2Imem_addr;
+    ADDR Imem_addr;
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
@@ -74,15 +69,13 @@ module cpu (
     MEM_WB_PACKET mem_packet, mem_wb_reg;
 
     // Outputs from MEM-Stage to memory
-    ADDR proc2Dmem_addr;
-    DATA proc2Dmem_data;
-    logic [1:0]  proc2Dmem_command;
-    MEM_SIZE     proc2Dmem_size;
+    ADDR        Dmem_addr;
+    MEM_BLOCK   Dmem_store_data;
+    MEM_COMMAND Dmem_command;
+    MEM_SIZE    Dmem_size;
 
     // Outputs from WB-Stage (These loop back to the register file in ID)
-    logic   wb_regfile_en;
-    REG_IDX wb_regfile_idx;
-    DATA    wb_regfile_data;
+    COMMIT_PACKET wb_packet;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -96,16 +89,16 @@ module cpu (
     // but there will be a 100ns latency in project 4
 
     always_comb begin
-        if (proc2Dmem_command != MEM_NONE) begin // read or write DATA from memory
-            proc2mem_command = proc2Dmem_command;
-            proc2mem_addr    = proc2Dmem_addr;
-            proc2mem_size    = proc2Dmem_size;  // size is never DOUBLE in project 3
-        end else begin                          // read an INSTRUCTION from memory
+        if (Dmem_command != MEM_NONE) begin  // read or write DATA from memory
+            proc2mem_command = Dmem_command;
+            proc2mem_size    = Dmem_size;   // size is never DOUBLE in project 3
+            proc2mem_addr    = Dmem_addr;
+        end else begin                      // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
-            proc2mem_addr    = proc2Imem_addr;
-            proc2mem_size    = DOUBLE;          // instructions load a full memory line (64 bits)
+            proc2mem_addr    = Imem_addr;
+            proc2mem_size    = DOUBLE;      // instructions load a full memory line (64 bits)
         end
-        proc2mem_data = {32'b0, proc2Dmem_data};
+        proc2mem_data = Dmem_store_data;
     end
 
     //////////////////////////////////////////////////
@@ -116,20 +109,20 @@ module cpu (
 
     // This state controls the stall signal that artificially forces IF
     // to stall until the previous instruction has completed.
-    // For project 3, start by setting this to always be 1
+    // For project 3, start by assigning if_valid to always be 1
 
-    logic next_if_valid;
+    logic if_valid, start_valid_on_reset, wb_valid;
 
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
-        if (reset) begin
-            // start valid, other stages (ID,EX,MEM,WB) start as invalid
-            next_if_valid <= 1;
-        end else begin
-            // valid bit will cycle through the pipeline and come back from the wb stage
-            next_if_valid <= mem_wb_reg.valid;
-        end
+        // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
+        // Using a separate always_ff is necessary since if_valid is combinational
+        // Assigning if_valid = reset doesn't work as you'd hope :/
+        start_valid_on_reset <= reset;
     end
+
+    // valid bit will cycle through the pipeline and come back from the wb stage
+    assign if_valid = start_valid_on_reset || wb_valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -141,14 +134,14 @@ module cpu (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_valid       (next_if_valid),
-        .take_branch    (ex_mem_reg.take_branch),
-        .branch_target  (ex_mem_reg.alu_result),
-        .Imem2proc_data (mem2proc_data),
+        .if_valid      (if_valid),
+        .take_branch   (ex_mem_reg.take_branch),
+        .branch_target (ex_mem_reg.alu_result),
+        .Imem_data     (mem2proc_data),
 
         // Outputs
-        .if_packet      (if_packet),
-        .proc2Imem_addr (proc2Imem_addr)
+        .if_packet (if_packet),
+        .Imem_addr (Imem_addr)
     );
 
     // debug outputs
@@ -163,7 +156,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign if_id_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             if_id_reg.inst  <= `NOP;
@@ -190,10 +183,10 @@ module cpu (
         // Inputs
         .clock (clock),
         .reset (reset),
-        .if_id_reg        (if_id_reg),
-        .wb_regfile_en    (wb_regfile_en),
-        .wb_regfile_idx   (wb_regfile_idx),
-        .wb_regfile_data  (wb_regfile_data),
+        .if_id_reg       (if_id_reg),
+        .wb_regfile_en   (wb_packet.valid),
+        .wb_regfile_idx  (wb_packet.reg_idx),
+        .wb_regfile_data (wb_packet.data),
 
         // Output
         .id_packet (id_packet)
@@ -206,7 +199,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign id_ex_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             id_ex_reg <= '{
@@ -219,6 +212,7 @@ module cpu (
                 OPB_IS_RS2,
                 `ZERO_REG,
                 ALU_ADD,
+                1'b0, // mult
                 1'b0, // rd_mem
                 1'b0, // wr_mem
                 1'b0, // cond
@@ -259,7 +253,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign ex_mem_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             ex_mem_inst_dbg <= `NOP; // debug output
@@ -283,14 +277,14 @@ module cpu (
     stage_mem stage_mem_0 (
         // Inputs
         .ex_mem_reg     (ex_mem_reg),
-        .Dmem2proc_data (mem2proc_data[31:0]), // for p3, we throw away the top 32 bits
+        .Dmem_load_data (mem2proc_data),
 
         // Outputs
-        .mem_packet        (mem_packet),
-        .proc2Dmem_command (proc2Dmem_command),
-        .proc2Dmem_size    (proc2Dmem_size),
-        .proc2Dmem_addr    (proc2Dmem_addr),
-        .proc2Dmem_data    (proc2Dmem_data)
+        .mem_packet      (mem_packet),
+        .Dmem_command    (Dmem_command),
+        .Dmem_size       (Dmem_size),
+        .Dmem_addr       (Dmem_addr),
+        .Dmem_store_data (Dmem_store_data)
     );
 
     //////////////////////////////////////////////////
@@ -300,7 +294,7 @@ module cpu (
     //////////////////////////////////////////////////
 
     assign mem_wb_enable = 1'b1; // always enabled
-    // synopsys sync_set_reset "reset"
+
     always_ff @(posedge clock) begin
         if (reset) begin
             mem_wb_inst_dbg <= `NOP; // debug output
@@ -325,11 +319,15 @@ module cpu (
         // Input
         .mem_wb_reg (mem_wb_reg), // doesn't use all of these
 
-        // Outputs
-        .wb_regfile_en   (wb_regfile_en),
-        .wb_regfile_idx  (wb_regfile_idx),
-        .wb_regfile_data (wb_regfile_data)
+        // Output
+        .wb_packet (wb_packet)
     );
+
+    // This signal is solely used by if_valid for the initial stalling behavior
+    always_ff @(posedge clock) begin
+        if (reset) wb_valid <= 0;
+        else       wb_valid <= mem_wb_reg.valid;
+    end
 
     //////////////////////////////////////////////////
     //                                              //
@@ -337,14 +335,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign pipeline_completed_insts = {3'b0, mem_wb_reg.valid}; // commit one valid instruction
-    assign pipeline_error_status = mem_wb_reg.illegal ? ILLEGAL_INST :
-                                   mem_wb_reg.halt    ? HALTED_ON_WFI :
-                                   (mem2proc_transaction_tag == 4'h0) ? LOAD_ACCESS_FAULT : NO_ERROR;
-
-    assign pipeline_commit_wr_en   = wb_regfile_en;
-    assign pipeline_commit_wr_idx  = wb_regfile_idx;
-    assign pipeline_commit_wr_data = wb_regfile_data;
-    assign pipeline_commit_NPC     = mem_wb_reg.NPC;
+    // Output the committed instruction to the testbench for counting
+    assign committed_insts[0] = wb_packet;
 
 endmodule // pipeline

@@ -78,13 +78,15 @@ not synthesizable.
 Start the project by removing the provided stalling behavior, then
 implement the structural hazard logic for the milestone.
 
-The provided stalling behavior is set in the `verilog/cpu.sv`
-file. You should open the file and find the `always_ff` block where the
-`next_if_valid` signal is set. This is the start of a `valid` bit
-which is passed between the stages along with the instruction, and it
-starts at 1 in the IF stage due to `next_if_valid`. The `next_if_valid`
-signal is currently set to read the valid bit from the WB stage, so
-will insert 4 invalid instructions between every valid one.
+The stalling behavior is set in the `verilog/cpu.sv` file. You should
+open the file and find the `assign` statement where the `if_valid`
+signal is set. This is the start of a `valid` bit which is passed
+through the stages along with the instruction, and it starts at 1 in the
+IF stage due to the `start_valid_on_reset` register. After reset
+`if_valid` just reads the valid bit that cycles through to the WB stage,
+causing us to insert 4 invalid instructions between every valid one.
+
+Start by assigning `if_valid` to always equal 1.
 
 ## Makefile Target Reference
 
@@ -115,18 +117,18 @@ processor:
 # These are your main commands for running programs and generating output
 make <my_program>.out      <- run a program on simv
                               output *.out, *.cpi, *.wb, and *.ppln files
-make <my_program>.syn.out  <- run a program on syn_simv and do the same
+make <my_program>.syn.out  <- run a program on syn.simv and do the same
 
 # ---- Executable Compilation ---- #
-make simv      <- compiles simv from the TESTBENCH and SOURCES
-make syn_simv  <- compiles syn_simv from TESTBENCH and SYNTH_FILES
-make *.vg      <- synthesize modules in SOURCES for use in syn_simv
-make slack     <- grep the slack status of any synthesized modules
+make build/simv      <- compiles simv from the TESTBENCH and SOURCES
+make build/syn.simv  <- compiles syn.simv from TESTBENCH and SYNTH_FILES
+make synth/cpu.vg    <- synthesize modules in SOURCES for use in syn.simv
+make slack           <- grep the slack status of any synthesized modules
 
 # ---- Program Memory Compilation ---- #
 # Programs to run are in the programs/ directory
-make programs/<my_program>.mem  <- compile a program to a RISC-V memory file
-make compile_all                <- compile every program at once (in parallel with -j)
+make programs/mem/<my_program>.mem  <- compile a program to a RISC-V memory file
+make compile_all                    <- compile every program at once (in parallel with -j)
 
 # ---- Dump Files ---- #
 make <my_program>.dump  <- disassembles compiled memory into RISC-V assembly dump files
@@ -135,11 +137,11 @@ make dump_all           <- create all dump files at once (in parallel with -j)
 
 # ---- Verdi ---- #
 make <my_program>.verdi     <- run a program in verdi via simv
-make <my_program>.syn.verdi <- run a program in verdi via syn_simv
+make <my_program>.syn.verdi <- run a program in verdi via syn.simv
 
 # ---- Visual Debugger ---- #
 make <my_program>.vis  <- run a program on the project 3 vtuber visual debugger!
-make vis_simv          <- compile the vtuber executable from VTUBER and SOURCES
+make build/vis.simv    <- compile the vtuber executable from VTUBER and SOURCES
 
 # ---- Cleanup ---- #
 make clean            <- remove per-run files and compiled executable files
