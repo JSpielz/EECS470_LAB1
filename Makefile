@@ -340,8 +340,8 @@ VERDI_TEMPLATE = /usr/caen/misc/class/eecs470/verdi-config/initialnovas.rc
 $(VERDI_DIR) $(VERDI_DIR)/verdiLog:
 	mkdir -p $@
 # Symbolic link from the build folder to VERDI_DIR in /tmp
-build/verdiLog: $(VERDI_DIR)/verdiLog build
-	ln -s $(VERDI_DIR)/verdiLog build
+build/verdiLog: $(VERDI_DIR) build
+	ln --force -s $(VERDI_DIR)/verdiLog build
 # make a custom novas.rc for your username matching VERDI_DIR
 build/novas.rc: $(VERDI_TEMPLATE) | build
 	sed s/UNIQNAME/$${USER}/ $< > $@
