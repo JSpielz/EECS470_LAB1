@@ -30,8 +30,8 @@
 
 # ---- Program Memory Compilation ---- #
 # NOTE: programs to run are in the programs/ directory
-# make programs/<my_program>.mem  <- compiles a program to a RISC-V memory file for running on the processor
-# make compile_all                <- compile every program at once (in parallel with -j)
+# make programs/mem/<my_program>.mem  <- compiles a program to a RISC-V memory file for running on the processor
+# make compile_all                    <- compile every program at once (in parallel with -j)
 
 # ---- Dump Files ---- #
 # make <my_program>.dump  <- disassembles <my_program>.mem into .dump_x and .dump_abi RISC-V assembly files
@@ -318,8 +318,8 @@ output/%.syn.out: programs/mem/%.mem build/syn.simv | output
 .PRECIOUS: %.out %.cpi %.wb %.ppln
 
 # run all programs in one command (use 'make -j' to run multithreaded)
-simulate_all: simv compile_all $(PROGRAMS:programs/%=output/%.out)
-simulate_all.syn: syn.simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
+simulate_all: build/simv compile_all $(PROGRAMS:programs/%=output/%.out)
+simulate_all.syn: build/syn.simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
 .PHONY: simulate_all simulate_all.syn
 
 ###################
