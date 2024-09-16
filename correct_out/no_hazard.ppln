@@ -15,5 +15,5 @@ Cycle |     IF      |     ID      |     EX      |     MEM     |     WB      |   
    13 |  38:wfi     |  34:sw      |  30:nop     |  2C:nop     |  28:nop     |              | LOAD  [30]
    14 |  3C:unknown |  38:wfi     |  34:sw      |  30:nop     |  2C:nop     |              | LOAD  [38]
    15 |   -:-       |  3C:unknown |  38:wfi     |  34:sw      |  30:nop     |              | STORE [64] = 3
-   16 |  40:unknown |   -:-       |   -:-       |  38:wfi     |  34:sw      |              | LOAD  [38]
-   17 |  44:unknown |  40:unknown |   -:-       |   -:-       |  38:wfi     |              | LOAD  [40]
+   16 |  40:unknown |   -:-       |  3C:unknown |  38:wfi     |  34:sw      |              | LOAD  [38]
+   17 |  44:unknown |  40:unknown |   -:-       |  3C:unknown |  38:wfi     |              | LOAD  [40]

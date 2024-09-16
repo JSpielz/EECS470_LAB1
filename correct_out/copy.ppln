@@ -226,5 +226,5 @@ Cycle |     IF      |     ID      |     EX      |     MEM     |     WB      |   
   224 |  30:wfi     |  2C:bne     |  28:slti    |  24:addi    |   -:-       |              | LOAD  [28]
   225 |  34:unknown |  30:wfi     |  2C:bne     |  28:slti    |  24:addi    | r06=10       | LOAD  [30]
   226 |  38:unknown |  34:unknown |  30:wfi     |  2C:bne     |  28:slti    | r05=0        | LOAD  [30]
-  227 |  3C:unknown |  38:unknown |   -:-       |  30:wfi     |  2C:bne     |              | LOAD  [38]
-  228 |  40:unknown |  3C:unknown |   -:-       |   -:-       |  30:wfi     |              | LOAD  [38]
+  227 |  3C:unknown |  38:unknown |  34:unknown |  30:wfi     |  2C:bne     |              | LOAD  [38]
+  228 |  40:unknown |  3C:unknown |  38:unknown |  34:unknown |  30:wfi     |              | LOAD  [38]
