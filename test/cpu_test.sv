@@ -167,7 +167,7 @@ module testbench;
         reset = 1'b0;
 
         wb_fileno = $fopen(writeback_outfile);
-        $fdisplay(wb_fileno, "Register writeback output");
+        $fdisplay(wb_fileno, "Register writeback output (hexadecimal)");
 
         // Open pipeline output file AFTER throwing the reset otherwise the reset state is displayed
         open_pipeline_output_file(pipeline_outfile);
