@@ -155,7 +155,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign if_id_enable = 1'b1; // always enabled
+    assign if_id_enable = 1'b1;
 
     always_ff @(posedge clock) begin
         if (reset) begin
@@ -198,7 +198,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign id_ex_enable = 1'b1; // always enabled
+    assign id_ex_enable = 1'b1;
 
     always_ff @(posedge clock) begin
         if (reset) begin
@@ -252,7 +252,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign ex_mem_enable = 1'b1; // always enabled
+    assign ex_mem_enable = 1'b1;
 
     always_ff @(posedge clock) begin
         if (reset) begin
@@ -293,7 +293,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign mem_wb_enable = 1'b1; // always enabled
+    assign mem_wb_enable = 1'b1;
 
     always_ff @(posedge clock) begin
         if (reset) begin
