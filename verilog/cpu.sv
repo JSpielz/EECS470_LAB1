@@ -98,7 +98,7 @@ module cpu (
     end
 
     // valid bit will cycle through the pipeline and come back from the wb stage
-    assign if_valid = start_valid_on_reset || mem_wb_reg.valid;
+    assign if_valid = (!reset && start_valid_on_reset) || mem_wb_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -140,6 +140,7 @@ module cpu (
         .take_branch   (ex_mem_reg.take_branch),
         .branch_target (ex_mem_reg.alu_result),
         .Imem_data     (mem2proc_data),
+        .Imem_tag      (mem2proc_data_tag),
 
         // Outputs
         .if_packet (if_packet),
