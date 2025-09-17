@@ -48,7 +48,7 @@ typedef logic [4:0] REG_IDX;
 // see if you can beat it's CPI in project 4 even with a 100ns latency!
 
 // NOTE: the global CLOCK_PERIOD is defined in the Makefile
-`define MEM_LATENCY_IN_CYCLES (100.0/`CLOCK_PERIOD+0.49999)
+`define MEM_LATENCY_IN_CYCLES ((100.0-`CLOCK_PERIOD)/`CLOCK_PERIOD+0.49999)
 
 // memory tags represent a unique id for outstanding mem transactions
 // 0 is a sentinel value and is not a valid tag
