@@ -79,6 +79,28 @@ module cpu (
 
     //////////////////////////////////////////////////
     //                                              //
+    //                  Valid Bit                   //
+    //                                              //
+    //////////////////////////////////////////////////
+
+    // This state controls the stall signal that artificially forces IF
+    // to stall until the previous instruction has completed.
+    // For project 3, start by assigning if_valid to always be 1
+
+    logic if_valid, start_valid_on_reset, wb_valid;
+
+    always_ff @(posedge clock) begin
+        // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
+        // Using a separate always_ff is necessary since if_valid is combinational
+        // Assigning if_valid = reset doesn't work as you'd hope :/
+        start_valid_on_reset <= reset;
+    end
+
+    // valid bit will cycle through the pipeline and come back from the wb stage
+    assign if_valid = start_valid_on_reset || mem_wb_reg.valid;
+
+    //////////////////////////////////////////////////
+    //                                              //
     //                Memory Outputs                //
     //                                              //
     //////////////////////////////////////////////////
@@ -93,36 +115,15 @@ module cpu (
             proc2mem_command = Dmem_command;
             proc2mem_size    = Dmem_size;   // size is never DOUBLE in project 3
             proc2mem_addr    = Dmem_addr;
-        end else begin                      // read an INSTRUCTION from memory
+        end else if (if_valid) begin        // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
             proc2mem_addr    = Imem_addr;
             proc2mem_size    = DOUBLE;      // instructions load a full memory line (64 bits)
+        end else begin
+            proc2mem_command = MEM_NONE;
         end
         proc2mem_data = Dmem_store_data;
     end
-
-    //////////////////////////////////////////////////
-    //                                              //
-    //                  Valid Bit                   //
-    //                                              //
-    //////////////////////////////////////////////////
-
-    // This state controls the stall signal that artificially forces IF
-    // to stall until the previous instruction has completed.
-    // For project 3, start by assigning if_valid to always be 1
-
-    logic if_valid, start_valid_on_reset, wb_valid;
-
-
-    always_ff @(posedge clock) begin
-        // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
-        // Using a separate always_ff is necessary since if_valid is combinational
-        // Assigning if_valid = reset doesn't work as you'd hope :/
-        start_valid_on_reset <= reset;
-    end
-
-    // valid bit will cycle through the pipeline and come back from the wb stage
-    assign if_valid = start_valid_on_reset || mem_wb_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
