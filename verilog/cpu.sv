@@ -137,6 +137,7 @@ module cpu (
         .clock (clock),
         .reset (reset),
         .if_valid      (if_valid),
+        .bus_load      (ex_mem_reg.rd_mem),
         .take_branch   (ex_mem_reg.take_branch),
         .branch_target (ex_mem_reg.alu_result),
         .Imem_data     (mem2proc_data),
@@ -256,7 +257,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign ex_mem_enable = 1'b1;
+    assign ex_mem_enable = !ex_mem_reg.valid || mem_packet.valid;
 
     always_ff @(posedge clock) begin
         if (reset) begin
@@ -280,8 +281,11 @@ module cpu (
 
     stage_mem stage_mem_0 (
         // Inputs
+        .clock (clock),
+        .reset (reset),
         .ex_mem_reg     (ex_mem_reg),
         .Dmem_load_data (mem2proc_data),
+        .Dmem_load_tag  (mem2proc_data_tag),
 
         // Outputs
         .mem_packet      (mem_packet),

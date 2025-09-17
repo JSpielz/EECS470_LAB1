@@ -13,10 +13,13 @@
 `include "sys_defs.svh"
 
 module stage_mem (
+    input clock,
+    input reset,
     input EX_MEM_PACKET  ex_mem_reg,
     // the MEM_LOAD response will magically be present in the *same* cycle it's requested (0ns latency)
     // this will not be true in project 4 (100ns latency)
     input MEM_BLOCK      Dmem_load_data, // Data loaded from memory
+    input MEM_TAG        Dmem_load_tag,
 
     output MEM_WB_PACKET mem_packet,
     output MEM_COMMAND   Dmem_command,   // The memory command
@@ -26,12 +29,23 @@ module stage_mem (
 );
 
     DATA load_data;
+    logic pending;
+
+    always_ff @(posedge clock) begin
+        if (reset) begin
+            pending <= 0;
+        end else if (Dmem_command == MEM_LOAD && Dmem_load_tag == 'h0) begin
+            pending <= 1;
+        end else if (Dmem_load_tag != 'h0) begin
+            pending <= 0;
+        end
+    end
 
     assign mem_packet.result = (ex_mem_reg.rd_mem) ? load_data : ex_mem_reg.alu_result;
 
     // Pass-throughs
     assign mem_packet.NPC          = ex_mem_reg.NPC;
-    assign mem_packet.valid        = ex_mem_reg.valid;
+    assign mem_packet.valid        = ex_mem_reg.valid && (!ex_mem_reg.rd_mem || Dmem_load_tag != 'h0);
     assign mem_packet.halt         = ex_mem_reg.halt;
     assign mem_packet.illegal      = ex_mem_reg.illegal;
     assign mem_packet.dest_reg_idx = ex_mem_reg.dest_reg_idx;
@@ -39,7 +53,7 @@ module stage_mem (
 
     // Outputs from the processor to memory
     assign Dmem_command = (ex_mem_reg.valid && ex_mem_reg.wr_mem) ? MEM_STORE :
-                          (ex_mem_reg.valid && ex_mem_reg.rd_mem) ? MEM_LOAD : MEM_NONE;
+                          (ex_mem_reg.valid && ex_mem_reg.rd_mem && !pending) ? MEM_LOAD : MEM_NONE;
     assign Dmem_size = ex_mem_reg.mem_size;
     assign Dmem_addr = ex_mem_reg.alu_result; // Memory address is calculated by the ALU
     assign Dmem_store_data = {32'b0, ex_mem_reg.rs2_value}; // for p3, just use low 32 bits
