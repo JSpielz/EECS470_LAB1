@@ -37,15 +37,15 @@ module stage_if (
         end
     end
 
-    // address of the instruction we're fetching (64 bit memory lines)
+    // address of the instruction we're fetching (32 bit aligned instructions)
     // mem always gives us 8=2^3 bytes, so ignore the last 3 bits
-    assign Imem_addr = {PC_reg[31:3], 3'b0};
+    assign Imem_addr = {PC_reg[31:2], 2'b0};
 
     assign fetch = if_valid;
     assign if_packet.valid = !bus_load && Imem_tag != 'h0;
 
     // index into the word (32-bits) of memory that matches this instruction
-    assign if_packet.inst = if_packet.valid ? Imem_data.word_level[PC_reg[2]] : `NOP;
+    assign if_packet.inst = if_packet.valid ? Imem_data.word_level[0] : `NOP;
 
     assign if_packet.PC  = PC_reg;
     assign if_packet.NPC = PC_reg + 4; // pass PC+4 down pipeline w/instruction

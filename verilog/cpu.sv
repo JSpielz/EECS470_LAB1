@@ -119,7 +119,7 @@ module cpu (
         end else if (if_fetch) begin        // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
             proc2mem_addr    = Imem_addr;
-            proc2mem_size    = DOUBLE;      // instructions load a full memory line (64 bits)
+            proc2mem_size    = WORD;      // instructions load a full memory line (64 bits)
         end else begin
             proc2mem_command = MEM_NONE;
         end
