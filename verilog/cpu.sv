@@ -57,6 +57,7 @@ module cpu (
 
     // Outputs from IF-Stage and IF/ID Pipeline Register
     ADDR Imem_addr;
+    logic if_fetch;
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
@@ -115,7 +116,7 @@ module cpu (
             proc2mem_command = Dmem_command;
             proc2mem_size    = Dmem_size;   // size is never DOUBLE in project 3
             proc2mem_addr    = Dmem_addr;
-        end else if (if_valid) begin        // read an INSTRUCTION from memory
+        end else if (if_fetch) begin        // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
             proc2mem_addr    = Imem_addr;
             proc2mem_size    = DOUBLE;      // instructions load a full memory line (64 bits)
@@ -142,7 +143,8 @@ module cpu (
 
         // Outputs
         .if_packet (if_packet),
-        .Imem_addr (Imem_addr)
+        .Imem_addr (Imem_addr),
+        .fetch     (if_fetch)
     );
 
     // debug outputs

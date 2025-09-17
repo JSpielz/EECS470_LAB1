@@ -19,7 +19,8 @@ module stage_if (
     input MEM_BLOCK Imem_data,      // data coming back from Instruction memory
 
     output IF_ID_PACKET if_packet,
-    output ADDR         Imem_addr // address sent to Instruction memory
+    output ADDR         Imem_addr, // address sent to Instruction memory
+    output logic        fetch
 );
 
     ADDR PC_reg; // PC we are currently fetching
@@ -40,6 +41,7 @@ module stage_if (
 
     // index into the word (32-bits) of memory that matches this instruction
     assign if_packet.inst = (if_valid) ? Imem_data.word_level[PC_reg[2]] : `NOP;
+    assign fetch = if_valid;
 
     assign if_packet.PC  = PC_reg;
     assign if_packet.NPC = PC_reg + 4; // pass PC+4 down pipeline w/instruction
