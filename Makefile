@@ -302,16 +302,20 @@ output/%.out: programs/mem/%.mem build/simv | output
 
 # run synthesis with: 'make <my_program>.syn.out'
 # this does the same as simv, but adds .syn to the output files and compiles syn.simv instead
-output/%.syn.out: programs/mem/%.mem build/syn.simv | output
+output_syn/%.out: programs/mem/%.mem build/syn.simv | output_syn
 	@$(call PRINT_COLOR, 5, running syn.simv on $<)
 	@$(call PRINT_COLOR, 3, this might take a while...)
-	cd build && ./syn.simv +MEMORY=../$< +OUTPUT=../output/$*.syn
+	cd build && ./syn.simv +MEMORY=../$< +OUTPUT=../output_syn/$*
 	@$(call PRINT_COLOR, 6, finished running syn.simv on $<)
-	@$(call PRINT_COLOR, 2, output is in output/$*.syn.{out cpi wb ppln})
+	@$(call PRINT_COLOR, 2, output is in output_syn/$*.{out cpi wb ppln})
 
 # Allow us to type 'make <my_program>.out' instead of 'make output/<my_program>.out'
 ./%.out: output/%.out ;
 .PHONY: ./%.out
+
+# Allow us to type 'make <my_program>.out' instead of 'make output/<my_program>.out'
+./%.syn: output_syn/%.out ;
+.PHONY: ./%.syn
 
 # Declare that creating a %.out file also creates both %.cpi, %.wb, and %.ppln files
 %.cpi %.wb %.ppln: %.out ;
@@ -320,7 +324,7 @@ output/%.syn.out: programs/mem/%.mem build/syn.simv | output
 
 # run all programs in one command (use 'make -j' to run multithreaded)
 simulate_all: build/simv compile_all $(PROGRAMS:programs/%=output/%.out)
-simulate_all.syn: build/syn.simv compile_all $(PROGRAMS:programs/%=output/%.syn.out)
+simulate_all.syn: build/syn.simv compile_all $(PROGRAMS:programs/%=output_syn/%.out)
 .PHONY: simulate_all simulate_all.syn
 
 ###################
@@ -388,7 +392,7 @@ build/vis.simv: $(HEADERS) $(VTUBER) $(SOURCES) | build
 # Directories for holding build files or run outputs
 # Targets that need these directories should add them after a pipe.
 # ex: "target: dep1 dep2 ... | build"
-build synth output programs/mem:
+build synth output output_syn programs/mem:
 	mkdir -p $@
 # Don't leave any files in these, they will be deleted by clean commands
 
@@ -426,7 +430,7 @@ clean_exe:
 
 clean_run_files:
 	@$(call PRINT_COLOR, 3, removing per-run outputs)
-	rm -rf output
+	rm -rf output output_syn
 	rm -rf output/*.out output/*.cpi output/*.wb output/*.ppln
 
 clean_synth:
