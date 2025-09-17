@@ -138,6 +138,7 @@ endif
 # This is done automatically with 'make <my_program>.out'
 
 HEADERS = verilog/sys_defs.svh \
+		  verilog/mem.svh \
           verilog/ISA.svh
 
 TESTBENCH = test/cpu_test.sv \

@@ -10,6 +10,8 @@
 `ifndef __SYS_DEFS_SVH__
 `define __SYS_DEFS_SVH__
 
+`include "mem.svh"
+
 // all files should `include "sys_defs.svh" to at least define the timescale
 `timescale 1ns/100ps
 
@@ -27,7 +29,6 @@
 `define N 1
 
 // word and register sizes
-typedef logic [31:0] ADDR;
 typedef logic [31:0] DATA;
 typedef logic [4:0] REG_IDX;
 
@@ -38,51 +39,6 @@ typedef logic [4:0] REG_IDX;
 // Basic NOP instruction. Allows pipline registers to clearly be reset with
 // an instruction that does nothing instead of Zero which is really an ADDI x0, x0, 0
 `define NOP 32'h00000013
-
-//////////////////////////////////
-// ---- Memory Definitions ---- //
-//////////////////////////////////
-
-// this will change for project 4
-// the project 3 processor has a massive boost in performance just from having no mem latency
-// see if you can beat it's CPI in project 4 even with a 100ns latency!
-
-// NOTE: the global CLOCK_PERIOD is defined in the Makefile
-`define MEM_LATENCY_IN_CYCLES ((100.0-`CLOCK_PERIOD)/`CLOCK_PERIOD+0.49999)
-
-// memory tags represent a unique id for outstanding mem transactions
-// 0 is a sentinel value and is not a valid tag
-`define NUM_MEM_TAGS 15
-typedef logic [3:0] MEM_TAG;
-
-`define CACHE_BLOCK_SIZE_IN_BYTES 16
-`define CACHE_BLOCK_OFFSET_BITS 4
-`define MEM_SIZE_IN_BYTES (64*1024)
-`define MEM_CACHE_LINES   (`MEM_SIZE_IN_BYTES/`CACHE_BLOCK_SIZE_IN_BYTES)
-
-// A memory or cache block
-typedef union packed {
-    logic [`CACHE_BLOCK_SIZE_IN_BYTES   -1:0]  [7:0] byte_level;
-    logic [`CACHE_BLOCK_SIZE_IN_BYTES/ 2-1:0] [15:0] half_level;
-    logic [`CACHE_BLOCK_SIZE_IN_BYTES/ 4-1:0] [31:0] word_level;
-    logic [`CACHE_BLOCK_SIZE_IN_BYTES/ 8-1:0] [63:0] dbbl_level;
-    logic [`CACHE_BLOCK_SIZE_IN_BYTES/16-1:0][127:0] quad_level;
-} MEM_BLOCK;
-
-typedef enum logic [2:0] {
-    BYTE   = 3'h0,
-    HALF   = 3'h1,
-    WORD   = 3'h2,
-    DOUBLE = 3'h3,
-    QUAD   = 3'h4
-} MEM_SIZE;
-
-// Memory bus commands
-typedef enum logic [1:0] {
-    MEM_NONE   = 2'h0,
-    MEM_LOAD   = 2'h1,
-    MEM_STORE  = 2'h2
-} MEM_COMMAND;
 
 ///////////////////////////////
 // ---- Exception Codes ---- //

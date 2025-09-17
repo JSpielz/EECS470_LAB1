@@ -9,7 +9,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "mem.svh"
 
 module mem (
     input           clock,         // Memory clock
