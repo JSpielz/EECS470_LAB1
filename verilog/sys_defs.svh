@@ -55,22 +55,26 @@ typedef logic [4:0] REG_IDX;
 `define NUM_MEM_TAGS 15
 typedef logic [3:0] MEM_TAG;
 
+`define CACHE_BLOCK_SIZE_IN_BYTES 16
+`define CACHE_BLOCK_OFFSET_BITS 4
 `define MEM_SIZE_IN_BYTES (64*1024)
-`define MEM_64BIT_LINES   (`MEM_SIZE_IN_BYTES/8)
+`define MEM_CACHE_LINES   (`MEM_SIZE_IN_BYTES/`CACHE_BLOCK_SIZE_IN_BYTES)
 
 // A memory or cache block
 typedef union packed {
-    logic [7:0][7:0]  byte_level;
-    logic [3:0][15:0] half_level;
-    logic [1:0][31:0] word_level;
-    logic      [63:0] dbbl_level;
+    logic [`CACHE_BLOCK_SIZE_IN_BYTES   -1:0]  [7:0] byte_level;
+    logic [`CACHE_BLOCK_SIZE_IN_BYTES/ 2-1:0] [15:0] half_level;
+    logic [`CACHE_BLOCK_SIZE_IN_BYTES/ 4-1:0] [31:0] word_level;
+    logic [`CACHE_BLOCK_SIZE_IN_BYTES/ 8-1:0] [63:0] dbbl_level;
+    logic [`CACHE_BLOCK_SIZE_IN_BYTES/16-1:0][127:0] quad_level;
 } MEM_BLOCK;
 
-typedef enum logic [1:0] {
-    BYTE   = 2'h0,
-    HALF   = 2'h1,
-    WORD   = 2'h2,
-    DOUBLE = 2'h3
+typedef enum logic [2:0] {
+    BYTE   = 3'h0,
+    HALF   = 3'h1,
+    WORD   = 3'h2,
+    DOUBLE = 3'h3,
+    QUAD   = 3'h4
 } MEM_SIZE;
 
 // Memory bus commands
