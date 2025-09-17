@@ -122,7 +122,7 @@ module cpu (
     end
 
     // valid bit will cycle through the pipeline and come back from the wb stage
-    assign if_valid = start_valid_on_reset || wb_valid;
+    assign if_valid = start_valid_on_reset || mem_wb_reg.valid;
 
     //////////////////////////////////////////////////
     //                                              //
