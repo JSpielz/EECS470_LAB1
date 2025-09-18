@@ -38,13 +38,25 @@ module testbench;
 
     MEM_COMMAND proc2mem_command;
     ADDR        proc2mem_addr;
-    MEM_BLOCK   proc2mem_data;
-    MEM_TAG     mem2proc_transaction_tag;
-    MEM_BLOCK   mem2proc_data;
-    MEM_TAG     mem2proc_data_tag;
 `ifndef CACHE_MODE
     MEM_SIZE    proc2mem_size;
 `endif
+    MEM_BLOCK   proc2mem_data;
+    MEM_COMMAND ls2mem_command;
+    ADDR        ls2mem_addr;
+    MEM_SIZE    ls2mem_size;
+    logic       proc2Icache_fetch;
+    ADDR        proc2Icache_addr;
+    MEM_TAG     mem2proc_transaction_tag;
+    MEM_BLOCK   mem2proc_data;
+    MEM_TAG     mem2proc_data_tag;
+    ADDR        mem2Icache_addr;
+    logic       mem2Icache_valid;
+    logic       Icache2proc_valid;
+    MEM_BLOCK   Icache2proc_data;
+    ADDR        Icache2mem_addr;
+    logic       Icache2mem_fetch;
+    MEM_SIZE    Icache2mem_size;
 
     COMMIT_PACKET [`N-1:0] committed_insts;
     EXCEPTION_CODE error_status = NO_ERROR;
@@ -65,6 +77,20 @@ module testbench;
     DATA  mem_wb_inst_dbg;
     logic mem_wb_valid_dbg;
 
+    always_comb begin
+        if (ls2mem_command != MEM_NONE) begin  // read or write DATA from memory
+            proc2mem_command = ls2mem_command;
+            proc2mem_size    = ls2mem_size;
+            proc2mem_addr    = ls2mem_addr;
+        end else if (Icache2mem_fetch) begin   // read an INSTRUCTION from memory
+            proc2mem_command = MEM_LOAD;
+            proc2mem_addr    = Icache2mem_addr;
+            proc2mem_size    = Icache2mem_size;
+        end else begin
+            proc2mem_command = MEM_NONE;
+        end
+        mem2Icache_valid = (mem2proc_data_tag != 'h0);
+    end
 
     // Instantiate the Pipeline
     cpu verisimpleV (
@@ -74,12 +100,16 @@ module testbench;
         .mem2proc_transaction_tag (mem2proc_transaction_tag),
         .mem2proc_data            (mem2proc_data),
         .mem2proc_data_tag        (mem2proc_data_tag),
+        .Icache2proc_valid  (Icache2proc_valid),
+        .Icache2proc_data   (Icache2proc_data),
 
         // Outputs
-        .proc2mem_command (proc2mem_command),
-        .proc2mem_addr    (proc2mem_addr),
+        .proc2Icache_fetch (proc2Icache_fetch),
+        .proc2Icache_addr  (proc2Icache_addr),
+        .proc2mem_command (ls2mem_command),
+        .proc2mem_addr    (ls2mem_addr),
+        .proc2mem_size    (ls2mem_size),
         .proc2mem_data    (proc2mem_data),
-        .proc2mem_size    (proc2mem_size),
 
         .committed_insts (committed_insts),
 
@@ -100,6 +130,23 @@ module testbench;
         .mem_wb_valid_dbg (mem_wb_valid_dbg)
     );
 
+    icache youricache (
+        // Inputs
+        .clock (clock),
+        .reset (reset),
+        .mem2Icache_addr    (mem2Icache_addr),
+        .mem2Icache_data    (mem2proc_data),
+        .mem2Icache_valid   (mem2Icache_valid),
+        .proc2Icache_addr   (proc2Icache_addr),
+        .proc2Icache_fetch  (proc2Icache_fetch),
+
+        // Outputs
+        .Icache2mem_addr    (Icache2mem_addr),
+        .Icache2mem_fetch   (Icache2mem_fetch),
+        .Icache2mem_size    (Icache2mem_size),
+        .Icache2proc_data   (Icache2proc_data),
+        .Icache2proc_valid  (Icache2proc_valid)
+    );
 
     // Instantiate the Data Memory
     mem memory (
@@ -115,7 +162,8 @@ module testbench;
         // Outputs
         .mem2proc_transaction_tag (mem2proc_transaction_tag),
         .mem2proc_data            (mem2proc_data),
-        .mem2proc_data_tag        (mem2proc_data_tag)
+        .mem2proc_data_tag        (mem2proc_data_tag),
+        .mem2proc_data_addr       (mem2Icache_addr)
     );
 
 

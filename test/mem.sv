@@ -23,18 +23,21 @@ module mem (
 
     output MEM_TAG   mem2proc_transaction_tag, // Memory tag for current transaction (0 = can't accept)
     output MEM_BLOCK mem2proc_data,            // Data for a load
-    output MEM_TAG   mem2proc_data_tag         // Tag for finished transactions (0 = no value)
+    output MEM_TAG   mem2proc_data_tag,        // Tag for finished transactions (0 = no value)
+    output ADDR      mem2proc_data_addr        // (fake) address for returned data
 );
 
     logic [63:0] unified_memory [(`MEM_SIZE_IN_BYTES/8)-1:0];
 
     MEM_BLOCK   next_mem2proc_data;
     MEM_TAG     next_mem2proc_transaction_tag, next_mem2proc_data_tag;
+    ADDR        next_mem2proc_addr;
 
     wire [31:`CACHE_BLOCK_OFFSET_BITS] block_addr = proc2mem_addr[31:`CACHE_BLOCK_OFFSET_BITS];
     wire [`CACHE_BLOCK_OFFSET_BITS-1:0] byte_addr = proc2mem_addr[`CACHE_BLOCK_OFFSET_BITS-1:0];
 
-    logic [63:0] loaded_data     [`NUM_MEM_TAGS:1];
+    ADDR         loaded_addr     [`NUM_MEM_TAGS:1];
+    MEM_BLOCK    loaded_data     [`NUM_MEM_TAGS:1];
     logic [15:0] cycles_left     [`NUM_MEM_TAGS:1];
     logic        waiting_for_bus [`NUM_MEM_TAGS:1];
 
@@ -107,7 +110,8 @@ module mem (
                 // done via a non-number definition for this macro
                 if (proc2mem_command == MEM_LOAD) begin
                     waiting_for_bus[i] = 1'b1;
-                    loaded_data[i]     = load_data;
+                    loaded_data[i] = load_data;
+                    loaded_addr[i] = proc2mem_addr;
                 end
             end
 
@@ -116,11 +120,13 @@ module mem (
                 waiting_for_bus[i] = 1'b0;
                 next_mem2proc_data_tag = i;
                 next_mem2proc_data     = loaded_data[i];
+                next_mem2proc_addr     = loaded_addr[i];
             end
         end
         mem2proc_transaction_tag <= next_mem2proc_transaction_tag;
         mem2proc_data            <= next_mem2proc_data;
         mem2proc_data_tag        <= next_mem2proc_data_tag;
+        mem2proc_data_addr       <= next_mem2proc_addr;
     end
 
     // Initialise the entire memory
@@ -132,8 +138,9 @@ module mem (
             unified_memory[i] = {`CACHE_BLOCK_SIZE_IN_BYTES{8'h0}};
         end
         mem2proc_transaction_tag = 4'd0;
-        mem2proc_data_tag = 4'd0;
-        mem2proc_data     = 64'bx;
+        mem2proc_data_tag  = 4'd0;
+        mem2proc_data      = 64'bx;
+        mem2proc_data_addr = 'x;
         for (int i = 1; i <= `NUM_MEM_TAGS; i = i+1) begin
             loaded_data[i] = 64'bx;
             cycles_left[i] = 16'd0;

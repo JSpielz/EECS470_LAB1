@@ -8,7 +8,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "mem.svh"
+`include "sys_defs.svh"
 
 module cpu (
     input clock, // System clock
@@ -17,6 +17,11 @@ module cpu (
     input MEM_TAG   mem2proc_transaction_tag, // Memory tag for current transaction
     input MEM_BLOCK mem2proc_data,            // Data coming back from memory
     input MEM_TAG   mem2proc_data_tag,        // Tag for which transaction data is for
+
+    input           Icache2proc_valid,      // Bit indicating I cache hit
+    input MEM_BLOCK Icache2proc_data,       // Data coming back from I cache
+    output          proc2Icache_fetch,      // Command sent to I Cache
+    output ADDR     proc2Icache_addr,       // Address sent to I Cache
 
     output MEM_COMMAND proc2mem_command, // Command sent to memory
     output ADDR        proc2mem_addr,    // Address sent to memory
@@ -116,10 +121,6 @@ module cpu (
             proc2mem_command = Dmem_command;
             proc2mem_size    = Dmem_size;   // size is never DOUBLE in project 3
             proc2mem_addr    = Dmem_addr;
-        end else if (if_fetch) begin        // read an INSTRUCTION from memory
-            proc2mem_command = MEM_LOAD;
-            proc2mem_addr    = Imem_addr;
-            proc2mem_size    = WORD;      // instructions load a full memory line (64 bits)
         end else begin
             proc2mem_command = MEM_NONE;
         end
@@ -140,13 +141,13 @@ module cpu (
         .bus_load      (ex_mem_reg.rd_mem),
         .take_branch   (ex_mem_reg.take_branch),
         .branch_target (ex_mem_reg.alu_result),
-        .Imem_data     (mem2proc_data),
-        .Imem_tag      (mem2proc_data_tag),
+        .Imem_data     (Icache2proc_data),
+        .Imem_valid    (Icache2proc_valid),
 
         // Outputs
         .if_packet (if_packet),
-        .Imem_addr (Imem_addr),
-        .fetch     (if_fetch)
+        .Imem_addr (proc2Icache_addr),
+        .fetch     (proc2Icache_fetch)
     );
 
     // debug outputs
