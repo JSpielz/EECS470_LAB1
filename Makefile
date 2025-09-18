@@ -163,18 +163,24 @@ build/simv: $(TESTBENCH) $(SOURCES) verilog/noicache.sv $(HEADERS) | build
 	$(VCS) $(filter-out $(HEADERS),$^) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
 
+# the normal simulation executable will run your testbench on the original modules
+build/noicache.simv: $(TESTBENCH) $(SOURCES) verilog/icache.sv $(HEADERS) | build
+	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
+	$(VCS) $(filter-out $(HEADERS),$^) -o $@
+	@$(call PRINT_COLOR, 6, finished compiling $@)
+
 # a make pattern rule to generate the .vg synthesis files
 # pattern rules use the % as a wildcard to match multiple possible targets
-synth/%.vg: $(SOURCES) $(TCL_SCRIPT) $(HEADERS) | synth
+synth/%.vg: verilog/icache.sv $(SOURCES) $(TCL_SCRIPT) $(HEADERS) | synth
 	@$(call PRINT_COLOR, 5, synthesizing the $* module)
 	@$(call PRINT_COLOR, 3, this might take a while...)
 	cd synth && \
-	MODULE=$* SOURCES="$(SOURCES)" \
+	MODULE=$* SOURCES="$(SOURCES) $<" \
 	dc_shell-t -f ../$(TCL_SCRIPT) | tee $*-synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
 
 # the synthesis executable runs your testbench on the synthesized versions of your modules
-build/syn.simv: $(TESTBENCH) $(SYNTH_FILES) $(HEADERS) | build
+build/syn.simv: $(TESTBENCH) $(SOURCES) synth/icache.vg $(HEADERS) | build
 	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
 	$(VCS) +define+SYNTH $(filter-out $(HEADERS),$^) $(LIB) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
@@ -325,6 +331,7 @@ output_syn/%.out: programs/mem/%.mem build/syn.simv | output_syn
 # run all programs in one command (use 'make -j' to run multithreaded)
 simulate_all: build/simv compile_all $(PROGRAMS:programs/%=output/%.out)
 simulate_all.syn: build/syn.simv compile_all $(PROGRAMS:programs/%=output_syn/%.out)
+simulate_all.noIcache: build/noIcache.simv compile_all $(PROGRAMS:programs/%=output_noIcache/%.out)
 .PHONY: simulate_all simulate_all.syn
 
 ###################

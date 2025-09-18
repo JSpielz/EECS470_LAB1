@@ -56,6 +56,7 @@ module testbench;
     MEM_BLOCK   Icache2proc_data;
     ADDR        Icache2mem_addr;
     logic       Icache2mem_fetch;
+    MEM_SIZE    Icache2mem_size;
 
     COMMIT_PACKET [`N-1:0] committed_insts;
     EXCEPTION_CODE error_status = NO_ERROR;
@@ -84,7 +85,7 @@ module testbench;
         end else if (Icache2mem_fetch) begin   // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
             proc2mem_addr    = Icache2mem_addr;
-            proc2mem_size    = WORD;      // instructions are 4B
+            proc2mem_size    = Icache2mem_size;
         end else begin
             proc2mem_command = MEM_NONE;
         end
@@ -142,6 +143,7 @@ module testbench;
         // Outputs
         .Icache2mem_addr    (Icache2mem_addr),
         .Icache2mem_fetch   (Icache2mem_fetch),
+        .Icache2mem_size    (Icache2mem_size),
         .Icache2proc_data   (Icache2proc_data),
         .Icache2proc_valid  (Icache2proc_valid)
     );

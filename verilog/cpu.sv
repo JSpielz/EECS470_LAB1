@@ -141,8 +141,8 @@ module cpu (
         .bus_load      (ex_mem_reg.rd_mem),
         .take_branch   (ex_mem_reg.take_branch),
         .branch_target (ex_mem_reg.alu_result),
-        .Imem_data     (mem2proc_data),
-        .Imem_tag      (mem2proc_data_tag),
+        .Imem_data     (Icache2proc_data),
+        .Imem_valid    (Icache2proc_valid),
 
         // Outputs
         .if_packet (if_packet),

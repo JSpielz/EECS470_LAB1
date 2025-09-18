@@ -23,8 +23,9 @@ module icache (
     input      proc2Icache_fetch,
 
     // To memory
-    output ADDR Icache2mem_addr,
-    output      Icache2mem_fetch,
+    output ADDR     Icache2mem_addr,
+    output          Icache2mem_fetch,
+    output MEM_SIZE Icache2mem_size,
 
     // To processor fetch
     output MEM_BLOCK Icache2proc_data, // mem[proc2Icache_addr]
@@ -33,8 +34,9 @@ module icache (
     // ---- Final outputs ---- //
 
     assign Icache2proc_valid = mem2Icache_valid;
-    assign Icache2proc_data = mem2Icache_data;
-    assign Icache2mem_fetch = proc2Icache_fetch;
-    assign Icache2mem_addr  = proc2Icache_addr;
+    assign Icache2proc_data  = mem2Icache_data;
+    assign Icache2mem_fetch  = proc2Icache_fetch;
+    assign Icache2mem_addr   = proc2Icache_addr;
+    assign Icache2mem_size   = WORD;  // instructions are 4B
 
 endmodule // icache

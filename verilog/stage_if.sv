@@ -18,7 +18,7 @@ module stage_if (
     input           take_branch,    // taken-branch signal
     input ADDR      branch_target,  // target pc: use if take_branch is TRUE
     input MEM_BLOCK Imem_data,      // data coming back from Instruction memory
-    input MEM_TAG   Imem_tag,       // Tag coming back from Instruction memory
+    input           Imem_valid,     // data coming back from Instruction memory is valid
 
     output IF_ID_PACKET if_packet,
     output ADDR         Imem_addr, // address sent to Instruction memory
@@ -42,7 +42,7 @@ module stage_if (
     assign Imem_addr = {PC_reg[31:2], 2'b0};
 
     assign fetch = if_valid;
-    assign if_packet.valid = !bus_load && Imem_tag != 'h0;
+    assign if_packet.valid = !bus_load && Imem_valid;
 
     // index into the word (32-bits) of memory that matches this instruction
     assign if_packet.inst = if_packet.valid ? Imem_data.word_level[0] : `NOP;

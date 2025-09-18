@@ -37,7 +37,7 @@ module mem (
     wire [`CACHE_BLOCK_OFFSET_BITS-1:0] byte_addr = proc2mem_addr[`CACHE_BLOCK_OFFSET_BITS-1:0];
 
     ADDR         loaded_addr     [`NUM_MEM_TAGS:1];
-    logic [63:0] loaded_data     [`NUM_MEM_TAGS:1];
+    MEM_BLOCK    loaded_data     [`NUM_MEM_TAGS:1];
     logic [15:0] cycles_left     [`NUM_MEM_TAGS:1];
     logic        waiting_for_bus [`NUM_MEM_TAGS:1];
 
