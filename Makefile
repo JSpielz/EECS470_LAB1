@@ -386,10 +386,16 @@ build/novas.rc: $(VERDI_TEMPLATE) | build
 
 # now the actual targets to launch verdi
 %.verdi: programs/mem/%.mem build/simv build/novas.rc build/verdiLog $(VERDI_DIR)
-	cd build && ./simv $(RUN_VERDI_OPTS) +MEMORY=../$< +OUTPUT=../output/verdi_output
+	cd build && ./simv $(RUN_VERDI_OPTS) +define+VERDI +MEMORY=../$< +OUTPUT=../output/verdi_output
+
+%.icache.verdi: programs/mem/%.mem build/icache.simv build/novas.rc build/verdiLog $(VERDI_DIR)
+	cd build && ./icache.simv $(RUN_VERDI_OPTS) +define+VERDI +MEMORY=../$< +OUTPUT=../output/verdi_output
 
 %.syn.verdi: programs/mem/%.mem build/syn.simv build/novas.rc build/verdiLog $(VERDI_DIR)
-	cd build && ./syn.simv $(RUN_VERDI_OPTS) +MEMORY=../$< +OUTPUT=../output/syn_verdi_output
+	cd build && ./syn.simv $(RUN_VERDI_OPTS) +define+VERDI +MEMORY=../$< +OUTPUT=../output/syn_verdi_output
+
+%.fullsyn.verdi: programs/mem/%.mem build/fullsyn.simv build/novas.rc build/verdiLog $(VERDI_DIR)
+	cd build && ./fullsyn.simv $(RUN_VERDI_OPTS) +define+VERDI +MEMORY=../$< +OUTPUT=../output/syn_verdi_output
 
 .PHONY: %.verdi
 

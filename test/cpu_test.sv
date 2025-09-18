@@ -238,7 +238,7 @@ module testbench;
             if (clock_count % 10000 == 0) begin
                 $display("  %16t : %d cycles", $realtime, clock_count);
             end
-
+`ifndef VERDI
             // print the pipeline debug outputs via c code to the pipeline output file
             print_cycles(clock_count - 1);
             print_stage(if_inst_dbg,     if_NPC_dbg,     {31'b0,if_valid_dbg});
@@ -250,7 +250,7 @@ module testbench;
                       {31'b0,committed_insts[0].valid});
             print_membus({30'b0,proc2mem_command}, proc2mem_addr[31:0],
                          proc2mem_data[63:32], proc2mem_data[31:0]);
-
+`endif
             output_reg_writeback_and_maybe_halt();
 
             // stop the processor
@@ -288,6 +288,7 @@ module testbench;
                 pc = committed_insts[n].NPC - 4;
                 block = memory.unified_memory[pc[31:3]];
                 inst = block.word_level[pc[2]];
+`ifndef VERDI
                 // print the committed instructions to the writeback output file
                 if (committed_insts[n].reg_idx == `ZERO_REG) begin
                     $fdisplay(wb_fileno, "PC %4x:%-8s| ---", pc, decode_inst(inst));
@@ -298,6 +299,7 @@ module testbench;
                               committed_insts[n].reg_idx,
                               committed_insts[n].data);
                 end
+`endif
 
                 // exit if we have an illegal instruction or a halt
                 if (committed_insts[n].illegal) begin
