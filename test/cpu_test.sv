@@ -290,7 +290,7 @@ module testbench;
             $fdisplay(out_fileno, "@@@ Unified Memory contents hex on left, decimal on right: ");
             $fdisplay(out_fileno, "@@@");
             showing_data = 0;
-            for (int k = 0; k <= `MEM_64BIT_LINES - 1; k = k+1) begin
+            for (int k = 0; k <= (`MEM_SIZE_IN_BYTES/8) - 1; k = k+1) begin
                 if (memory.unified_memory[k] != 0) begin
                     $fdisplay(out_fileno, "@@@ mem[%5d] = %x : %0d", k*8, memory.unified_memory[k],
                                                              memory.unified_memory[k]);

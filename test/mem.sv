@@ -9,13 +9,13 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "mem.svh"
 
 module mem (
     input           clock,         // Memory clock
     input ADDR      proc2mem_addr, // address for current command
                                    // support for memory model with byte level addressing
-    input MEM_BLOCK proc2mem_data, // address for current command
+    input MEM_BLOCK proc2mem_data, // store data for current command
 `ifndef CACHE_MODE
     input MEM_SIZE  proc2mem_size, // BYTE, HALF, WORD or DOUBLE
 `endif
@@ -26,13 +26,13 @@ module mem (
     output MEM_TAG   mem2proc_data_tag         // Tag for finished transactions (0 = no value)
 );
 
-    logic [63:0] unified_memory [`MEM_64BIT_LINES-1:0];
+    logic [63:0] unified_memory [(`MEM_SIZE_IN_BYTES/8)-1:0];
 
     MEM_BLOCK   next_mem2proc_data;
     MEM_TAG     next_mem2proc_transaction_tag, next_mem2proc_data_tag;
 
-    wire [31:3] block_addr = proc2mem_addr[31:3];
-    wire [2:0] byte_addr = proc2mem_addr[2:0];
+    wire [31:`CACHE_BLOCK_OFFSET_BITS] block_addr = proc2mem_addr[31:`CACHE_BLOCK_OFFSET_BITS];
+    wire [`CACHE_BLOCK_OFFSET_BITS-1:0] byte_addr = proc2mem_addr[`CACHE_BLOCK_OFFSET_BITS-1:0];
 
     logic [63:0] loaded_data     [`NUM_MEM_TAGS:1];
     logic [15:0] cycles_left     [`NUM_MEM_TAGS:1];
@@ -53,34 +53,40 @@ module mem (
         next_mem2proc_data_tag        = 4'b0;
 
 `ifdef CACHE_MODE
-        valid_address = (proc2mem_addr[2:0] == 3'b0) && (proc2mem_addr < `MEM_SIZE_IN_BYTES);
+        valid_address = (proc2mem_addr[`CACHE_BLOCK_OFFSET_BITS-1:0] == `CACHE_BLOCK_OFFSET_BITS'b0) && (proc2mem_addr < `MEM_SIZE_IN_BYTES);
         if (valid_address) begin
             if (proc2mem_command == MEM_LOAD) begin
-                load_data = unified_memory[block_addr];
+                load_data.dbbl_level[0] = unified_memory[{block_addr, 1'h0}];
+                load_data.dbbl_level[1] = unified_memory[{block_addr, 1'h1}];
             end else if (proc2mem_command == MEM_STORE) begin
-                unified_memory[block_addr] = proc2mem_data;
+                unified_memory[{block_addr, 1'h0}] = proc2mem_data.dbbl_level[0];
+                unified_memory[{block_addr, 1'h1}] = proc2mem_data.dbbl_level[1];
             end
         end
 `else
         valid_address = (proc2mem_addr < `MEM_SIZE_IN_BYTES);
         if (valid_address) begin
             // filling up the block data
-            block = unified_memory[block_addr];
+            block.dbbl_level[0] = unified_memory[{block_addr, 1'h0}];
+            block.dbbl_level[1] = unified_memory[{block_addr, 1'h1}];
             if (proc2mem_command == MEM_LOAD) begin
                 case (proc2mem_size)
-                    BYTE:   load_data = {56'b0, block.byte_level[byte_addr[2:0]]};
-                    HALF:   load_data = {48'b0, block.half_level[byte_addr[2:1]]};
-                    WORD:   load_data = {32'b0, block.word_level[byte_addr[2]]};
-                    DOUBLE: load_data = block;
+                    BYTE:   load_data = {{(`CACHE_BLOCK_SIZE_IN_BYTES-1){8'b0}}, block.byte_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:0]]};
+                    HALF:   load_data = {{(`CACHE_BLOCK_SIZE_IN_BYTES-2){8'b0}}, block.half_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:1]]};
+                    WORD:   load_data = {{(`CACHE_BLOCK_SIZE_IN_BYTES-4){8'b0}}, block.word_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:2]]};
+                    DOUBLE: load_data = {{(`CACHE_BLOCK_SIZE_IN_BYTES-8){8'b0}}, block.dbbl_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:3]]};
+                    QUAD:   load_data = block;
                 endcase
             end else if (proc2mem_command == MEM_STORE) begin
                 case (proc2mem_size)
-                    BYTE:   block.byte_level[byte_addr[2:0]] = proc2mem_data[7:0];
-                    HALF:   block.half_level[byte_addr[2:1]] = proc2mem_data[15:0];
-                    WORD:   block.word_level[byte_addr[2]]   = proc2mem_data[31:0];
-                    DOUBLE: block                            = proc2mem_data;
+                    BYTE:   block.byte_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:0]] = proc2mem_data[7:0];
+                    HALF:   block.half_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:1]] = proc2mem_data[15:0];
+                    WORD:   block.word_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:2]] = proc2mem_data[31:0];
+                    DOUBLE: block.dbbl_level[byte_addr[`CACHE_BLOCK_OFFSET_BITS-1:3]] = proc2mem_data[63:0];
+                    QUAD:   block                                                     = proc2mem_data;
                 endcase
-                unified_memory[block_addr] = block;
+                unified_memory[{block_addr, 1'h0}] = block.dbbl_level[0];
+                unified_memory[{block_addr, 1'h1}] = block.dbbl_level[1];
             end
         end
 `endif // CACHE_MODE
@@ -122,8 +128,8 @@ module mem (
         // This posedge is very important, it ensures that we don't enter a race
         // condition with the negedge driven block above.
         @(posedge clock);
-        for (int i = 0; i < `MEM_64BIT_LINES; i = i+1) begin
-            unified_memory[i] = 64'h0;
+        for (int i = 0; i < `MEM_CACHE_LINES; i = i+1) begin
+            unified_memory[i] = {`CACHE_BLOCK_SIZE_IN_BYTES{8'h0}};
         end
         mem2proc_transaction_tag = 4'd0;
         mem2proc_data_tag = 4'd0;

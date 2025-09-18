@@ -8,7 +8,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`include "sys_defs.svh"
+`include "mem.svh"
 
 module cpu (
     input clock, // System clock
@@ -57,6 +57,7 @@ module cpu (
 
     // Outputs from IF-Stage and IF/ID Pipeline Register
     ADDR Imem_addr;
+    logic if_fetch;
     IF_ID_PACKET if_packet, if_id_reg;
 
     // Outputs from ID stage and ID/EX Pipeline Register
@@ -79,6 +80,28 @@ module cpu (
 
     //////////////////////////////////////////////////
     //                                              //
+    //                  Valid Bit                   //
+    //                                              //
+    //////////////////////////////////////////////////
+
+    // This state controls the stall signal that artificially forces IF
+    // to stall until the previous instruction has completed.
+    // For project 3, start by assigning if_valid to always be 1
+
+    logic if_valid, start_valid_on_reset, wb_valid;
+
+    always_ff @(posedge clock) begin
+        // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
+        // Using a separate always_ff is necessary since if_valid is combinational
+        // Assigning if_valid = reset doesn't work as you'd hope :/
+        start_valid_on_reset <= reset;
+    end
+
+    // valid bit will cycle through the pipeline and come back from the wb stage
+    assign if_valid = (!reset && start_valid_on_reset) || mem_wb_reg.valid;
+
+    //////////////////////////////////////////////////
+    //                                              //
     //                Memory Outputs                //
     //                                              //
     //////////////////////////////////////////////////
@@ -93,36 +116,15 @@ module cpu (
             proc2mem_command = Dmem_command;
             proc2mem_size    = Dmem_size;   // size is never DOUBLE in project 3
             proc2mem_addr    = Dmem_addr;
-        end else begin                      // read an INSTRUCTION from memory
+        end else if (if_fetch) begin        // read an INSTRUCTION from memory
             proc2mem_command = MEM_LOAD;
             proc2mem_addr    = Imem_addr;
-            proc2mem_size    = DOUBLE;      // instructions load a full memory line (64 bits)
+            proc2mem_size    = WORD;      // instructions load a full memory line (64 bits)
+        end else begin
+            proc2mem_command = MEM_NONE;
         end
         proc2mem_data = Dmem_store_data;
     end
-
-    //////////////////////////////////////////////////
-    //                                              //
-    //                  Valid Bit                   //
-    //                                              //
-    //////////////////////////////////////////////////
-
-    // This state controls the stall signal that artificially forces IF
-    // to stall until the previous instruction has completed.
-    // For project 3, start by assigning if_valid to always be 1
-
-    logic if_valid, start_valid_on_reset, wb_valid;
-
-
-    always_ff @(posedge clock) begin
-        // Start valid on reset. Other stages (ID,EX,MEM,WB) start as invalid
-        // Using a separate always_ff is necessary since if_valid is combinational
-        // Assigning if_valid = reset doesn't work as you'd hope :/
-        start_valid_on_reset <= reset;
-    end
-
-    // valid bit will cycle through the pipeline and come back from the wb stage
-    assign if_valid = start_valid_on_reset || wb_valid;
 
     //////////////////////////////////////////////////
     //                                              //
@@ -135,13 +137,16 @@ module cpu (
         .clock (clock),
         .reset (reset),
         .if_valid      (if_valid),
+        .bus_load      (ex_mem_reg.rd_mem),
         .take_branch   (ex_mem_reg.take_branch),
         .branch_target (ex_mem_reg.alu_result),
         .Imem_data     (mem2proc_data),
+        .Imem_tag      (mem2proc_data_tag),
 
         // Outputs
         .if_packet (if_packet),
-        .Imem_addr (Imem_addr)
+        .Imem_addr (Imem_addr),
+        .fetch     (if_fetch)
     );
 
     // debug outputs
@@ -252,7 +257,7 @@ module cpu (
     //                                              //
     //////////////////////////////////////////////////
 
-    assign ex_mem_enable = 1'b1;
+    assign ex_mem_enable = !ex_mem_reg.valid || mem_packet.valid;
 
     always_ff @(posedge clock) begin
         if (reset) begin
@@ -276,8 +281,11 @@ module cpu (
 
     stage_mem stage_mem_0 (
         // Inputs
+        .clock (clock),
+        .reset (reset),
         .ex_mem_reg     (ex_mem_reg),
         .Dmem_load_data (mem2proc_data),
+        .Dmem_load_tag  (mem2proc_data_tag),
 
         // Outputs
         .mem_packet      (mem_packet),
