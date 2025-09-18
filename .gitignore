@@ -52,5 +52,5 @@ programs/mem/
 
 # ignore the output folder
 # don't ignore the correct_out folder
-output/
+output*/
 !correct_out/*

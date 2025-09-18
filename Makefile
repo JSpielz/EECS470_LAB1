@@ -2,23 +2,20 @@
 # ---- Introduction ---- #
 ##########################
 
-# Welcome to the Project 3 VeriSimpleV Processor makefile!
-# this file will build and run a fully synthesizable RISC-V verilog processor
+# Welcome to the VeriSimpleV Processor makefile!
+# This file will build and run a fully synthesizable RISC-V verilog processor
 # and is an extended version of the EECS 470 standard makefile
-
-# NOTE: this file should need no changes for project 3
-# but it will be reused for project 4, where you will likely add your own new files and functionality
 
 # reference table of all make targets:
 
 # make  <- runs the default target, set explicitly below as 'make no_hazard.out'
-.DEFAULT_GOAL = no_hazard.out
+.DEFAULT_GOAL = simulate_all
 # ^ this overrides using the first listed target as the default
 
 # ---- Program Execution ---- #
 # these are your main commands for running programs and generating output
 # make <my_program>.out      <- run a program on simv and output .out, .cpi, .wb, and .ppln files
-# make <my_program>.syn.out  <- run a program on syn.simv and do the same
+# make <my_program>.syn      <- run a program on syn.simv and do the same
 # make simulate_all          <- run every program on simv at once (in parallel with -j)
 # make simulate_all.syn      <- run every program on syn.simv at once (in parallel with -j)
 
@@ -163,10 +160,22 @@ build/simv: $(TESTBENCH) $(SOURCES) verilog/noicache.sv $(HEADERS) | build
 	$(VCS) $(filter-out $(HEADERS),$^) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
 
-# the normal simulation executable will run your testbench on the original modules
-build/noicache.simv: $(TESTBENCH) $(SOURCES) verilog/icache.sv $(HEADERS) | build
+# the icache simulation executable will run your testbench with your icache module
+build/icache.simv: $(TESTBENCH) $(SOURCES) verilog/icache.sv $(HEADERS) | build
 	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
 	$(VCS) $(filter-out $(HEADERS),$^) -o $@
+	@$(call PRINT_COLOR, 6, finished compiling $@)
+
+# the synthesis executable runs your testbench on the synthesized version of your icache
+build/syn.simv: $(TESTBENCH) $(SOURCES) synth/icache.vg $(HEADERS) | build
+	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
+	$(VCS) +define+SYNTH $(filter-out $(HEADERS),$^) $(LIB) -o $@
+	@$(call PRINT_COLOR, 6, finished compiling $@)
+
+# the synthesis executable runs your testbench on the synthesized versions of your icache and cpu
+build/fullsyn.simv: $(TESTBENCH) $(SYNTH_FILES) synth/icache.vg $(HEADERS) | build
+	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
+	$(VCS) +define+SYNTH $(filter-out $(HEADERS),$^) $(LIB) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
 
 # a make pattern rule to generate the .vg synthesis files
@@ -178,12 +187,6 @@ synth/%.vg: verilog/icache.sv $(SOURCES) $(TCL_SCRIPT) $(HEADERS) | synth
 	MODULE=$* SOURCES="$(SOURCES) $<" \
 	dc_shell-t -f ../$(TCL_SCRIPT) | tee $*-synth.out
 	@$(call PRINT_COLOR, 6, finished synthesizing $@)
-
-# the synthesis executable runs your testbench on the synthesized versions of your modules
-build/syn.simv: $(TESTBENCH) $(SOURCES) synth/icache.vg $(HEADERS) | build
-	@$(call PRINT_COLOR, 5, compiling the synthesis executable $@)
-	$(VCS) +define+SYNTH $(filter-out $(HEADERS),$^) $(LIB) -o $@
-	@$(call PRINT_COLOR, 6, finished compiling $@)
 
 # a phony target to view the slack in the *.rep synthesis report file
 slack:
@@ -221,7 +224,7 @@ ASLINKERS  = programs/aslinker.lds
 
 # make elf files from assembly code
 programs/mem/%.elf: programs/%.s $(ASLINKERS) | programs/mem
-	@$(call PRINT_COLOR, 5, compiling assembly file $<)
+	@$(call PRINT_COLOR, 5, assembling assembly file $<)
 	$(GCC) $(ASFLAGS) $< -T $(ASLINKERS) -o $@
 
 # make elf files from C source code
@@ -299,15 +302,23 @@ dump_all: $(DUMP_PROGRAMS:=.dump_x) $(DUMP_PROGRAMS:=.dump_abi)
 # the same can be done for synthesis by doing 'make sampler.syn.out'
 # which will also create .syn.cpi, .syn.wb, and .syn.ppln files in output/
 
-# run a program and produce output files
+# run a program and produce output files with: 'make <my_program>.out'
 output/%.out: programs/mem/%.mem build/simv | output
 	@$(call PRINT_COLOR, 5, running simv on $<)
 	cd build && ./simv +MEMORY=../$< +OUTPUT=../output/$*
 	@$(call PRINT_COLOR, 6, finished running simv on $<)
 	@$(call PRINT_COLOR, 2, output is in output/$*.{out finalmem cpi wb ppln})
 
-# run synthesis with: 'make <my_program>.syn.out'
-# this does the same as simv, but adds .syn to the output files and compiles syn.simv instead
+# run a program with icache and produce output files with: 'make <my_program>.icache'
+# this does the same as simv, but places the output files in another folder and compiles icache.simv instead
+output_icache/%.out: programs/mem/%.mem build/icache.simv | output_icache
+	@$(call PRINT_COLOR, 5, running icache.simv on $<)
+	cd build && ./icache.simv +MEMORY=../$< +OUTPUT=../output_icache/$*
+	@$(call PRINT_COLOR, 6, finished running icache.simv on $<)
+	@$(call PRINT_COLOR, 2, output is in output_icache/$*.{out finalmem cpi wb ppln})
+
+# run synthesis with: 'make <my_program>.syn'
+# this does the same as simv, but places the output files in another folder and compiles syn.simv instead
 output_syn/%.out: programs/mem/%.mem build/syn.simv | output_syn
 	@$(call PRINT_COLOR, 5, running syn.simv on $<)
 	@$(call PRINT_COLOR, 3, this might take a while...)
@@ -315,13 +326,27 @@ output_syn/%.out: programs/mem/%.mem build/syn.simv | output_syn
 	@$(call PRINT_COLOR, 6, finished running syn.simv on $<)
 	@$(call PRINT_COLOR, 2, output is in output_syn/$*.{out cpi wb ppln})
 
+# run synthesis with: 'make <my_program>.syn'
+# this does the same as simv, but places the output files in another folder and compiles syn.simv instead
+output_fullsyn/%.out: programs/mem/%.mem build/fullsyn.simv | output_fullsyn
+	@$(call PRINT_COLOR, 5, running fullsyn.simv on $<)
+	@$(call PRINT_COLOR, 3, this might take a while...)
+	cd build && ./fullsyn.simv +MEMORY=../$< +OUTPUT=../output_fullsyn/$*
+	@$(call PRINT_COLOR, 6, finished running fullsyn.simv on $<)
+	@$(call PRINT_COLOR, 2, output is in output_fullsyn/$*.{out cpi wb ppln})
+
 # Allow us to type 'make <my_program>.out' instead of 'make output/<my_program>.out'
 ./%.out: output/%.out ;
 .PHONY: ./%.out
 
-# Allow us to type 'make <my_program>.out' instead of 'make output/<my_program>.out'
+./%.icache: output_icache/%.out ;
+.PHONY: ./%.syn
+
 ./%.syn: output_syn/%.out ;
 .PHONY: ./%.syn
+
+./%.fullsyn: output_fullsyn/%.out ;
+.PHONY: ./%.fullsyn
 
 # Declare that creating a %.out file also creates both %.cpi, %.wb, and %.ppln files
 %.cpi %.wb %.ppln: %.out ;
@@ -330,9 +355,10 @@ output_syn/%.out: programs/mem/%.mem build/syn.simv | output_syn
 
 # run all programs in one command (use 'make -j' to run multithreaded)
 simulate_all: build/simv compile_all $(PROGRAMS:programs/%=output/%.out)
+simulate_all.icache: build/icache.simv compile_all $(PROGRAMS:programs/%=output_icache/%.out)
 simulate_all.syn: build/syn.simv compile_all $(PROGRAMS:programs/%=output_syn/%.out)
-simulate_all.noIcache: build/noIcache.simv compile_all $(PROGRAMS:programs/%=output_noIcache/%.out)
-.PHONY: simulate_all simulate_all.syn
+simulate_all.fullsyn: build/fullsyn.simv compile_all $(PROGRAMS:programs/%=output_fullsyn/%.out)
+.PHONY: simulate_all simulate_all.syn simulate_all.icache simulate_all.fullsyn
 
 ###################
 # ---- Verdi ---- #
@@ -399,7 +425,7 @@ build/vis.simv: $(HEADERS) $(VTUBER) $(SOURCES) | build
 # Directories for holding build files or run outputs
 # Targets that need these directories should add them after a pipe.
 # ex: "target: dep1 dep2 ... | build"
-build synth output output_syn programs/mem:
+build synth output output_syn output_icache output_fullsyn programs/mem:
 	mkdir -p $@
 # Don't leave any files in these, they will be deleted by clean commands
 
@@ -437,8 +463,7 @@ clean_exe:
 
 clean_run_files:
 	@$(call PRINT_COLOR, 3, removing per-run outputs)
-	rm -rf output output_syn
-	rm -rf output/*.out output/*.cpi output/*.wb output/*.ppln
+	rm -rf output*
 
 clean_synth:
 	@$(call PRINT_COLOR, 1, removing synthesis files)
