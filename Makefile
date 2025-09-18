@@ -158,7 +158,7 @@ SOURCES = verilog/cpu.sv \
 SYNTH_FILES = synth/cpu.vg
 
 # the normal simulation executable will run your testbench on the original modules
-build/simv: $(TESTBENCH) $(SOURCES) $(HEADERS) | build
+build/simv: $(TESTBENCH) $(SOURCES) verilog/noicache.sv $(HEADERS) | build
 	@$(call PRINT_COLOR, 5, compiling the simulation executable $@)
 	$(VCS) $(filter-out $(HEADERS),$^) -o $@
 	@$(call PRINT_COLOR, 6, finished compiling $@)
